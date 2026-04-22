@@ -3,254 +3,157 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Japanese Coach Pro · Robust Audio</title>
+<title>Japanese Coach Pro · Full Curriculum</title>
 <style>
 body { font-family:-apple-system,sans-serif; margin:0; background:#fdf6e3; }
 .header { background:#c0392b; color:#fff; padding:16px; text-align:center; font-weight:700; }
-.container { max-width:700px; margin:auto; padding:16px; }
-.tabs { display:flex; overflow:auto; gap:6px; padding:10px; }
-.tab { padding:8px 10px; background:#eee; border-radius:8px; cursor:pointer; font-size:12px; }
-.tab.active { background:#c0392b; color:#fff; }
-.card { background:#fff; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08);} 
+.container { max-width:800px; margin:auto; padding:16px; }
+.week-tabs { display:flex; gap:8px; padding:10px; overflow:auto; }
+.week { padding:10px; background:#ddd; border-radius:10px; cursor:pointer; }
+.week.active { background:#c0392b; color:white; }
+.day-tabs { display:flex; gap:6px; overflow:auto; margin-bottom:10px; }
+.day { padding:6px 8px; background:#eee; border-radius:8px; cursor:pointer; font-size:12px; }
+.day.active { background:#4a9eda; color:white; }
+.card { background:white; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08);} 
 button { padding:10px 14px; border:none; border-radius:10px; margin-top:8px; cursor:pointer; font-weight:600; }
 .primary { background:#4a9eda; color:white; }
 .success { background:#5cb85c; color:white; }
-.danger { background:#e05c5c; color:white; }
-.recording { background:#e05c5c !important; animation:pulse 1s infinite; }
-@keyframes pulse { 0%{opacity:1;} 50%{opacity:0.6;} 100%{opacity:1;} }
+.task { border-top:1px solid #eee; padding-top:10px; margin-top:10px; }
 .progress { height:10px; background:#eee; border-radius:10px; overflow:hidden; }
 .fill { height:100%; background:#5cb85c; width:0%; }
-.task { border-top:1px solid #eee; padding-top:10px; margin-top:10px; }
-input { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:8px; }
-.small { font-size:12px; color:#777; }
-.loading { opacity:0.6; }
 </style>
 </head>
 <body>
 
-<div class="header">🇯🇵 Japanese Coach Pro · 30 Day System</div>
-<div class="tabs" id="tabs"></div>
+<div class="header">🇯🇵 Japanese Coach Pro · Structured 30 Day Plan</div>
 
+<div class="week-tabs" id="weeks"></div>
 <div class="container">
+<div class="day-tabs" id="days"></div>
 
 <div class="card">
-  <strong>Day <span id="day">1</span></strong>
+  <strong id="lessonTitle"></strong>
   <div class="progress"><div id="progress" class="fill"></div></div>
 </div>
 
-<div class="card">
-  <h3 id="jp"></h3>
-  <p id="en" class="small"></p>
-</div>
-
-<div class="card task">
-  <h3>📚 Vocabulary</h3>
-  <button class="primary" onclick="revealMeaning()">Show meaning</button>
-  <p id="vocabFeedback"></p>
-</div>
-
-<div class="card task">
-  <h3>🔊 Listening</h3>
-  <button id="audioBtn" class="primary" onclick="speak()">🔊 Listen</button>
-  <button onclick="heard()">I understood</button>
-  <p id="listenFeedback"></p>
-</div>
-
-<div class="card task">
-  <h3>🎤 Speaking</h3>
-  <button id="micBtn" class="primary" onclick="toggleListening()">Start Speaking</button>
-  <p id="transcript" class="small"></p>
-  <p id="speechFeedback"></p>
-</div>
-
-<div class="card task">
-  <h3>⌨️ Writing</h3>
-  <input id="input" placeholder="Type Japanese">
-  <button onclick="checkTyping()">Check</button>
-  <p id="typingFeedback"></p>
-</div>
-
-<div class="card">
-  <button class="success" onclick="next()">Next →</button>
-</div>
+<div id="lessonContent"></div>
 
 </div>
 
 <script>
-const lessons = [
-  {jp:"こんにちは", en:"Hello"},
-  {jp:"ありがとうございます", en:"Thank you"},
-  {jp:"すみません", en:"Excuse me"},
-  {jp:"トイレはどこですか", en:"Where is the toilet?"},
-  {jp:"これをください", en:"This please"},
-  {jp:"みずをください", en:"Water please"},
-  {jp:"いくらですか", en:"How much?"},
-  {jp:"えいごがはなせますか", en:"Do you speak English?"},
-  {jp:"おねがいします", en:"Please"},
-  {jp:"おいしいですね", en:"Delicious"}
+
+const curriculum = [
+  {
+    week: "Week 1: Basics",
+    days: [
+      { title:"Greetings", items:[
+        {jp:"こんにちは", en:"Hello"},
+        {jp:"おはよう", en:"Good morning"}
+      ]},
+      { title:"Politeness", items:[
+        {jp:"ありがとうございます", en:"Thank you"},
+        {jp:"すみません", en:"Excuse me"}
+      ]},
+      { title:"Questions", items:[
+        {jp:"トイレはどこですか", en:"Where is the toilet?"}
+      ]},
+      { title:"Requests", items:[
+        {jp:"これをください", en:"This please"}
+      ]},
+      { title:"Food", items:[
+        {jp:"おいしい", en:"Delicious"}
+      ]}
+    ]
+  },
+  {
+    week: "Week 2: Travel",
+    days: [
+      { title:"Transport", items:[{jp:"えき", en:"Station"}]},
+      { title:"Money", items:[{jp:"いくら", en:"How much"}]},
+      { title:"Directions", items:[{jp:"みぎ", en:"Right"}]},
+      { title:"Shopping", items:[{jp:"かいます", en:"Buy"}]},
+      { title:"Eating Out", items:[{jp:"みず", en:"Water"}]}
+    ]
+  }
 ];
 
-let index = 0;
+let currentWeek = 0;
+let currentDay = 0;
 let progress = 0;
-let recognition;
-let listening = false;
-let voices = [];
 
-// Load voices properly
-function loadVoices(){ voices = speechSynthesis.getVoices(); }
-speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
-
-// ROBUST AUDIO SYSTEM
-function speak(){
-  const btn = document.getElementById('audioBtn');
-  const text = lessons[index].jp;
-
-  btn.innerText = "Loading...";
-  btn.classList.add('loading');
-
-  try {
-    const utter = new SpeechSynthesisUtterance(text);
-
-    let ja = voices.find(v=>v.lang==='ja-JP') || voices.find(v=>v.lang.includes('ja'));
-    if(ja) utter.voice = ja;
-
-    utter.rate = 0.9;
-
-    utter.onend = resetAudioBtn;
-    utter.onerror = fallbackAudio;
-
-    speechSynthesis.cancel();
-    speechSynthesis.resume();
-    speechSynthesis.speak(utter);
-
-  } catch(e) {
-    fallbackAudio();
-  }
-
-  // fallback if nothing happens in 1s
-  setTimeout(()=>{
-    if(btn.innerText === "Loading...") fallbackAudio();
-  },1000);
+function renderWeeks(){
+  const el = document.getElementById('weeks');
+  el.innerHTML = '';
+  curriculum.forEach((w,i)=>{
+    const div = document.createElement('div');
+    div.className = 'week';
+    div.innerText = w.week;
+    div.onclick = ()=>{currentWeek=i; currentDay=0; renderDays(); renderLesson(); setActiveWeek(i)};
+    el.appendChild(div);
+  });
+  setActiveWeek(0);
 }
 
-function fallbackAudio(){
-  const btn = document.getElementById('audioBtn');
-  const text = encodeURIComponent(lessons[index].jp);
+function setActiveWeek(i){
+  document.querySelectorAll('.week').forEach(w=>w.classList.remove('active'));
+  document.querySelectorAll('.week')[i].classList.add('active');
+}
 
-  const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&q=${text}&tl=ja&client=tw-ob`);
-  audio.play().then(resetAudioBtn).catch(()=>{
-    btn.innerText = "Audio failed";
+function renderDays(){
+  const el = document.getElementById('days');
+  el.innerHTML = '';
+  curriculum[currentWeek].days.forEach((d,i)=>{
+    const div = document.createElement('div');
+    div.className = 'day';
+    div.innerText = 'Day '+(i+1);
+    div.onclick = ()=>{currentDay=i; renderLesson(); setActiveDay(i)};
+    el.appendChild(div);
+  });
+  setActiveDay(0);
+}
+
+function setActiveDay(i){
+  document.querySelectorAll('.day').forEach(d=>d.classList.remove('active'));
+  document.querySelectorAll('.day')[i].classList.add('active');
+}
+
+function speak(text){
+  const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=ja&client=tw-ob`);
+  audio.play();
+}
+
+function renderLesson(){
+  const lesson = curriculum[currentWeek].days[currentDay];
+  document.getElementById('lessonTitle').innerText = lesson.title;
+
+  const container = document.getElementById('lessonContent');
+  container.innerHTML = '';
+
+  lesson.items.forEach(item=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    card.innerHTML = `
+      <h3>${item.jp}</h3>
+      <p>${item.en}</p>
+      <button class="primary">🔊 Listen</button>
+      <button class="success">Mark Learned</button>
+    `;
+
+    card.querySelector('.primary').onclick = ()=> speak(item.jp);
+    card.querySelector('.success').onclick = ()=>{
+      progress += 10;
+      document.getElementById('progress').style.width = progress + '%';
+    }
+
+    container.appendChild(card);
   });
 }
 
-function resetAudioBtn(){
-  const btn = document.getElementById('audioBtn');
-  btn.innerText = "🔊 Listen";
-  btn.classList.remove('loading');
-}
+renderWeeks();
+renderDays();
+renderLesson();
 
-function updateProgress(val=10){
-  progress += val;
-  document.getElementById('progress').style.width = progress + "%";
-}
-
-function revealMeaning(){
-  document.getElementById('vocabFeedback').innerText = lessons[index].en;
-  updateProgress();
-}
-
-function heard(){
-  document.getElementById('listenFeedback').innerText = "Good listening";
-  updateProgress();
-}
-
-function toggleListening(){
-  const btn = document.getElementById('micBtn');
-
-  if(!('webkitSpeechRecognition' in window)){
-    alert("Use Chrome for speech recognition");
-    return;
-  }
-
-  if(!listening){
-    recognition = new webkitSpeechRecognition();
-    recognition.lang = 'ja-JP';
-    recognition.start();
-
-    listening = true;
-    btn.innerText = "Stop Recording";
-    btn.classList.add('recording');
-
-    recognition.onresult = function(e){
-      const text = e.results[0][0].transcript;
-      document.getElementById('transcript').innerText = "You said: " + text;
-
-      if(text.replace(/\s/g,'') === lessons[index].jp){
-        document.getElementById('speechFeedback').innerText = "✅ Good";
-        updateProgress();
-      } else {
-        document.getElementById('speechFeedback').innerText = "❌ Try again";
-      }
-    }
-
-    recognition.onend = stopListening;
-  } else {
-    stopListening();
-  }
-}
-
-function stopListening(){
-  if(recognition) recognition.stop();
-  listening = false;
-  const btn = document.getElementById('micBtn');
-  btn.innerText = "Start Speaking";
-  btn.classList.remove('recording');
-}
-
-function checkTyping(){
-  const val = document.getElementById('input').value.trim();
-  if(val === lessons[index].jp){
-    document.getElementById('typingFeedback').innerText = "Correct";
-    updateProgress();
-  } else {
-    document.getElementById('typingFeedback').innerText = "Try again";
-  }
-}
-
-function next(){
-  index++;
-  if(index >= lessons.length){
-    alert("Day complete 🎉");
-    index = 0;
-    progress = 0;
-  }
-  load();
-}
-
-function load(){
-  document.getElementById('jp').innerText = lessons[index].jp;
-  document.getElementById('en').innerText = lessons[index].en;
-  document.getElementById('day').innerText = index+1;
-}
-
-// Tabs
-const tabs = document.getElementById('tabs');
-for(let i=0;i<30;i++){
-  const t = document.createElement('div');
-  t.className = 'tab';
-  t.innerText = "Day "+(i+1);
-  t.onclick = ()=>{ index = i % lessons.length; load(); setActive(i);} 
-  tabs.appendChild(t);
-}
-
-function setActive(i){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  tabs.children[i].classList.add('active');
-}
-
-setActive(0);
-load();
 </script>
 
 </body>
