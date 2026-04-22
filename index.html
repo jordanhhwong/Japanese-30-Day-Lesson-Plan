@@ -3,25 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Japanese Coach Pro · Full</title>
+<title>Japanese Coach Pro · Full UI</title>
 <style>
-body { font-family: -apple-system, sans-serif; margin:0; background:#fdf6e3; }
-.header { background:#c0392b; color:white; padding:16px; text-align:center; font-weight:700; }
-.container { max-width:650px; margin:auto; padding:16px; }
-.card { background:white; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08);} 
+body { font-family:-apple-system,sans-serif; margin:0; background:#fdf6e3; }
+.header { background:#c0392b; color:#fff; padding:16px; text-align:center; font-weight:700; }
+.container { max-width:700px; margin:auto; padding:16px; }
+.tabs { display:flex; overflow:auto; gap:6px; padding:10px; }
+.tab { padding:8px 10px; background:#eee; border-radius:8px; cursor:pointer; font-size:12px; }
+.tab.active { background:#c0392b; color:#fff; }
+.card { background:#fff; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08);} 
 button { padding:10px 14px; border:none; border-radius:10px; margin-top:8px; cursor:pointer; font-weight:600; }
 .primary { background:#4a9eda; color:white; }
 .success { background:#5cb85c; color:white; }
 .danger { background:#e05c5c; color:white; }
-.progress { height:10px; background:#eee; border-radius:10px; overflow:hidden; margin-top:10px; }
+.recording { background:#e05c5c !important; animation:pulse 1s infinite; }
+@keyframes pulse { 0%{opacity:1;} 50%{opacity:0.6;} 100%{opacity:1;} }
+.progress { height:10px; background:#eee; border-radius:10px; overflow:hidden; }
 .fill { height:100%; background:#5cb85c; width:0%; }
+.task { border-top:1px solid #eee; padding-top:10px; margin-top:10px; }
 input { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:8px; }
 .small { font-size:12px; color:#777; }
 </style>
 </head>
 <body>
 
-<div class="header">🇯🇵 Japanese Coach Pro · 30 Days</div>
+<div class="header">🇯🇵 Japanese Coach Pro · 30 Day System</div>
+<div class="tabs" id="tabs"></div>
 
 <div class="container">
 
@@ -33,18 +40,34 @@ input { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; marg
 <div class="card">
   <h3 id="jp"></h3>
   <p id="en" class="small"></p>
-  <button class="primary" onclick="speak()">🔊 Listen</button>
 </div>
 
-<div class="card">
-  <h3>🎤 Speak</h3>
-  <button class="primary" onclick="startListening()">Start Speaking</button>
+<!-- VOCAB -->
+<div class="card task">
+  <h3>📚 Vocabulary</h3>
+  <button class="primary" onclick="revealMeaning()">Show meaning</button>
+  <p id="vocabFeedback"></p>
+</div>
+
+<!-- LISTENING -->
+<div class="card task">
+  <h3>🔊 Listening</h3>
+  <button class="primary" onclick="speak()">Play Audio</button>
+  <button onclick="heard()">I understood</button>
+  <p id="listenFeedback"></p>
+</div>
+
+<!-- SPEAKING -->
+<div class="card task">
+  <h3>🎤 Speaking</h3>
+  <button id="micBtn" class="primary" onclick="toggleListening()">Start Speaking</button>
   <p id="transcript" class="small"></p>
   <p id="speechFeedback"></p>
 </div>
 
-<div class="card">
-  <h3>⌨️ Type</h3>
+<!-- TYPING -->
+<div class="card task">
+  <h3>⌨️ Writing</h3>
   <input id="input" placeholder="Type Japanese">
   <button onclick="checkTyping()">Check</button>
   <p id="typingFeedback"></p>
@@ -57,7 +80,6 @@ input { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; marg
 </div>
 
 <script>
-
 const lessons = [
   {jp:"こんにちは", en:"Hello"},
   {jp:"ありがとうございます", en:"Thank you"},
@@ -65,14 +87,16 @@ const lessons = [
   {jp:"トイレはどこですか", en:"Where is the toilet?"},
   {jp:"これをください", en:"This please"},
   {jp:"みずをください", en:"Water please"},
-  {jp:"いくらですか", en:"How much is it?"},
+  {jp:"いくらですか", en:"How much?"},
   {jp:"えいごがはなせますか", en:"Do you speak English?"},
   {jp:"おねがいします", en:"Please"},
-  {jp:"おいしいですね", en:"It's delicious"}
+  {jp:"おいしいですね", en:"Delicious"}
 ];
 
 let index = 0;
 let progress = 0;
+let recognition;
+let listening = false;
 
 function load(){
   document.getElementById('jp').innerText = lessons[index].jp;
@@ -80,50 +104,81 @@ function load(){
   document.getElementById('day').innerText = index+1;
 }
 
+function updateProgress(val=10){
+  progress += val;
+  document.getElementById('progress').style.width = progress + "%";
+}
+
+// VOCAB
+function revealMeaning(){
+  document.getElementById('vocabFeedback').innerText = lessons[index].en;
+  updateProgress();
+}
+
+// LISTENING
 function speak(){
   const u = new SpeechSynthesisUtterance(lessons[index].jp);
   const v = speechSynthesis.getVoices().find(v=>v.lang.includes('ja'));
   if(v) u.voice = v;
+  if(speechSynthesis.paused) speechSynthesis.resume();
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
 
-// Speech recognition
-let recognition;
+function heard(){
+  document.getElementById('listenFeedback').innerText = "Good listening";
+  updateProgress();
+}
 
-function startListening(){
+// SPEECH
+function toggleListening(){
+  const btn = document.getElementById('micBtn');
+
   if(!('webkitSpeechRecognition' in window)){
-    alert("Speech recognition not supported. Use Chrome or host app.");
+    alert("Use Chrome for speech recognition");
     return;
   }
 
-  recognition = new webkitSpeechRecognition();
-  recognition.lang = 'ja-JP';
-  recognition.start();
+  if(!listening){
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'ja-JP';
+    recognition.start();
 
-  recognition.onresult = function(e){
-    const text = e.results[0][0].transcript;
-    document.getElementById('transcript').innerText = "You said: " + text;
+    listening = true;
+    btn.innerText = "Stop Recording";
+    btn.classList.add('recording');
 
-    if(compare(text, lessons[index].jp)){
-      document.getElementById('speechFeedback').innerText = "✅ Good pronunciation";
-      progress += 10;
-      updateProgress();
-    } else {
-      document.getElementById('speechFeedback').innerText = "❌ Try again";
+    recognition.onresult = function(e){
+      const text = e.results[0][0].transcript;
+      document.getElementById('transcript').innerText = "You said: " + text;
+
+      if(text.replace(/\s/g,'') === lessons[index].jp){
+        document.getElementById('speechFeedback').innerText = "✅ Good";
+        updateProgress();
+      } else {
+        document.getElementById('speechFeedback').innerText = "❌ Try again";
+      }
     }
+
+    recognition.onend = stopListening;
+  } else {
+    stopListening();
   }
 }
 
-function compare(a,b){
-  return a.replace(/\s/g,'') === b.replace(/\s/g,'');
+function stopListening(){
+  if(recognition) recognition.stop();
+  listening = false;
+  const btn = document.getElementById('micBtn');
+  btn.innerText = "Start Speaking";
+  btn.classList.remove('recording');
 }
 
+// TYPING
 function checkTyping(){
   const val = document.getElementById('input').value.trim();
-  if(compare(val, lessons[index].jp)){
+  if(val === lessons[index].jp){
     document.getElementById('typingFeedback').innerText = "Correct";
-    progress += 10;
     updateProgress();
   } else {
     document.getElementById('typingFeedback').innerText = "Try again";
@@ -140,11 +195,29 @@ function next(){
   load();
 }
 
-function updateProgress(){
-  document.getElementById('progress').style.width = progress + "%";
+// TABS
+const tabs = document.getElementById('tabs');
+for(let i=0;i<30;i++){
+  const t = document.createElement('div');
+  t.className = 'tab';
+  t.innerText = "Day "+(i+1);
+  t.onclick = ()=>{
+    index = i % lessons.length;
+    load();
+    setActive(i);
+  }
+  tabs.appendChild(t);
 }
 
+function setActive(i){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  tabs.children[i].classList.add('active');
+}
+
+setActive(0);
 load();
+
+speechSynthesis.onvoiceschanged = ()=>{};
 
 </script>
 
