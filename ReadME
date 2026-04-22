@@ -1,0 +1,70 @@
+# 🇯🇵 Japanese Holiday Coach — 30-Day Learning Plan
+
+A fully self-contained web app to take you from complete beginner to holiday-ready Japanese speaker in 30 days, with under 30 minutes of study per day.
+
+## ✨ Features
+
+- **30 structured days** across 4 weeks: Survival → Conversations → Deeper Talk → Confidence
+- **Interactive vocabulary** — type each word 3× to master it, with instant feedback
+- **Live mic pronunciation check** — press 🎤 to start, press again to stop; the app checks if your Japanese was intelligible
+- **Audio playback** — press ▶ to hear phrases spoken aloud (uses device TTS with Google Translate TTS as fallback)
+- **Furigana** — pronunciation shown above every Japanese character
+- **Weekly mini-tests** every 7th day with answers
+- **Progress saved** automatically in your browser (works across sessions)
+- **Export / Import** your progress as a JSON file to move between devices
+
+## 🚀 Using via GitHub Pages
+
+1. Fork this repository
+2. Go to **Settings → Pages**
+3. Set source to **main branch / root**
+4. Your app will be live at `https://YOUR-USERNAME.github.io/REPO-NAME/japanese_coach.html`
+
+Bookmark that URL on your phone — your progress is saved in the browser's localStorage, so it persists across sessions **as long as you use the same browser on the same device**.
+
+## 💾 Keeping Progress Across Devices
+
+Because this is a static file, there is no server to sync progress. Instead:
+
+- **Same device / browser:** Progress saves automatically — just reopen the URL
+- **Moving to a new device:** Tap **💾 Export progress** in the app header, save the `.json` file, open the app on your new device, tap **📂 Import progress**
+- **Backup:** Export your progress periodically so you don't lose it if you clear browser data
+
+## 🔊 Audio Notes
+
+The app tries your device's built-in Japanese text-to-speech first. If that doesn't work (common on some Android browsers), it automatically falls back to Google Translate TTS. A small badge in the header tells you which engine is active.
+
+**Best browser:** Chrome on Android or desktop Chrome gives the best speech recognition and TTS support.
+
+For mic features on iOS, use **Safari** (it supports the Web Speech API from iOS 14.5+).
+
+## 🎤 Microphone / Speech Recognition
+
+1. Open the app in Chrome (Android) or Safari (iOS)
+2. When you tap 🎤 for the first time, your browser will ask for microphone permission — tap **Allow**
+3. Press 🎤 to **start** recording, press again (⏹ STOP) to **finish**
+4. The app compares what it heard against the target phrase
+
+If mic access is blocked, go to your browser settings → Site permissions → Microphone → allow for the page.
+
+## 📁 Files
+
+| File | Description |
+|------|-------------|
+| `japanese_coach.html` | The entire app — one self-contained file |
+| `README.md` | This file |
+
+## 🗓 Study Plan Overview
+
+| Week | Theme | Days |
+|------|-------|------|
+| Week 1 | Survival Basics | 1–7 |
+| Week 2 | Conversations & Context | 8–14 |
+| Week 3 | Deeper Conversations | 15–21 |
+| Week 4 | Polish & Confidence | 22–30 |
+
+Every 7th day includes a full checkpoint review and an 8-question mini-test.
+
+---
+
+*Built with ❤️ for October 2026 Japan holidays 🍁*
