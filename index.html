@@ -211,9 +211,10 @@
   /* ── Mic button ── */
   .mic-btn {
     width: 72px; height: 72px; border-radius: 50%; border: none;
-    font-size: 28px; cursor: pointer; display: block; margin: 0 auto;
+    font-size: 26px; cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; margin: 0 auto;
     box-shadow: 0 4px 14px rgba(0,0,0,.18); transition: all .2s;
-    color: #fff;
+    color: #fff; line-height: 1.2; padding: 4px;
   }
   .mic-btn:active { transform: scale(.95); }
   @keyframes mic-pulse {
@@ -310,7 +311,12 @@
 <header class="app-header">
   <span class="flag">🇯🇵</span>
   <h1>30-Day Japanese Holiday Coach</h1>
-  <p>Beginner → Holiday-ready · Real audio · Mic pronunciation · Save progress</p>
+  <p>Beginner → Holiday-ready · Real audio · Mic pronunciation · Progress saved</p>
+  <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center">
+    <span id="tts-badge" class="hidden" style="font-size:10px;background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:10px"></span>
+    <button onclick="exportProgress()" style="font-size:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:3px 10px;border-radius:10px;cursor:pointer">💾 Export progress</button>
+    <button onclick="importProgress()" style="font-size:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:3px 10px;border-radius:10px;cursor:pointer">📂 Import progress</button>
+  </div>
 </header>
 
 <!-- Week tabs -->
@@ -609,20 +615,93 @@ function extractPhrases(content) {
   }, []).slice(0, 5);
 }
 
-// ── Speech ────────────────────────────────────────────────────────────────────
-function speakJP(text, rate=0.8) {
-  if (!window.speechSynthesis) return;
+// ── TTS — Google Translate primary, native fallback ───────────────────────────
+//
+// WHY NOT SpeechSynthesis as primary?
+// On Android, SpeechSynthesis is routed through the ACCESSIBILITY / CALL audio
+// stream, NOT the media stream. That means it is silent when only the media
+// volume is up (which is the normal case). An HTML5 <audio> element routes
+// through the media stream — the same channel as music and video — so the
+// phone's volume buttons always control it.
+//
+// STRATEGY:
+//   1. Primary:  Google Translate TTS via HTML5 <audio>  (media routing ✓)
+//   2. Fallback: Web Speech API SpeechSynthesis           (if Google 404s)
+
+// --- Single shared <audio> element (media stream routing) --------------------
+const ttsAudio = document.createElement('audio');
+ttsAudio.setAttribute('playsinline', '');   // iOS: play inline, not fullscreen
+ttsAudio.setAttribute('preload', 'none');
+ttsAudio.style.display = 'none';
+document.body.appendChild(ttsAudio);
+
+// Badge shown once first play happens
+function showTTSBadge(label, colour) {
+  const badge = document.getElementById('tts-badge');
+  if (!badge) return;
+  badge.textContent = label;
+  badge.style.color  = colour;
+  badge.classList.remove('hidden');
+}
+
+// --- speakJP: main entry point -----------------------------------------------
+// text    — Japanese string to speak
+// rate    — 0.5 (slow) … 1.0 (normal)  [optional, default 0.75]
+// onEnd   — callback when finished     [optional]
+function speakJP(text, rate, onEnd) {
+  rate = (typeof rate === 'number') ? rate : 0.75;
+  // Clamp to Google's accepted range (0.24–1.0)
+  const googleSpeed = Math.max(0.24, Math.min(1.0, rate)).toFixed(2);
+  const url = 'https://translate.google.com/translate_tts'
+    + '?ie=UTF-8'
+    + '&client=tw-ob'
+    + '&tl=ja'
+    + '&ttsspeed=' + googleSpeed
+    + '&q=' + encodeURIComponent(text);
+
+  // Reset any previous listeners
+  ttsAudio.onended = null;
+  ttsAudio.onerror = null;
+
+  ttsAudio.onended = () => {
+    showTTSBadge('🔊 Google TTS', 'var(--blue)');
+    if (onEnd) onEnd();
+  };
+
+  ttsAudio.onerror = () => {
+    // Google failed — fall back to native SpeechSynthesis
+    console.warn('Google TTS fetch failed, falling back to native');
+    showTTSBadge('🔊 Device TTS (fallback)', '#aaa');
+    _speakNativeFallback(text, rate, onEnd);
+  };
+
+  ttsAudio.src = url;
+  // .load() resets the element so .play() works reliably on mobile
+  ttsAudio.load();
+  ttsAudio.play().catch(err => {
+    // Autoplay blocked (should not happen after a user tap, but just in case)
+    console.warn('ttsAudio.play() blocked:', err.message);
+    _speakNativeFallback(text, rate, onEnd);
+  });
+}
+
+function _speakNativeFallback(text, rate, onEnd) {
+  if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
   speechSynthesis.cancel();
-  // Wait briefly so cancel takes effect
   setTimeout(() => {
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ja-JP'; u.rate = rate; u.pitch = 1.05;
-    // Prefer a Japanese voice if available
-    const voices = speechSynthesis.getVoices();
-    const jpVoice = voices.find(v => v.lang.startsWith('ja'));
-    if (jpVoice) u.voice = jpVoice;
+    u.lang = 'ja-JP'; u.rate = rate || 0.75; u.volume = 1;
+    const jv = speechSynthesis.getVoices().find(v => v.lang.startsWith('ja'));
+    if (jv) u.voice = jv;
+    u.onend = u.onerror = () => { if (onEnd) onEnd(); };
     speechSynthesis.speak(u);
-  }, 80);
+  }, 60);
+}
+
+function stopAllAudio() {
+  ttsAudio.pause();
+  ttsAudio.src = '';
+  if (window.speechSynthesis) speechSynthesis.cancel();
 }
 
 // Syllable splitter
@@ -814,46 +893,102 @@ function animateSylls(phraseI, guideId) {
   }, 330);
 }
 
-const micActive = {};
+// ── Microphone / Speech Recognition ──────────────────────────────────────────
+//
+// WHY getUserMedia FIRST?
+// SpeechRecognition on mobile often fails silently — the permission dialog
+// never appears and rec.onerror fires immediately with 'not-allowed'.
+// Calling navigator.mediaDevices.getUserMedia({ audio: true }) first triggers
+// the browser's NATIVE permission prompt reliably. Once permission is granted,
+// SpeechRecognition can use the mic without needing to ask again.
+//
+// NOTE: There is no Google-URL equivalent for STT like there is for TTS.
+// webkitSpeechRecognition in Chrome already routes to Google's servers on the
+// backend — it IS Google STT. The improvement here is purely in the
+// permission-request and state-management flow.
+
+// Simple global state — avoids stale per-id tracking
+let recGlobal = null;    // the SpeechRecognition instance
+let recState  = 'idle';  // 'idle' | 'requesting' | 'recording' | 'processing'
+let recMicStream = null; // the getUserMedia stream (kept alive while recording)
+
 function startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
-  const btnId = `${id}-mic-${phraseIdx}`;
-  const btn = document.getElementById(btnId);
+  const btn      = document.getElementById(`${id}-mic-${phraseIdx}`);
   const statusEl = document.getElementById(`${id}-status-${phraseIdx}`);
   const heardEl  = document.getElementById(`${id}-heard-${phraseIdx}`);
   const fbEl     = document.getElementById(`${id}-fb-${phraseIdx}`);
 
-  if (micActive[id]) {
-    // Stop listening
-    if (micActive[id].recognition) micActive[id].recognition.stop();
+  // ── STOP: user pressed button while recording ───────────────────────────
+  if (recState === 'recording' && recGlobal) {
+    recGlobal.stop();
+    // onend will tidy up
     return;
   }
 
+  // Ignore double-taps while starting up or processing
+  if (recState !== 'idle') return;
+
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { statusEl.textContent = '⚠️ Use Chrome for mic support'; return; }
+  if (!SR) {
+    statusEl.textContent = '⚠️ Use Chrome (Android / desktop) for mic support';
+    return;
+  }
 
-  const rec = new SR();
-  rec.lang = 'ja-JP'; rec.interimResults = false; rec.maxAlternatives = 5;
-  micActive[id] = { recognition: rec };
-
-  btn.className = 'mic-btn listening';
-  btn.textContent = '⏹';
-  btn.onclick = () => { rec.stop(); };
-  statusEl.textContent = '🔴 Listening… tap ⏹ to stop';
-  fbEl.className = 'mic-feedback hidden'; fbEl.textContent = '';
+  // ── REQUEST PERMISSION via getUserMedia first ───────────────────────────
+  recState = 'requesting';
+  setMicBtn(btn, 'requesting');
+  statusEl.textContent = 'Requesting microphone…';
+  fbEl.className = 'mic-feedback hidden';
   heardEl.classList.add('hidden');
 
+  navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    .then(stream => {
+      recMicStream = stream;
+      // Permission granted — now start recognition
+      _beginRecognition(stream, SR, id, phraseIdx, japanese, romaji,
+                        dayIdx, taskIdx, totalPhrases, btn, statusEl, heardEl, fbEl);
+    })
+    .catch(err => {
+      recState = 'idle';
+      setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        statusEl.innerHTML =
+          '⚠️ Microphone blocked.<br>' +
+          'In Chrome tap ⋮ → Settings → Site settings → Microphone → allow this site.';
+      } else {
+        statusEl.textContent = `⚠️ Mic unavailable: ${err.message}`;
+      }
+    });
+}
+
+function _beginRecognition(stream, SR, id, phraseIdx, japanese, romaji,
+                            dayIdx, taskIdx, totalPhrases, btn, statusEl, heardEl, fbEl) {
+  const rec = new SR();
+  recGlobal = rec;
+  rec.lang            = 'ja-JP';
+  rec.continuous      = false;
+  rec.interimResults  = false;
+  rec.maxAlternatives = 5;
+
+  setMicBtn(btn, 'recording');
+  recState = 'recording';
+  statusEl.innerHTML = '<span style="color:#e05c5c;font-weight:700">🔴 Recording — press again to stop</span>';
+
   rec.onresult = e => {
+    recState = 'processing';
+    _stopMicStream();
+
     const alts = Array.from(e.results[0]).map(r => r.transcript.trim());
-    heardEl.textContent = `Heard: "${alts[0]}"`;
+    heardEl.textContent = `Heard: "${alts[0] || '—'}"`;
     heardEl.classList.remove('hidden');
     statusEl.textContent = 'Checking…';
 
-    const target = japanese.replace(/[！？。、\s]/g,'');
+    const target = japanese.replace(/[！？。、\s]/g, '');
     const pass = alts.some(a => {
-      const clean = a.replace(/[！？。、\s]/g,'');
+      const clean = a.replace(/[！？。、\s]/g, '');
       let hits = 0;
       for (const ch of target) if (clean.includes(ch)) hits++;
-      return target.length > 0 && hits/target.length >= 0.5;
+      return target.length > 0 && hits / target.length >= 0.5;
     });
 
     setTimeout(() => {
@@ -862,24 +997,77 @@ function startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases
   };
 
   rec.onerror = e => {
-    micActive[id] = null;
-    btn.className = 'mic-btn'; btn.textContent = '🎤';
-    btn.onclick = () => startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
-    statusEl.textContent = e.error === 'not-allowed'
-      ? '⚠️ Mic blocked — allow microphone in browser settings'
-      : '⚠️ Error — try again';
-  };
-
-  rec.onend = () => {
-    micActive[id] = null;
-    if (btn.className.includes('listening')) {
-      btn.className = 'mic-btn'; btn.textContent = '🎤';
-      btn.onclick = () => startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
-      if (statusEl.textContent.includes('Listening')) statusEl.textContent = 'Tap mic to try again';
+    recState = 'idle';
+    recGlobal = null;
+    _stopMicStream();
+    setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+    if (e.error === 'not-allowed') {
+      statusEl.innerHTML =
+        '⚠️ Permission denied.<br>Allow microphone for this page in browser settings.';
+    } else if (e.error === 'no-speech') {
+      statusEl.textContent = 'No speech detected — press 🎤 and speak clearly';
+    } else if (e.error === 'network') {
+      statusEl.textContent = '⚠️ Network error — make sure you\'re online and try again';
+    } else {
+      statusEl.textContent = `⚠️ ${e.error} — press 🎤 to try again`;
     }
   };
 
-  rec.start();
+  rec.onend = () => {
+    _stopMicStream();
+    if (recState === 'processing') return; // result already handled
+    recState = 'idle';
+    recGlobal = null;
+    if (btn && btn.classList.contains('listening')) {
+      setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+      statusEl.textContent = 'Stopped — press 🎤 to try again';
+    }
+  };
+
+  try {
+    rec.start();
+  } catch (e) {
+    recState = 'idle';
+    recGlobal = null;
+    _stopMicStream();
+    setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+    statusEl.textContent = 'Could not start mic — press 🎤 to try again';
+  }
+}
+
+function _stopMicStream() {
+  if (recMicStream) {
+    recMicStream.getTracks().forEach(t => t.stop());
+    recMicStream = null;
+  }
+}
+
+// btn state: 'idle' | 'requesting' | 'recording'
+function setMicBtn(btn, state, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
+  if (!btn) return;
+  const weekCol = WEEK_COLORS[getCurrentWeek()];
+  if (state === 'idle') {
+    btn.className = 'mic-btn';
+    btn.innerHTML = '🎤';
+    btn.style.background = weekCol;
+    btn.style.boxShadow  = `0 4px 14px rgba(0,0,0,.18)`;
+    // Restore onclick in case it was overwritten
+    btn.onclick = () => startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+  } else if (state === 'requesting') {
+    btn.className = 'mic-btn';
+    btn.innerHTML = '⏳';
+    btn.style.background = '#aaa';
+  } else if (state === 'recording') {
+    btn.className = 'mic-btn listening';
+    btn.innerHTML = '⏹<br><span style="font-size:10px;font-weight:700;letter-spacing:0">STOP</span>';
+    btn.style.background = '#e05c5c';
+    btn.style.boxShadow  = '0 0 0 6px rgba(224,92,92,.3)';
+  }
+}
+
+// Keep resetMicBtn as alias so finishMic can still call it
+function resetMicBtn(btn, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
+  setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
 }
 
 function finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese, romaji) {
@@ -887,19 +1075,20 @@ function finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese,
   const btn = document.getElementById(btnId);
   const statusEl = document.getElementById(`${id}-status-${phraseIdx}`);
   const fbEl     = document.getElementById(`${id}-fb-${phraseIdx}`);
-  micActive[id] = null;
+  recState  = 'idle';
+  recGlobal = null;
 
   if (pass) {
-    btn.style.background = 'var(--green)'; btn.textContent = '✓'; btn.className = 'mic-btn';
+    btn.className = 'mic-btn';
+    btn.innerHTML = '✓';
+    btn.style.background = 'var(--green)';
     statusEl.innerHTML = '<span style="color:var(--green);font-weight:700">✓ Great pronunciation!</span>';
     fbEl.textContent = 'Well done! Moving to next phrase…';
     fbEl.className = 'mic-feedback pass';
 
-    // Mark pill
     const pill = document.getElementById(`${id}-pill-${phraseIdx}`);
     if (pill) { pill.classList.add('passed'); pill.textContent = '✓'; }
 
-    // Check if all passed
     const allPassed = Array.from({length:totalPhrases},(_,i)=>
       document.getElementById(`${id}-pill-${i}`)?.classList.contains('passed')
     ).every(Boolean);
@@ -909,20 +1098,15 @@ function finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese,
       markTaskComplete(dayIdx, taskIdx);
     } else {
       setTimeout(() => {
-        // Move to next
         let next = phraseIdx + 1;
         while (next < totalPhrases && document.getElementById(`${id}-pill-${next}`)?.classList.contains('passed')) next++;
         if (next < totalPhrases) selectPhrase(id, next, totalPhrases);
       }, 1600);
     }
   } else {
-    btn.style.background = '#e05c5c'; btn.textContent = '↺'; btn.className = 'mic-btn';
-    btn.onclick = () => {
-      btn.style.background = WEEK_COLORS[getCurrentWeek()]; btn.textContent = '🎤';
-      startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
-    };
-    statusEl.textContent = "Couldn't quite catch it — try again!";
-    fbEl.textContent = `Tip: say each syllable clearly — ${romaji}`;
+    resetMicBtn(btn, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+    statusEl.textContent = "Couldn't quite catch it — press 🎤 and try again!";
+    fbEl.textContent = `Tip: speak clearly — ${romaji}`;
     fbEl.className = 'mic-feedback fail';
   }
 }
@@ -1016,46 +1200,33 @@ function playSinglePhrase(id, idx, japanese, dayIdx, taskIdx, required) {
   if (cntEl) { cntEl.textContent = cnt + '×'; cntEl.classList.remove('hidden'); }
   document.getElementById(`${id}-row-${idx}`)?.classList.add('played');
 
-  const newTotal = Object.values(listenCounts).filter(k => String(k).startsWith ? true : true)
-    .reduce((a,b) => a + (typeof b === 'number' ? b : 0), 0);
-  // Recalculate total from matching keys
   const total = Object.entries(listenCounts)
     .filter(([k]) => k.startsWith(id+'-'))
     .reduce((a,[,v]) => a+v, 0);
 
-  // Disable all play buttons while playing
   const allBtns = document.querySelectorAll(`[id^="${id}-btn-"]`);
   allBtns.forEach(b => { b.disabled = true; });
-  document.getElementById(`${id}-playall`).disabled = true;
+  const playAllBtn = document.getElementById(`${id}-playall`);
+  if (playAllBtn) playAllBtn.disabled = true;
 
-  speechSynthesis.cancel();
-  setTimeout(() => {
-    const u = new SpeechSynthesisUtterance(japanese);
-    u.lang = 'ja-JP'; u.rate = 0.75;
-    const voices = speechSynthesis.getVoices();
-    const jpVoice = voices.find(v => v.lang.startsWith('ja'));
-    if (jpVoice) u.voice = jpVoice;
-    u.onend = u.onerror = () => {
-      playingId = null;
-      if (btn) { btn.classList.remove('playing'); btn.textContent = '▶'; btn.disabled = false; }
-      allBtns.forEach(b => { b.disabled = false; });
-      document.getElementById(`${id}-playall`).disabled = false;
-      updateListenProgress(id, total, required, dayIdx, taskIdx);
-    };
-    speechSynthesis.speak(u);
-  }, 80);
+  speakJP(japanese, 0.75, () => {
+    playingId = null;
+    if (btn) { btn.classList.remove('playing'); btn.textContent = '▶'; btn.disabled = false; }
+    allBtns.forEach(b => { b.disabled = false; });
+    if (playAllBtn) playAllBtn.disabled = false;
+    updateListenProgress(id, total, required, dayIdx, taskIdx);
+  });
 }
 
 function playAllPhrases(id, phrases, dayIdx, taskIdx, required) {
   if (playingId) return;
-  document.getElementById(`${id}-playall`).disabled = true;
-  document.getElementById(`${id}-playall`).textContent = '⏸ Playing…';
+  const playAllBtn = document.getElementById(`${id}-playall`);
+  if (playAllBtn) { playAllBtn.disabled = true; playAllBtn.textContent = '⏸ Playing…'; }
   let i = 0;
   const next = () => {
     if (i >= phrases.length) {
       playingId = null;
-      document.getElementById(`${id}-playall`).disabled = false;
-      document.getElementById(`${id}-playall`).textContent = '▶ Play All Phrases';
+      if (playAllBtn) { playAllBtn.disabled = false; playAllBtn.textContent = '▶ Play All Phrases'; }
       const total = Object.entries(listenCounts).filter(([k])=>k.startsWith(id+'-')).reduce((a,[,v])=>a+v,0);
       updateListenProgress(id, total, required, dayIdx, taskIdx);
       return;
@@ -1070,19 +1241,11 @@ function playAllPhrases(id, phrases, dayIdx, taskIdx, required) {
     if (cntEl) { cntEl.textContent = cnt+'×'; cntEl.classList.remove('hidden'); }
     document.getElementById(`${id}-row-${i}`)?.classList.add('played');
 
-    speechSynthesis.cancel();
-    setTimeout(() => {
-      const u = new SpeechSynthesisUtterance(phrases[i]);
-      u.lang = 'ja-JP'; u.rate = 0.75;
-      const voices = speechSynthesis.getVoices();
-      const jpVoice = voices.find(v => v.lang.startsWith('ja'));
-      if (jpVoice) u.voice = jpVoice;
-      u.onend = u.onerror = () => {
-        if (btn) { btn.classList.remove('playing'); btn.textContent = '▶'; }
-        i++; setTimeout(next, 500);
-      };
-      speechSynthesis.speak(u);
-    }, 80);
+    const ci = i;
+    speakJP(phrases[ci], 0.75, () => {
+      if (btn) { btn.classList.remove('playing'); btn.textContent = '▶'; }
+      i++; setTimeout(next, 450);
+    });
   };
   next();
 }
@@ -1266,14 +1429,60 @@ function renderAll() {
   renderDayNav();
 }
 
+// ── Export / Import progress ──────────────────────────────────────────────────
+function exportProgress() {
+  const data = {
+    completed,
+    currentDay,
+    exportedAt: new Date().toISOString(),
+    version: 1
+  };
+  const json = JSON.stringify(data);
+  const blob = new Blob([json], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'japanese-coach-progress.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function importProgress() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json,application/json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.version === 1 && data.completed) {
+          completed = data.completed;
+          if (data.currentDay) currentDay = data.currentDay;
+          saveState();
+          openTaskIdx = null;
+          renderAll();
+          alert('✓ Progress imported successfully!');
+        } else {
+          alert('⚠️ Unrecognised file format.');
+        }
+      } catch(err) {
+        alert('⚠️ Could not read file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  document.body.appendChild(input); input.click(); document.body.removeChild(input);
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 loadState();
-// Preload voices
+renderAll();
+
 if (window.speechSynthesis) {
   speechSynthesis.getVoices();
   speechSynthesis.addEventListener('voiceschanged', () => {});
 }
-renderAll();
 </script>
 </body>
 </html>
