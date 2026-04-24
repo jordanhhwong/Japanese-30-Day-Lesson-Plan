@@ -617,25 +617,29 @@ function extractPhrases(content) {
 
 // ── TTS — Google Translate primary, native fallback ───────────────────────────
 //
-// WHY NOT SpeechSynthesis as primary?
-// On Android, SpeechSynthesis is routed through the ACCESSIBILITY / CALL audio
-// stream, NOT the media stream. That means it is silent when only the media
-// volume is up (which is the normal case). An HTML5 <audio> element routes
-// through the media stream — the same channel as music and video — so the
-// phone's volume buttons always control it.
+// WHY HTML5 <audio> NOT SpeechSynthesis?
+// On Android, SpeechSynthesis routes through the accessibility/call audio
+// stream — silent when only media volume is up. An HTML5 <audio> element
+// routes through the media stream (same as music/video).
 //
-// STRATEGY:
-//   1. Primary:  Google Translate TTS via HTML5 <audio>  (media routing ✓)
-//   2. Fallback: Web Speech API SpeechSynthesis           (if Google 404s)
+// WHY googleapis.com NOT translate.google.com?
+// translate.google.com/translate_tts is increasingly rate-limited and
+// returns HTTP 200 with an HTML error page (not audio), which means
+// onerror never fires — the audio element just plays silence.
+// translate.googleapis.com is the same backend but a more stable endpoint.
+//
+// SILENT FAILURE DETECTION:
+// If play() succeeds but onended never fires within a timeout, we assume
+// Google blocked the request silently and fall through to SpeechSynthesis.
 
-// --- Single shared <audio> element (media stream routing) --------------------
 const ttsAudio = document.createElement('audio');
-ttsAudio.setAttribute('playsinline', '');   // iOS: play inline, not fullscreen
+ttsAudio.setAttribute('playsinline', '');
 ttsAudio.setAttribute('preload', 'none');
 ttsAudio.style.display = 'none';
 document.body.appendChild(ttsAudio);
 
-// Badge shown once first play happens
+let _ttsWatchdog = null;
+
 function showTTSBadge(label, colour) {
   const badge = document.getElementById('tts-badge');
   if (!badge) return;
@@ -644,63 +648,88 @@ function showTTSBadge(label, colour) {
   badge.classList.remove('hidden');
 }
 
-// --- speakJP: main entry point -----------------------------------------------
-// text    — Japanese string to speak
-// rate    — 0.5 (slow) … 1.0 (normal)  [optional, default 0.75]
-// onEnd   — callback when finished     [optional]
 function speakJP(text, rate, onEnd) {
   rate = (typeof rate === 'number') ? rate : 0.75;
-  // Clamp to Google's accepted range (0.24–1.0)
-  const googleSpeed = Math.max(0.24, Math.min(1.0, rate)).toFixed(2);
-  const url = 'https://translate.google.com/translate_tts'
-    + '?ie=UTF-8'
-    + '&client=tw-ob'
-    + '&tl=ja'
-    + '&ttsspeed=' + googleSpeed
-    + '&q=' + encodeURIComponent(text);
 
-  // Reset any previous listeners
+  // Cancel any in-progress audio
+  clearTimeout(_ttsWatchdog);
+  ttsAudio.pause();
   ttsAudio.onended = null;
   ttsAudio.onerror = null;
+  if (window.speechSynthesis) speechSynthesis.cancel();
+
+  // ── Try Google Translate TTS (googleapis.com is more reliable) ──────────
+  const speed = Math.max(0.24, Math.min(1.0, rate)).toFixed(2);
+  const url = 'https://translate.googleapis.com/translate_tts'
+    + '?ie=UTF-8&client=gtx&tl=ja'
+    + '&ttsspeed=' + speed
+    + '&q=' + encodeURIComponent(text);
+
+  let googleSucceeded = false;
 
   ttsAudio.onended = () => {
+    clearTimeout(_ttsWatchdog);
+    googleSucceeded = true;
     showTTSBadge('🔊 Google TTS', 'var(--blue)');
     if (onEnd) onEnd();
   };
 
   ttsAudio.onerror = () => {
-    // Google failed — fall back to native SpeechSynthesis
-    console.warn('Google TTS fetch failed, falling back to native');
-    showTTSBadge('🔊 Device TTS (fallback)', '#aaa');
-    _speakNativeFallback(text, rate, onEnd);
+    // Network/decode error → fall back immediately
+    clearTimeout(_ttsWatchdog);
+    if (!googleSucceeded) _speakNativeFallback(text, rate, onEnd);
   };
 
   ttsAudio.src = url;
-  // .load() resets the element so .play() works reliably on mobile
   ttsAudio.load();
-  ttsAudio.play().catch(err => {
-    // Autoplay blocked (should not happen after a user tap, but just in case)
-    console.warn('ttsAudio.play() blocked:', err.message);
-    _speakNativeFallback(text, rate, onEnd);
-  });
+
+  ttsAudio.play()
+    .then(() => {
+      // play() resolved — but Google may have served an HTML error page
+      // (HTTP 200 with wrong content). Set a watchdog: if onended hasn't
+      // fired after a generous timeout, treat as silent failure.
+      const watchdogMs = Math.max(4000, text.length * 200);
+      _ttsWatchdog = setTimeout(() => {
+        if (!googleSucceeded) {
+          ttsAudio.pause();
+          _speakNativeFallback(text, rate, onEnd);
+        }
+      }, watchdogMs);
+    })
+    .catch(() => {
+      // Autoplay blocked or immediate error
+      clearTimeout(_ttsWatchdog);
+      _speakNativeFallback(text, rate, onEnd);
+    });
 }
 
 function _speakNativeFallback(text, rate, onEnd) {
+  showTTSBadge('🔊 Device TTS', '#e8a838');
   if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
+
   speechSynthesis.cancel();
+  // Small delay so cancel() takes effect before we speak
   setTimeout(() => {
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ja-JP'; u.rate = rate || 0.75; u.volume = 1;
-    const jv = speechSynthesis.getVoices().find(v => v.lang.startsWith('ja'));
+    u.lang   = 'ja-JP';
+    u.rate   = rate || 0.75;
+    u.volume = 1.0;
+    // Pick a Japanese voice if one is loaded
+    const voices = speechSynthesis.getVoices();
+    const jv = voices.find(v => v.lang && v.lang.startsWith('ja'));
     if (jv) u.voice = jv;
-    u.onend = u.onerror = () => { if (onEnd) onEnd(); };
+    u.onend   = () => { if (onEnd) onEnd(); };
+    u.onerror = () => { if (onEnd) onEnd(); };
     speechSynthesis.speak(u);
-  }, 60);
+  }, 80);
 }
 
 function stopAllAudio() {
+  clearTimeout(_ttsWatchdog);
   ttsAudio.pause();
   ttsAudio.src = '';
+  ttsAudio.onended = null;
+  ttsAudio.onerror = null;
   if (window.speechSynthesis) speechSynthesis.cancel();
 }
 
@@ -895,22 +924,18 @@ function animateSylls(phraseI, guideId) {
 
 // ── Microphone / Speech Recognition ──────────────────────────────────────────
 //
-// WHY getUserMedia FIRST?
-// SpeechRecognition on mobile often fails silently — the permission dialog
-// never appears and rec.onerror fires immediately with 'not-allowed'.
-// Calling navigator.mediaDevices.getUserMedia({ audio: true }) first triggers
-// the browser's NATIVE permission prompt reliably. Once permission is granted,
-// SpeechRecognition can use the mic without needing to ask again.
+// KEY FIX: getUserMedia is called ONLY to trigger the OS permission dialog.
+// Once the promise resolves (permission granted), we IMMEDIATELY stop all
+// tracks before calling rec.start(). On Android Chrome, holding a getUserMedia
+// stream open while also calling SpeechRecognition.start() causes a mic
+// conflict — both compete for the hardware simultaneously, and Chrome fires
+// not-allowed on the recognition even though site settings say allowed.
 //
-// NOTE: There is no Google-URL equivalent for STT like there is for TTS.
-// webkitSpeechRecognition in Chrome already routes to Google's servers on the
-// backend — it IS Google STT. The improvement here is purely in the
-// permission-request and state-management flow.
+// Stopping the stream first releases the hardware lock, then SpeechRecognition
+// opens it cleanly on its own.
 
-// Simple global state — avoids stale per-id tracking
-let recGlobal = null;    // the SpeechRecognition instance
-let recState  = 'idle';  // 'idle' | 'requesting' | 'recording' | 'processing'
-let recMicStream = null; // the getUserMedia stream (kept alive while recording)
+let recGlobal = null;
+let recState  = 'idle'; // 'idle' | 'requesting' | 'recording' | 'processing'
 
 function startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
   const btn      = document.getElementById(`${id}-mic-${phraseIdx}`);
@@ -918,66 +943,69 @@ function startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases
   const heardEl  = document.getElementById(`${id}-heard-${phraseIdx}`);
   const fbEl     = document.getElementById(`${id}-fb-${phraseIdx}`);
 
-  // ── STOP: user pressed button while recording ───────────────────────────
+  // STOP if already recording
   if (recState === 'recording' && recGlobal) {
     recGlobal.stop();
-    // onend will tidy up
     return;
   }
 
-  // Ignore double-taps while starting up or processing
   if (recState !== 'idle') return;
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    statusEl.textContent = '⚠️ Use Chrome (Android / desktop) for mic support';
+    statusEl.textContent = '⚠️ Speech recognition requires Chrome on Android or desktop Chrome';
     return;
   }
 
-  // ── REQUEST PERMISSION via getUserMedia first ───────────────────────────
   recState = 'requesting';
   setMicBtn(btn, 'requesting');
-  statusEl.textContent = 'Requesting microphone…';
+  statusEl.textContent = 'Requesting microphone access…';
   fbEl.className = 'mic-feedback hidden';
   heardEl.classList.add('hidden');
 
   navigator.mediaDevices.getUserMedia({ audio: true, video: false })
     .then(stream => {
-      recMicStream = stream;
-      // Permission granted — now start recognition
-      _beginRecognition(stream, SR, id, phraseIdx, japanese, romaji,
-                        dayIdx, taskIdx, totalPhrases, btn, statusEl, heardEl, fbEl);
+      // ── CRITICAL: release mic hardware BEFORE starting SpeechRecognition ──
+      // Keeping the stream open while calling rec.start() causes a hardware
+      // conflict on Android → not-allowed error even with permission granted.
+      stream.getTracks().forEach(track => track.stop());
+
+      // Short pause to let the OS fully release the mic
+      setTimeout(() => {
+        _beginRecognition(SR, id, phraseIdx, japanese, romaji,
+                          dayIdx, taskIdx, totalPhrases, btn, statusEl, heardEl, fbEl);
+      }, 200);
     })
     .catch(err => {
       recState = 'idle';
       setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         statusEl.innerHTML =
-          '⚠️ Microphone blocked.<br>' +
-          'In Chrome tap ⋮ → Settings → Site settings → Microphone → allow this site.';
+          '⚠️ Microphone blocked. '
+          + 'In Chrome: tap the 🔒 icon in the address bar → Permissions → Microphone → Allow, then refresh.';
+      } else if (err.name === 'NotReadableError') {
+        statusEl.textContent = '⚠️ Mic is in use by another app — close it and try again';
       } else {
-        statusEl.textContent = `⚠️ Mic unavailable: ${err.message}`;
+        statusEl.textContent = `⚠️ Mic error: ${err.name}`;
       }
     });
 }
 
-function _beginRecognition(stream, SR, id, phraseIdx, japanese, romaji,
+function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
                             dayIdx, taskIdx, totalPhrases, btn, statusEl, heardEl, fbEl) {
   const rec = new SR();
   recGlobal = rec;
-  rec.lang            = 'ja-JP';
-  rec.continuous      = false;
-  rec.interimResults  = false;
+  rec.lang           = 'ja-JP';
+  rec.continuous     = false;
+  rec.interimResults = false;
   rec.maxAlternatives = 5;
 
-  setMicBtn(btn, 'recording');
   recState = 'recording';
+  setMicBtn(btn, 'recording');
   statusEl.innerHTML = '<span style="color:#e05c5c;font-weight:700">🔴 Recording — press again to stop</span>';
 
   rec.onresult = e => {
     recState = 'processing';
-    _stopMicStream();
-
     const alts = Array.from(e.results[0]).map(r => r.transcript.trim());
     heardEl.textContent = `Heard: "${alts[0] || '—'}"`;
     heardEl.classList.remove('hidden');
@@ -999,23 +1027,21 @@ function _beginRecognition(stream, SR, id, phraseIdx, japanese, romaji,
   rec.onerror = e => {
     recState = 'idle';
     recGlobal = null;
-    _stopMicStream();
     setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
     if (e.error === 'not-allowed') {
       statusEl.innerHTML =
-        '⚠️ Permission denied.<br>Allow microphone for this page in browser settings.';
+        '⚠️ Permission denied. Tap 🔒 in address bar → Microphone → Allow, then refresh.';
     } else if (e.error === 'no-speech') {
-      statusEl.textContent = 'No speech detected — press 🎤 and speak clearly';
+      statusEl.textContent = 'No speech heard — press 🎤 and speak clearly';
     } else if (e.error === 'network') {
-      statusEl.textContent = '⚠️ Network error — make sure you\'re online and try again';
+      statusEl.textContent = '⚠️ Network error — check your connection and try again';
     } else {
       statusEl.textContent = `⚠️ ${e.error} — press 🎤 to try again`;
     }
   };
 
   rec.onend = () => {
-    _stopMicStream();
-    if (recState === 'processing') return; // result already handled
+    if (recState === 'processing') return;
     recState = 'idle';
     recGlobal = null;
     if (btn && btn.classList.contains('listening')) {
@@ -1029,16 +1055,8 @@ function _beginRecognition(stream, SR, id, phraseIdx, japanese, romaji,
   } catch (e) {
     recState = 'idle';
     recGlobal = null;
-    _stopMicStream();
     setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
     statusEl.textContent = 'Could not start mic — press 🎤 to try again';
-  }
-}
-
-function _stopMicStream() {
-  if (recMicStream) {
-    recMicStream.getTracks().forEach(t => t.stop());
-    recMicStream = null;
   }
 }
 
