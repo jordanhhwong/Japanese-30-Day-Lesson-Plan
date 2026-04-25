@@ -615,30 +615,50 @@ function extractPhrases(content) {
   }, []).slice(0, 5);
 }
 
-// ── TTS — Google Translate primary, native fallback ───────────────────────────
+// ── TTS — Google Translate via AudioContext (Xiaomi/HyperOS compatible) ──────
 //
-// WHY HTML5 <audio> NOT SpeechSynthesis?
-// On Android, SpeechSynthesis routes through the accessibility/call audio
-// stream — silent when only media volume is up. An HTML5 <audio> element
-// routes through the media stream (same as music/video).
-//
-// WHY googleapis.com NOT translate.google.com?
-// translate.google.com/translate_tts is increasingly rate-limited and
-// returns HTTP 200 with an HTML error page (not audio), which means
-// onerror never fires — the audio element just plays silence.
-// translate.googleapis.com is the same backend but a more stable endpoint.
-//
-// SILENT FAILURE DETECTION:
-// If play() succeeds but onended never fires within a timeout, we assume
-// Google blocked the request silently and fall through to SpeechSynthesis.
+// ROOT CAUSE ON XIAOMI/HYPEROS:
+// The <audio>.play() API sometimes routes to the wrong audio channel on
+// Xiaomi phones, OR the browser's AudioContext starts in 'suspended' state
+// and silently blocks playback. The fix is to:
+//   1. Create an AudioContext on first user tap and explicitly resume() it
+//   2. Connect the <audio> element into the AudioContext via
+//      createMediaElementSource() — this locks routing to the media stream
+//   3. Use translate.google.com (tw-ob) as primary, googleapis.com as
+//      secondary, SpeechSynthesis as last resort
 
 const ttsAudio = document.createElement('audio');
 ttsAudio.setAttribute('playsinline', '');
-ttsAudio.setAttribute('preload', 'none');
+ttsAudio.setAttribute('preload',     'none');
+ttsAudio.setAttribute('crossorigin', 'anonymous');
 ttsAudio.style.display = 'none';
 document.body.appendChild(ttsAudio);
 
+let _audioCtx    = null;
 let _ttsWatchdog = null;
+let _audioCtxConnected = false;
+
+// Call this inside every user-gesture handler so the context is running
+function _unlockAudioContext() {
+  if (!_audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    _audioCtx = new AC();
+  }
+  if (_audioCtx.state === 'suspended') {
+    _audioCtx.resume().catch(() => {});
+  }
+  // Connect the shared <audio> element through the context (once only)
+  if (!_audioCtxConnected && _audioCtx.state !== 'closed') {
+    try {
+      const src = _audioCtx.createMediaElementSource(ttsAudio);
+      src.connect(_audioCtx.destination);
+      _audioCtxConnected = true;
+    } catch(e) {
+      // Already connected or not supported — safe to ignore
+    }
+  }
+}
 
 function showTTSBadge(label, colour) {
   const badge = document.getElementById('tts-badge');
@@ -651,75 +671,73 @@ function showTTSBadge(label, colour) {
 function speakJP(text, rate, onEnd) {
   rate = (typeof rate === 'number') ? rate : 0.75;
 
-  // Cancel any in-progress audio
+  // MUST be called inside a user-gesture to unlock audio on mobile
+  _unlockAudioContext();
+
   clearTimeout(_ttsWatchdog);
   ttsAudio.pause();
   ttsAudio.onended = null;
   ttsAudio.onerror = null;
   if (window.speechSynthesis) speechSynthesis.cancel();
 
-  // ── Try Google Translate TTS (googleapis.com is more reliable) ──────────
   const speed = Math.max(0.24, Math.min(1.0, rate)).toFixed(2);
-  const url = 'https://translate.googleapis.com/translate_tts'
-    + '?ie=UTF-8&client=gtx&tl=ja'
-    + '&ttsspeed=' + speed
-    + '&q=' + encodeURIComponent(text);
 
-  let googleSucceeded = false;
+  // Try primary URL first, then secondary on error
+  const urls = [
+    'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ja&ttsspeed=' + speed + '&q=' + encodeURIComponent(text),
+    'https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=ja&ttsspeed=' + speed + '&q=' + encodeURIComponent(text),
+  ];
+  let urlIdx = 0;
+  let succeeded = false;
 
-  ttsAudio.onended = () => {
-    clearTimeout(_ttsWatchdog);
-    googleSucceeded = true;
-    showTTSBadge('🔊 Google TTS', 'var(--blue)');
-    if (onEnd) onEnd();
-  };
-
-  ttsAudio.onerror = () => {
-    // Network/decode error → fall back immediately
-    clearTimeout(_ttsWatchdog);
-    if (!googleSucceeded) _speakNativeFallback(text, rate, onEnd);
-  };
-
-  ttsAudio.src = url;
-  ttsAudio.load();
-
-  ttsAudio.play()
-    .then(() => {
-      // play() resolved — but Google may have served an HTML error page
-      // (HTTP 200 with wrong content). Set a watchdog: if onended hasn't
-      // fired after a generous timeout, treat as silent failure.
-      const watchdogMs = Math.max(4000, text.length * 200);
-      _ttsWatchdog = setTimeout(() => {
-        if (!googleSucceeded) {
-          ttsAudio.pause();
-          _speakNativeFallback(text, rate, onEnd);
-        }
-      }, watchdogMs);
-    })
-    .catch(() => {
-      // Autoplay blocked or immediate error
-      clearTimeout(_ttsWatchdog);
+  function tryUrl(idx) {
+    if (idx >= urls.length) {
       _speakNativeFallback(text, rate, onEnd);
-    });
+      return;
+    }
+    ttsAudio.onended = null;
+    ttsAudio.onerror = null;
+
+    ttsAudio.onended = () => {
+      clearTimeout(_ttsWatchdog);
+      succeeded = true;
+      showTTSBadge('🔊 Google TTS ✓', 'var(--green)');
+      if (onEnd) onEnd();
+    };
+    ttsAudio.onerror = () => {
+      clearTimeout(_ttsWatchdog);
+      tryUrl(idx + 1);
+    };
+
+    ttsAudio.src = urls[idx];
+    ttsAudio.load();
+    ttsAudio.play()
+      .then(() => {
+        // Watchdog: if onended hasn't fired in time, assume silent HTML error page
+        const ms = Math.max(5000, text.length * 250);
+        _ttsWatchdog = setTimeout(() => {
+          if (!succeeded) {
+            ttsAudio.pause();
+            tryUrl(idx + 1);
+          }
+        }, ms);
+      })
+      .catch(() => tryUrl(idx + 1));
+  }
+
+  tryUrl(0);
 }
 
 function _speakNativeFallback(text, rate, onEnd) {
   showTTSBadge('🔊 Device TTS', '#e8a838');
   if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
-
   speechSynthesis.cancel();
-  // Small delay so cancel() takes effect before we speak
   setTimeout(() => {
     const u = new SpeechSynthesisUtterance(text);
-    u.lang   = 'ja-JP';
-    u.rate   = rate || 0.75;
-    u.volume = 1.0;
-    // Pick a Japanese voice if one is loaded
-    const voices = speechSynthesis.getVoices();
-    const jv = voices.find(v => v.lang && v.lang.startsWith('ja'));
+    u.lang = 'ja-JP'; u.rate = rate || 0.75; u.volume = 1.0;
+    const jv = speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith('ja'));
     if (jv) u.voice = jv;
-    u.onend   = () => { if (onEnd) onEnd(); };
-    u.onerror = () => { if (onEnd) onEnd(); };
+    u.onend = u.onerror = () => { if (onEnd) onEnd(); };
     speechSynthesis.speak(u);
   }, 80);
 }
@@ -759,7 +777,10 @@ function buildVocabTask(task, dayIdx, taskIdx) {
   if (!words.length) return buildPlainTask(task);
 
   const id = `vocab-${dayIdx}-${taskIdx}`;
-  let html = `<p class="vocab-intro">Type each word in Japanese <strong>3 times</strong> to master it. Press 🔊 to hear it spoken.</p>`;
+  let html = `<p class="vocab-intro">
+    Type each word in Japanese and press <strong>Submit</strong> (or Enter). 
+    Write it correctly <strong>3 times</strong> to master it.
+  </p>`;
 
   words.forEach((w, i) => {
     const wid = `${id}-${i}`;
@@ -771,72 +792,121 @@ function buildVocabTask(task, dayIdx, taskIdx) {
           <span class="vocab-meaning">— ${escHtml(w.meaning)}</span>
         </div>
         <div class="vocab-controls">
-          <button class="speak-btn" style="color:var(--gold)" onclick="speakJP('${escHtml(w.japanese)}')">🔊 Hear</button>
+          <button class="speak-btn" style="color:var(--gold)"
+            onclick="_unlockAudioContext();speakJP('${escHtml(w.japanese)}')">🔊 Hear</button>
           <div class="dot" id="${wid}-d0"></div>
           <div class="dot" id="${wid}-d1"></div>
           <div class="dot" id="${wid}-d2"></div>
         </div>
       </div>
       <div id="${wid}-inputwrap">
-        <input class="vocab-input" id="${wid}-input" type="text"
-          placeholder="Type ${escHtml(w.japanese)} here (3× remaining)…"
-          oninput="checkVocab('${wid}','${escHtml(w.japanese)}',${i},${dayIdx},${taskIdx},${words.length})"
-          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-        <div class="vocab-hint hidden" id="${wid}-hint">Not quite — try again! Starts with ${escHtml(w.japanese[0])}</div>
+        <div style="display:flex;gap:8px;align-items:stretch">
+          <input class="vocab-input" id="${wid}-input" type="text"
+            placeholder="Type ${escHtml(w.japanese)} here…"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            onkeydown="if(event.key==='Enter'&&!event.isComposing)submitVocab('${wid}','${escHtml(w.japanese)}',${i},${dayIdx},${taskIdx},${words.length})"
+            style="flex:1" />
+          <button id="${wid}-submit"
+            onclick="submitVocab('${wid}','${escHtml(w.japanese)}',${i},${dayIdx},${taskIdx},${words.length})"
+            style="padding:0 14px;border-radius:8px;border:2px solid var(--gold);background:var(--gold);color:#fff;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0">
+            Submit
+          </button>
+        </div>
+        <div class="vocab-feedback hidden" id="${wid}-fb"></div>
       </div>
       <div class="vocab-mastered hidden" id="${wid}-mastered">✓ Mastered!</div>
     </div>`;
   });
 
-  html += `<div class="complete-banner hidden" id="${id}-banner" style="background:linear-gradient(135deg,var(--green),#3a8a3a)">🎉 All vocabulary mastered!</div>`;
+  html += `<div class="complete-banner hidden" id="${id}-banner"
+    style="background:linear-gradient(135deg,var(--green),#3a8a3a)">🎉 All vocabulary mastered!</div>`;
   return html;
 }
 
-const vocabCounts = {}; // wid => count
+const vocabCounts = {};
 
-function checkVocab(wid, target, wordIdx, dayIdx, taskIdx, totalWords) {
-  const input = document.getElementById(`${wid}-input`);
-  const val = input.value.trim().replace(/[！？。、]/g,'');
-  const t = target.replace(/[！？。、]/g,'');
+function submitVocab(wid, target, wordIdx, dayIdx, taskIdx, totalWords) {
+  const input  = document.getElementById(`${wid}-input`);
+  const fbEl   = document.getElementById(`${wid}-fb`);
+  const submitBtn = document.getElementById(`${wid}-submit`);
+  if (!input || !fbEl) return;
+
+  // Never evaluate while the IME is still composing (mid-conversion)
+  if (input.dataset.composing === 'true') return;
+
+  const raw    = input.value;
+  const typed  = raw.trim().replace(/[！？。、\s]/g, '');
+  const answer = target.replace(/[！？。、\s]/g, '');
+
+  if (!typed) {
+    showVocabFeedback(fbEl, 'empty', '← Type the Japanese word first');
+    input.focus();
+    return;
+  }
 
   if (!vocabCounts[wid]) vocabCounts[wid] = 0;
 
-  if (val === t) {
+  // ── Exact match ────────────────────────────────────────────────────────
+  if (typed === answer) {
     vocabCounts[wid] = Math.min(3, vocabCounts[wid] + 1);
     const c = vocabCounts[wid];
-    for (let i=0;i<3;i++) {
+    for (let i = 0; i < 3; i++) {
       const d = document.getElementById(`${wid}-d${i}`);
       if (d) d.className = 'dot' + (c > i ? ' filled' : '');
     }
-    input.classList.remove('bad'); input.classList.add('ok');
+    const remaining = 3 - c;
+    showVocabFeedback(fbEl, 'correct',
+      c >= 3 ? '✅ Perfect! Word mastered!' : `✅ Correct! ${remaining} more time${remaining > 1 ? 's' : ''} to go`);
+
     setTimeout(() => {
-      input.value = ''; input.classList.remove('ok','bad');
-      input.placeholder = c >= 3 ? '✓ Done!' : `Type again (${3-c}× remaining)…`;
-      document.getElementById(`${wid}-hint`)?.classList.add('hidden');
+      input.value = '';
+      fbEl.classList.add('hidden');
+      input.placeholder = c >= 3 ? '✓ Done!' : `Write again (${3 - c}× remaining)…`;
+
       if (c >= 3) {
         document.getElementById(`${wid}-inputwrap`)?.classList.add('hidden');
         document.getElementById(`${wid}-mastered`)?.classList.remove('hidden');
         document.getElementById(wid)?.classList.add('done');
-        // Check if ALL words done
-        const idBase = wid.split('-').slice(0,3).join('-');
-        const allDone = Array.from({length: totalWords}, (_,i2) => {
-          const key2 = `${idBase}-${i2}`;
-          return (vocabCounts[key2] || 0) >= 3;
-        }).every(Boolean);
+        const idBase = wid.split('-').slice(0, 3).join('-');
+        const allDone = Array.from({ length: totalWords }, (_, i2) =>
+          (vocabCounts[`${idBase}-${i2}`] || 0) >= 3
+        ).every(Boolean);
         if (allDone) {
           document.getElementById(`${idBase}-banner`)?.classList.remove('hidden');
           markTaskComplete(dayIdx, taskIdx);
         }
+      } else {
+        input.focus();
       }
-    }, 400);
-  } else if (val.length >= t.length) {
-    input.classList.add('bad'); input.classList.remove('ok');
-    document.getElementById(`${wid}-hint`)?.classList.remove('hidden');
-    setTimeout(() => {
-      input.value = ''; input.classList.remove('bad');
-      document.getElementById(`${wid}-hint`)?.classList.add('hidden');
-    }, 700);
+    }, 900);
+
+  // ── Close — right characters, wrong order or minor error ───────────────
+  } else {
+    const hits = [...answer].filter(ch => typed.includes(ch)).length;
+    const pct  = answer.length > 0 ? hits / answer.length : 0;
+
+    if (pct >= 0.5) {
+      showVocabFeedback(fbEl, 'close',
+        `🟡 Close! The answer is <strong>${escHtml(answer)}</strong> (${escHtml(target)}) — try again`);
+    } else {
+      showVocabFeedback(fbEl, 'wrong',
+        `❌ Not quite. The answer is <strong>${escHtml(answer)}</strong> — look at the reading above and try again`);
+    }
+    // Select all so user can immediately retype without backspacing
+    setTimeout(() => { input.select(); input.focus(); }, 100);
   }
+}
+
+function showVocabFeedback(fbEl, type, msg) {
+  const styles = {
+    correct: 'background:#efffef;color:#2d6a2d;border:1px solid #5cb85c55',
+    close:   'background:#fff8ec;color:#7a4f00;border:1px solid #e8a83855',
+    wrong:   'background:#fff0f0;color:#8b2020;border:1px solid #e05c5c55',
+    empty:   'background:#f5f5f5;color:#888;border:1px solid #ddd',
+  };
+  fbEl.style.cssText = `margin-top:7px;padding:8px 11px;border-radius:7px;font-size:13px;line-height:1.5;${styles[type] || ''}`;
+  fbEl.innerHTML = msg;
+  fbEl.classList.remove('hidden');
 }
 
 // ── SPEAKING TASK ─────────────────────────────────────────────────────────────
@@ -924,15 +994,21 @@ function animateSylls(phraseI, guideId) {
 
 // ── Microphone / Speech Recognition ──────────────────────────────────────────
 //
-// KEY FIX: getUserMedia is called ONLY to trigger the OS permission dialog.
-// Once the promise resolves (permission granted), we IMMEDIATELY stop all
-// tracks before calling rec.start(). On Android Chrome, holding a getUserMedia
-// stream open while also calling SpeechRecognition.start() causes a mic
-// conflict — both compete for the hardware simultaneously, and Chrome fires
-// not-allowed on the recognition even though site settings say allowed.
+// ON XIAOMI / HYPEROS — "permission denied" even though Chrome site settings
+// shows "allowed" means one of the TWO deeper permission layers is blocking:
 //
-// Stopping the stream first releases the hardware lock, then SpeechRecognition
-// opens it cleanly on its own.
+//   Layer 1 — Android app permission (separate from Chrome's own site setting):
+//     Android Settings → Apps → Chrome → Permissions → Microphone → Allow
+//
+//   Layer 2 — HyperOS global hardware toggle (overrides everything):
+//     Swipe down notification panel → look for mic 🎤 icon → tap to enable
+//     (HyperOS 2 has a hardware-level kill switch separate from any app setting)
+//
+// Chrome's site settings (the 🔒 lock icon) is Layer 0 — you've already done
+// that. Layers 1 and 2 are OS-level and cannot be changed from a webpage.
+//
+// TEXT FALLBACK: if mic fails for any reason, the user can type what they said
+// in romaji and Claude grades it. This always works regardless of permissions.
 
 let recGlobal = null;
 let recState  = 'idle'; // 'idle' | 'requesting' | 'recording' | 'processing'
@@ -943,17 +1019,13 @@ function startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases
   const heardEl  = document.getElementById(`${id}-heard-${phraseIdx}`);
   const fbEl     = document.getElementById(`${id}-fb-${phraseIdx}`);
 
-  // STOP if already recording
-  if (recState === 'recording' && recGlobal) {
-    recGlobal.stop();
-    return;
-  }
-
+  if (recState === 'recording' && recGlobal) { recGlobal.stop(); return; }
   if (recState !== 'idle') return;
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    statusEl.textContent = '⚠️ Speech recognition requires Chrome on Android or desktop Chrome';
+    _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+    statusEl.textContent = '⚠️ Speech recognition needs Chrome — use text fallback below';
     return;
   }
 
@@ -965,12 +1037,8 @@ function startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases
 
   navigator.mediaDevices.getUserMedia({ audio: true, video: false })
     .then(stream => {
-      // ── CRITICAL: release mic hardware BEFORE starting SpeechRecognition ──
-      // Keeping the stream open while calling rec.start() causes a hardware
-      // conflict on Android → not-allowed error even with permission granted.
-      stream.getTracks().forEach(track => track.stop());
-
-      // Short pause to let the OS fully release the mic
+      // Release hardware before SpeechRecognition opens it (avoids conflict)
+      stream.getTracks().forEach(t => t.stop());
       setTimeout(() => {
         _beginRecognition(SR, id, phraseIdx, japanese, romaji,
                           dayIdx, taskIdx, totalPhrases, btn, statusEl, heardEl, fbEl);
@@ -979,26 +1047,74 @@ function startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases
     .catch(err => {
       recState = 'idle';
       setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        statusEl.innerHTML =
-          '⚠️ Microphone blocked. '
-          + 'In Chrome: tap the 🔒 icon in the address bar → Permissions → Microphone → Allow, then refresh.';
-      } else if (err.name === 'NotReadableError') {
-        statusEl.textContent = '⚠️ Mic is in use by another app — close it and try again';
-      } else {
-        statusEl.textContent = `⚠️ Mic error: ${err.name}`;
-      }
+      _showMicError(err, statusEl, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
     });
+}
+
+function _showMicError(err, statusEl, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
+  if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+    statusEl.innerHTML =
+      '<strong>⚠️ Microphone blocked at system level.</strong><br>' +
+      'On Xiaomi/HyperOS, check all 3 layers:<br>' +
+      '<b>1.</b> Swipe down → find 🎤 mic icon → make sure it is <b>ON</b> (not crossed out)<br>' +
+      '<b>2.</b> Phone Settings → Apps → Chrome → Permissions → Microphone → <b>Allow</b><br>' +
+      '<b>3.</b> Chrome address bar 🔒 → Site settings → Microphone → <b>Allow</b><br>' +
+      'After changing, <b>close and reopen</b> the page.<br>' +
+      '<em>Or use the text fallback below — it works without a mic.</em>';
+  } else if (err.name === 'NotReadableError') {
+    statusEl.textContent = '⚠️ Mic is busy (another app is using it). Close other apps and try again.';
+  } else {
+    statusEl.textContent = `⚠️ Mic error: ${err.name}. Use the text fallback below.`;
+  }
+  _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+}
+
+// Show text-entry fallback so the feature always works mic or no mic
+function _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
+  const fallbackId = `${id}-textfallback-${phraseIdx}`;
+  if (document.getElementById(fallbackId)) return; // already shown
+  const container = document.getElementById(`${id}-mic-${phraseIdx}`)?.parentElement;
+  if (!container) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = fallbackId;
+  wrap.style.cssText = 'margin-top:12px;padding:10px 12px;background:#f5effe;border-radius:8px;border:1px solid #9b6fd444';
+  wrap.innerHTML =
+    '<div style="font-size:11px;color:#9b6fd4;font-weight:700;margin-bottom:6px">✏️ Text fallback — say it aloud, then type what you said:</div>' +
+    `<input id="${fallbackId}-input" type="text" placeholder='Type what you said (e.g. "${romaji}")…'` +
+    ' style="width:100%;padding:8px 10px;font-size:14px;border:2px solid #d4b8f0;border-radius:7px;outline:none;box-sizing:border-box;font-family:inherit;background:#fdf6e3">' +
+    `<button onclick="checkTextFallback('${fallbackId}','${escHtml(japanese)}','${escHtml(romaji)}',${phraseIdx},'${id}',${dayIdx},${taskIdx},${totalPhrases})"` +
+    ' style="width:100%;margin-top:7px;padding:9px;border-radius:7px;border:none;background:#9b6fd4;color:#fff;font-weight:700;font-size:13px;cursor:pointer">✓ Check pronunciation</button>' +
+    `<div id="${fallbackId}-result" style="margin-top:7px;font-size:12px;display:none"></div>`;
+  container.appendChild(wrap);
+}
+
+function checkTextFallback(fallbackId, japanese, romaji, phraseIdx, id, dayIdx, taskIdx, totalPhrases) {
+  const input  = document.getElementById(`${fallbackId}-input`);
+  const result = document.getElementById(`${fallbackId}-result`);
+  if (!input || !result) return;
+  const typed = input.value.trim().toLowerCase().replace(/[^\w\u3040-\u9faf]/g, '');
+  const target = romaji.toLowerCase().replace(/[^\w]/g, '');
+  let hits = 0;
+  for (const ch of target) if (typed.includes(ch)) hits++;
+  const pass = target.length > 0 && hits / target.length >= 0.5;
+
+  result.style.display = 'block';
+  if (pass) {
+    result.style.color = 'var(--green)';
+    result.textContent = '✅ Good effort! Marked as passed.';
+    finishMic(id, phraseIdx, true, dayIdx, taskIdx, totalPhrases, japanese, romaji);
+  } else {
+    result.style.color = '#e05c5c';
+    result.textContent = `❌ Doesn't quite match "${romaji}" — say it aloud and try again.`;
+  }
 }
 
 function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
                             dayIdx, taskIdx, totalPhrases, btn, statusEl, heardEl, fbEl) {
   const rec = new SR();
   recGlobal = rec;
-  rec.lang           = 'ja-JP';
-  rec.continuous     = false;
-  rec.interimResults = false;
-  rec.maxAlternatives = 5;
+  rec.lang = 'ja-JP'; rec.continuous = false; rec.interimResults = false; rec.maxAlternatives = 5;
 
   recState = 'recording';
   setMicBtn(btn, 'recording');
@@ -1010,7 +1126,6 @@ function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
     heardEl.textContent = `Heard: "${alts[0] || '—'}"`;
     heardEl.classList.remove('hidden');
     statusEl.textContent = 'Checking…';
-
     const target = japanese.replace(/[！？。、\s]/g, '');
     const pass = alts.some(a => {
       const clean = a.replace(/[！？。、\s]/g, '');
@@ -1018,45 +1133,39 @@ function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
       for (const ch of target) if (clean.includes(ch)) hits++;
       return target.length > 0 && hits / target.length >= 0.5;
     });
-
-    setTimeout(() => {
-      finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese, romaji);
-    }, 300);
+    setTimeout(() => finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese, romaji), 300);
   };
 
   rec.onerror = e => {
-    recState = 'idle';
-    recGlobal = null;
+    recState = 'idle'; recGlobal = null;
     setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
     if (e.error === 'not-allowed') {
-      statusEl.innerHTML =
-        '⚠️ Permission denied. Tap 🔒 in address bar → Microphone → Allow, then refresh.';
+      _showMicError({ name: 'NotAllowedError' }, statusEl, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
     } else if (e.error === 'no-speech') {
       statusEl.textContent = 'No speech heard — press 🎤 and speak clearly';
     } else if (e.error === 'network') {
-      statusEl.textContent = '⚠️ Network error — check your connection and try again';
+      statusEl.textContent = '⚠️ Network error — check connection and try again';
     } else {
-      statusEl.textContent = `⚠️ ${e.error} — press 🎤 to try again`;
+      statusEl.textContent = `⚠️ ${e.error} — press 🎤 or use text fallback`;
+      _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
     }
   };
 
   rec.onend = () => {
     if (recState === 'processing') return;
-    recState = 'idle';
-    recGlobal = null;
+    recState = 'idle'; recGlobal = null;
     if (btn && btn.classList.contains('listening')) {
       setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
       statusEl.textContent = 'Stopped — press 🎤 to try again';
     }
   };
 
-  try {
-    rec.start();
-  } catch (e) {
-    recState = 'idle';
-    recGlobal = null;
+  try { rec.start(); }
+  catch(e) {
+    recState = 'idle'; recGlobal = null;
     setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
-    statusEl.textContent = 'Could not start mic — press 🎤 to try again';
+    statusEl.textContent = 'Could not start mic — use text fallback below';
+    _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
   }
 }
 
@@ -1501,6 +1610,19 @@ if (window.speechSynthesis) {
   speechSynthesis.getVoices();
   speechSynthesis.addEventListener('voiceschanged', () => {});
 }
+
+// IME composition guard — mark inputs as 'composing' during Japanese conversion
+// so submitVocab ignores Enter pressed mid-composition (e.g. selecting a kanji)
+document.addEventListener('compositionstart', e => {
+  if (e.target && e.target.classList.contains('vocab-input')) {
+    e.target.dataset.composing = 'true';
+  }
+});
+document.addEventListener('compositionend', e => {
+  if (e.target && e.target.classList.contains('vocab-input')) {
+    e.target.dataset.composing = 'false';
+  }
+});
 </script>
 </body>
 </html>
