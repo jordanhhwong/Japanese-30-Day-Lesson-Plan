@@ -615,48 +615,40 @@ function extractPhrases(content) {
   }, []).slice(0, 5);
 }
 
-// ── TTS — Google Translate via AudioContext (Xiaomi/HyperOS compatible) ──────
+// ── TTS — Local audio files → Google TTS → SpeechSynthesis ───────────────────
 //
-// ROOT CAUSE ON XIAOMI/HYPEROS:
-// The <audio>.play() API sometimes routes to the wrong audio channel on
-// Xiaomi phones, OR the browser's AudioContext starts in 'suspended' state
-// and silently blocks playback. The fix is to:
-//   1. Create an AudioContext on first user tap and explicitly resume() it
-//   2. Connect the <audio> element into the AudioContext via
-//      createMediaElementSource() — this locks routing to the media stream
-//   3. Use translate.google.com (tw-ob) as primary, googleapis.com as
-//      secondary, SpeechSynthesis as last resort
+// PRIORITY ORDER:
+//   1. Local MP3 file from audio/ directory (committed to GitHub repo)
+//      → Works offline, no CORS, no rate-limiting, guaranteed to play
+//   2. Google Translate TTS via HTML5 <audio> (media stream routing)
+//      → Requires internet, occasionally rate-limited
+//   3. SpeechSynthesis fallback
+//      → Routes via call/accessibility audio on Android (often silent)
+//
+// The audio manifest maps Japanese text → relative MP3 path.
+// Run generate_audio.py once to download all the MP3 files into audio/.
+
+// Inline manifest — Japanese text → local file path
+const AUDIO_MANIFEST = {"おはようございます":"audio/e12eb2fcd5.mp3","こんにちは":"audio/c0e89a293b.mp3","こんばんは":"audio/73c9cdc2c8.mp3","ありがとうございます":"audio/94f49c978d.mp3","すみません":"audio/27eeedab97.mp3","すみません！":"audio/c24c44108e.mp3","いち":"audio/cb1b789d7b.mp3","に":"audio/8b63626ad3.mp3","さん":"audio/5c8a429e6d.mp3","し":"audio/fc0e89edd8.mp3","ご":"audio/e729be1d05.mp3","ろく":"audio/465ec92f71.mp3","なな":"audio/1eb7933c95.mp3","はち":"audio/424dde6436.mp3","きゅう":"audio/e0624fd9ff.mp3","じゅう":"audio/d1cf3c41e2.mp3","トイレ":"audio/e12c23aa02.mp3","えき":"audio/47546dc177.mp3","ホテル":"audio/9d01e3e138.mp3","レストラン":"audio/a5cb9a9482.mp3","コンビニ":"audio/82bfc76940.mp3","みぎ":"audio/df8376086c.mp3","ひだり":"audio/ec442a982c.mp3","まっすぐ":"audio/101beac739.mp3","トイレはどこですか？":"audio/ed9f95596a.mp3","えきはどこですか？":"audio/dfe798011c.mp3","ホテルはどこですか？":"audio/5c964665b0.mp3","みず":"audio/72f4c40d85.mp3","ビール":"audio/992b0ef56d.mp3","これ":"audio/782acde178.mp3","ひとつ":"audio/62d4359ab4.mp3","ふたつ":"audio/f951e30504.mp3","おいしい":"audio/e577ae2f49.mp3","メニュー":"audio/9013ced74d.mp3","おすすめ":"audio/a0415844ff.mp3","これをください。":"audio/90b22b33f6.mp3","みずをふたつください。":"audio/9de3a62d27.mp3","みずをください。":"audio/6bf2dc2bb8.mp3","おいしいですね！":"audio/65ef75027d.mp3","いくら":"audio/6a687c8e82.mp3","たかい":"audio/4b96fc902d.mp3","やすい":"audio/6d43689057.mp3","ください":"audio/274052ba30.mp3","けっこうです":"audio/7404ec72a9.mp3","カード":"audio/c8bf9a25c2.mp3","げんきん":"audio/f1c8de417e.mp3","これはいくらですか？":"audio/990e1b4e55.mp3","カードでいいですか？":"audio/829ffe96e3.mp3","きっぷ":"audio/a69e520db0.mp3","のりば":"audio/f753ae4369.mp3","つぎ":"audio/f6fe5186de.mp3","でんしゃ":"audio/487009fe4f.mp3","バス":"audio/19800da5f6.mp3","タクシー":"audio/245cb61e67.mp3","まで":"audio/ff113c1509.mp3","しんじゅくまでおねがいします。":"audio/1e3a07a6ab.mp3","とうきょうまでおねがいします。":"audio/edabfaee05.mp3","つぎはどこですか？":"audio/985f512ade.mp3","おねがいします":"audio/56945bbb09.mp3","こんにちは！":"audio/87e7e23c32.mp3","わたし":"audio/df551410e7.mp3","なまえ":"audio/d8a5aa934c.mp3","くに":"audio/17a71ce3ff.mp3","きました":"audio/5c1c565aad.mp3","はじめまして":"audio/9527cdc3ed.mp3","よろしく":"audio/933ff7eca9.mp3","はじめまして。":"audio/80d7828993.mp3","わたしはスミスです。":"audio/7f6a1da9ee.mp3","よろしくおねがいします。":"audio/82b138b85f.mp3","よろしくおねがいします":"audio/bd0d3df4bb.mp3","はじめまして。よろしくおねがいします。":"audio/d2d2de4059.mp3","すき":"audio/48bf2ba0fe.mp3","きらい":"audio/01ee744827.mp3","だいすき":"audio/ac0aa59c70.mp3","たべもの":"audio/96f1a3f78d.mp3","おんがく":"audio/d949470af6.mp3","りょこう":"audio/5386f9562a.mp3","スポーツ":"audio/0aa0aad997.mp3","すしがだいすきです。":"audio/13f879196a.mp3","りょこうがすきです。":"audio/57ea80ddcc.mp3","おんがくがすきですか？":"audio/5b59e88318.mp3","チェックイン":"audio/090137e75b.mp3","よやく":"audio/6c3512df97.mp3","へや":"audio/b2910bd6de.mp3","かぎ":"audio/9d2db8e42c.mp3","あさごはん":"audio/bad9092ebf.mp3","なんじ":"audio/997957d9f5.mp3","チェックアウト":"audio/f38fc75bf5.mp3","よやくしました。":"audio/a4154ca6e9.mp3","あさごはんはなんじですか？":"audio/def29bd630.mp3","へやのかぎをおねがいします。":"audio/284f72ceae.mp3","じ":"audio/c272e7aa4e.mp3","ふん":"audio/6bcf2abd0f.mp3","いま":"audio/34fab81a7f.mp3","ごぜん":"audio/d317aa108c.mp3","ごご":"audio/75903bb252.mp3","はん":"audio/012bdc404d.mp3","いまなんじですか？":"audio/cc5241fbc5.mp3","ごぜんはちじです。":"audio/9e4a9a878d.mp3","さんじはんです。":"audio/ca9c3e8b2d.mp3","おおきい":"audio/4045371a1d.mp3","ちいさい":"audio/8978458f1d.mp3","あつい":"audio/b4b8b4b6a3.mp3","つめたい":"audio/b71274964e.mp3","さむい":"audio/151bc73d37.mp3","たのしい":"audio/8091874484.mp3","おおきいホテルですね。":"audio/2ab0a1660e.mp3","つめたいみずをください。":"audio/1141df095f.mp3","たのしいですね！":"audio/6ac5282a86.mp3","わかりません":"audio/2445b6a1a7.mp3","えいご":"audio/fde3933add.mp3","もういちど":"audio/374c173cb2.mp3","ゆっくり":"audio/10f6571e43.mp3","たすけて":"audio/9ceb2ddf4a.mp3","はなせます":"audio/89fe1d04a2.mp3","わかりません。":"audio/0f80d92e19.mp3","えいごがはなせますか？":"audio/ef0628a9b1.mp3","もういちどゆっくりおねがいします。":"audio/bbf40c0f01.mp3","たべたい":"audio/7da390095c.mp3","いきたい":"audio/e644e41f83.mp3","みたい":"audio/4122b5b376.mp3","かいたい":"audio/4d6ec94ef5.mp3","あした":"audio/bfdf65982e.mp3","きょう":"audio/adfefaa458.mp3","らいねん":"audio/e98be8ee5c.mp3","すしをたべたいです。":"audio/7805532d3b.mp3","きょうとにいきたいです。":"audio/a3810256b9.mp3","おみやげをかいたいです。":"audio/a54d890a54.mp3","たべたいです":"audio/05793fa589.mp3","いきたいです":"audio/828ca12e60.mp3","ゆうめい":"audio/2688a83b86.mp3","にんき":"audio/4f7f1ba6f9.mp3","ちかく":"audio/c84dd30be0.mp3","ぜひ":"audio/6696449e6d.mp3","あります":"audio/496766a885.mp3","おすすめはなんですか？":"audio/84924d8517.mp3","ちかくにレストランはありますか？":"audio/42c00e9dc7.mp3","ぜひいってみます！":"audio/39b2e1152a.mp3","うれしい":"audio/2b4eaac7b1.mp3","つかれた":"audio/2353db5d71.mp3","すごい":"audio/1cbfa1bfd1.mp3","きれい":"audio/eae8268e17.mp3","やばい":"audio/38e8916355.mp3","すごいですね！":"audio/8a2bc2cfec.mp3","きれいですね！":"audio/3cd64fda82.mp3","ました":"audio/c49d21fbe7.mp3","きのう":"audio/c150f60e9b.mp3","せんしゅう":"audio/f7e58704e9.mp3","もう":"audio/d10ff26951.mp3","まだ":"audio/f687bb8eb5.mp3","いきました":"audio/ef9674acb8.mp3","きのうすしをたべました。":"audio/286f237be8.mp3","きょうとにいきました！":"audio/bc871d5f9e.mp3","まだたべていません。":"audio/ab30e44593.mp3","たべました":"audio/bdd3ed9436.mp3","ひゃく":"audio/8ffc95811c.mp3","せん":"audio/5f18816374.mp3","まん":"audio/d9f97548d2.mp3","えん":"audio/d31ff5f304.mp3","おつり":"audio/0698408dc3.mp3","レシート":"audio/0e80128ee2.mp3","ひゃくえんです。":"audio/4754097321.mp3","せんえんです。":"audio/f553cbf53a.mp3","おつりをください。":"audio/2d0a1209d4.mp3","いただきます":"audio/32542eb70a.mp3","ごちそうさま":"audio/1b74a248e8.mp3","おじゃまします":"audio/2ea6c91b7e.mp3","おつかれさま":"audio/5505485aab.mp3","どうぞ":"audio/cf30ffebe8.mp3","いただきます。":"audio/ac1c3fc96c.mp3","ごちそうさまでした。":"audio/3c4dbc8bb5.mp3","おつかれさまです。":"audio/033e94175e.mp3","ごちそうさまでした":"audio/c3a9c5a17b.mp3","じょうず":"audio/fbeddd9861.mp3","かっこいい":"audio/175b7f18fa.mp3","かわいい":"audio/11dfd6f514.mp3","すてき":"audio/9c8896a2a4.mp3","センス":"audio/bc1fc66e5e.mp3","にほんご":"audio/50f4a53ea2.mp3","にほんごがじょうずですね！":"audio/d65d876298.mp3","すてきなおみせですね。":"audio/e918caae78.mp3","かわいいですね！":"audio/5993f25e0e.mp3","そうですね":"audio/fbc761d670.mp3","なるほど":"audio/2e1550a3f1.mp3","ほんとうですか":"audio/463893d3b5.mp3","もちろん":"audio/9ab04e798b.mp3","たぶん":"audio/c1afbaa05c.mp3","ちょっと":"audio/8a3a932677.mp3","そうですね。":"audio/49b485b7f3.mp3","ほんとうですか？":"audio/6fc885823d.mp3","なるほど！":"audio/d11600f9c6.mp3","そうですね。なるほど！":"audio/51eb2cb576.mp3","びょういん":"audio/31db9d143e.mp3","くすり":"audio/5d54cb7108.mp3","いたいです":"audio/b2adc2be58.mp3","あたま":"audio/502952cc28.mp3","おなか":"audio/0d30d13a02.mp3","アレルギー":"audio/29a5b2a122.mp3","たすけてください！":"audio/23e089b2be.mp3","おなかがいたいです。":"audio/a6408ecb63.mp3","アレルギーがあります。":"audio/f6a913f5fe.mp3","しゃしん":"audio/254e189d9e.mp3","にゅうじょう":"audio/46010c28d8.mp3","チケット":"audio/3eb0248954.mp3","ガイド":"audio/b93138b7b8.mp3","まえ":"audio/83610a2f55.mp3","しゃしんをとってもいいですか？":"audio/2e4d1eba1d.mp3","これはなんですか？":"audio/6a7dabbb9b.mp3","とてもきれいですね！":"audio/9d59ec3500.mp3","からい":"audio/f1eb5bf2cf.mp3","あまい":"audio/d665625df5.mp3","おかわり":"audio/873c172110.mp3","おかんじょう":"audio/1b2ba09473.mp3","ベジタリアン":"audio/35e5964190.mp3","はいっています":"audio/8283fbcc5a.mp3","からくないものはありますか？":"audio/4051383760.mp3","おかわりをください！":"audio/3f38dd6085.mp3","おかんじょうおねがいします。":"audio/1cf2d6f409.mp3","こんにちは！よやくしました。":"audio/49437d4220.mp3","これをください。おいしいですね！":"audio/fe411473aa.mp3","こんにちは！おねがいします。ありがとうございます！":"audio/51bc8e3022.mp3","こうよう":"audio/5c93d9ba2b.mp3","おまつり":"audio/c74eff9db3.mp3","やたい":"audio/a4761ff1ff.mp3","おみやげ":"audio/f0d5e5ddbf.mp3","おんせん":"audio/ea13e3a403.mp3","さくら":"audio/1501d48816.mp3","ゆかた":"audio/b800f2429e.mp3","こうようがとてもきれいですね！":"audio/3ddece1a1c.mp3","おまつりはどこですか？":"audio/13b0d070a2.mp3","おんせんにはいりたいです！":"audio/47205bbf67.mp3","はじめまして。わたしはスミスです。":"audio/d5184f9587.mp3","これをください。おいしかったです！":"audio/7715b40b2f.mp3","ありがとうございました！":"audio/be40f4f97b.mp3","またきます！":"audio/5d83db658a.mp3"};
 
 const ttsAudio = document.createElement('audio');
 ttsAudio.setAttribute('playsinline', '');
-ttsAudio.setAttribute('preload',     'none');
-ttsAudio.setAttribute('crossorigin', 'anonymous');
+ttsAudio.setAttribute('preload', 'none');
+// NO crossorigin attribute — omitting it allows cross-origin audio without CORS headers
 ttsAudio.style.display = 'none';
 document.body.appendChild(ttsAudio);
 
 let _audioCtx    = null;
 let _ttsWatchdog = null;
-let _audioCtxConnected = false;
 
-// Call this inside every user-gesture handler so the context is running
 function _unlockAudioContext() {
   if (!_audioCtx) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
-    _audioCtx = new AC();
+    try { _audioCtx = new AC(); } catch(e) { return; }
   }
   if (_audioCtx.state === 'suspended') {
     _audioCtx.resume().catch(() => {});
-  }
-  // Connect the shared <audio> element through the context (once only)
-  if (!_audioCtxConnected && _audioCtx.state !== 'closed') {
-    try {
-      const src = _audioCtx.createMediaElementSource(ttsAudio);
-      src.connect(_audioCtx.destination);
-      _audioCtxConnected = true;
-    } catch(e) {
-      // Already connected or not supported — safe to ignore
-    }
   }
 }
 
@@ -668,10 +660,13 @@ function showTTSBadge(label, colour) {
   badge.classList.remove('hidden');
 }
 
+// Normalise text for manifest lookup — strip punctuation/spaces to match keys
+function _normaliseText(t) {
+  return t.replace(/[！？。、\s]/g, '').trim();
+}
+
 function speakJP(text, rate, onEnd) {
   rate = (typeof rate === 'number') ? rate : 0.75;
-
-  // MUST be called inside a user-gesture to unlock audio on mobile
   _unlockAudioContext();
 
   clearTimeout(_ttsWatchdog);
@@ -680,52 +675,76 @@ function speakJP(text, rate, onEnd) {
   ttsAudio.onerror = null;
   if (window.speechSynthesis) speechSynthesis.cancel();
 
-  const speed = Math.max(0.24, Math.min(1.0, rate)).toFixed(2);
+  // ── 1. Try local file from manifest ──────────────────────────────────────
+  // Look up by exact text first, then by normalised text
+  let localFile = AUDIO_MANIFEST[text] || null;
+  if (!localFile) {
+    const norm = _normaliseText(text);
+    for (const [k, v] of Object.entries(AUDIO_MANIFEST)) {
+      if (_normaliseText(k) === norm) { localFile = v; break; }
+    }
+  }
 
-  // Try primary URL first, then secondary on error
+  if (localFile) {
+    _playAudioFile(localFile, text, rate, onEnd, true);
+    return;
+  }
+
+  // ── 2. No local file — fall back to Google TTS ────────────────────────────
+  _playGoogleTTS(text, rate, onEnd);
+}
+
+function _playAudioFile(src, text, rate, onEnd, isLocal) {
+  let succeeded = false;
+
+  ttsAudio.onended = () => {
+    clearTimeout(_ttsWatchdog);
+    succeeded = true;
+    if (isLocal) showTTSBadge('🔊 Local audio ✓', 'var(--green)');
+    if (onEnd) onEnd();
+  };
+  ttsAudio.onerror = () => {
+    clearTimeout(_ttsWatchdog);
+    if (!succeeded) {
+      // Local file missing/corrupt — try Google TTS instead
+      if (isLocal) _playGoogleTTS(text, rate, onEnd);
+      else _speakNativeFallback(text, rate, onEnd);
+    }
+  };
+
+  ttsAudio.src = src;
+  ttsAudio.load();
+  ttsAudio.play()
+    .then(() => {
+      const ms = Math.max(5000, text.length * 300);
+      _ttsWatchdog = setTimeout(() => {
+        if (!succeeded) {
+          ttsAudio.pause();
+          if (isLocal) _playGoogleTTS(text, rate, onEnd);
+          else _speakNativeFallback(text, rate, onEnd);
+        }
+      }, ms);
+    })
+    .catch(() => {
+      if (isLocal) _playGoogleTTS(text, rate, onEnd);
+      else _speakNativeFallback(text, rate, onEnd);
+    });
+}
+
+function _playGoogleTTS(text, rate, onEnd) {
+  const speed = Math.max(0.24, Math.min(1.0, rate)).toFixed(2);
   const urls = [
     'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ja&ttsspeed=' + speed + '&q=' + encodeURIComponent(text),
     'https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=ja&ttsspeed=' + speed + '&q=' + encodeURIComponent(text),
   ];
-  let urlIdx = 0;
-  let succeeded = false;
-
-  function tryUrl(idx) {
-    if (idx >= urls.length) {
-      _speakNativeFallback(text, rate, onEnd);
-      return;
-    }
-    ttsAudio.onended = null;
-    ttsAudio.onerror = null;
-
-    ttsAudio.onended = () => {
-      clearTimeout(_ttsWatchdog);
-      succeeded = true;
-      showTTSBadge('🔊 Google TTS ✓', 'var(--green)');
-      if (onEnd) onEnd();
-    };
-    ttsAudio.onerror = () => {
-      clearTimeout(_ttsWatchdog);
-      tryUrl(idx + 1);
-    };
-
-    ttsAudio.src = urls[idx];
-    ttsAudio.load();
-    ttsAudio.play()
-      .then(() => {
-        // Watchdog: if onended hasn't fired in time, assume silent HTML error page
-        const ms = Math.max(5000, text.length * 250);
-        _ttsWatchdog = setTimeout(() => {
-          if (!succeeded) {
-            ttsAudio.pause();
-            tryUrl(idx + 1);
-          }
-        }, ms);
-      })
-      .catch(() => tryUrl(idx + 1));
+  let idx = 0;
+  function tryNext() {
+    if (idx >= urls.length) { _speakNativeFallback(text, rate, onEnd); return; }
+    showTTSBadge('🔊 Google TTS', 'var(--blue)');
+    _playAudioFile(urls[idx++], text, rate, onEnd, false);
   }
-
-  tryUrl(0);
+  // Override onerror before calling _playAudioFile so tryNext chains correctly
+  tryNext();
 }
 
 function _speakNativeFallback(text, rate, onEnd) {
@@ -1054,15 +1073,18 @@ function startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases
 function _showMicError(err, statusEl, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
   if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
     statusEl.innerHTML =
-      '<strong>⚠️ Microphone blocked at system level.</strong><br>' +
-      'On Xiaomi/HyperOS, check all 3 layers:<br>' +
-      '<b>1.</b> Swipe down → find 🎤 mic icon → make sure it is <b>ON</b> (not crossed out)<br>' +
-      '<b>2.</b> Phone Settings → Apps → Chrome → Permissions → Microphone → <b>Allow</b><br>' +
-      '<b>3.</b> Chrome address bar 🔒 → Site settings → Microphone → <b>Allow</b><br>' +
-      'After changing, <b>close and reopen</b> the page.<br>' +
-      '<em>Or use the text fallback below — it works without a mic.</em>';
+      '<strong>⚠️ Microphone blocked at system level.</strong><br><br>' +
+      'Chrome site settings alone are not enough on Xiaomi HyperOS.<br>' +
+      'There is a <strong>separate Android-level permission for Chrome</strong>:<br><br>' +
+      '<b>Step 1.</b> Open your phone\'s <b>Settings</b> app<br>' +
+      '<b>Step 2.</b> Go to <b>Apps</b> → find and tap <b>Chrome</b><br>' +
+      '<b>Step 3.</b> Tap <b>Permissions</b> → tap <b>Microphone</b> → set to <b>Allow</b><br>' +
+      '<b>Step 4.</b> Come back to Chrome, close this tab fully, and reopen the page<br><br>' +
+      '<em>Note: HyperOS 3 does not have a mic toggle in the notification panel — ' +
+      'the Android app permission above is the one that matters.</em><br><br>' +
+      '✏️ <b>No mic? Use the text fallback below</b> — it works without a microphone.';
   } else if (err.name === 'NotReadableError') {
-    statusEl.textContent = '⚠️ Mic is busy (another app is using it). Close other apps and try again.';
+    statusEl.textContent = '⚠️ Mic is busy — another app is using it. Close other apps and try again.';
   } else {
     statusEl.textContent = `⚠️ Mic error: ${err.name}. Use the text fallback below.`;
   }
