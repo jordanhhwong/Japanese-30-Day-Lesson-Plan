@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Japanese Holiday Coach · 30 Days</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red:    #c0392b;
+    --gold:   #e8a838;
+    --blue:   #4a9eda;
+    --green:  #5cb85c;
+    --purple: #9b6fd4;
+    --cream:  #fdf6e3;
+    --warm:   #f9f0d8;
+    --ink:    #2c1a0e;
+    --muted:  #7a6650;
+    --border: #ddd3be;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    font-family: 'Noto Serif JP', Georgia, serif;
+    background: linear-gradient(160deg, var(--cream) 0%, var(--warm) 100%);
+    min-height: 100vh;
+    color: var(--ink);
+    max-width: 640px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    background: linear-gradient(135deg, #c0392b 0%, #7b1a12 100%);
+    padding: 22px 20px 16px;
+    text-align: center;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .app-header h1 {
+    font-family: 'Playfair Display', serif;
+    color: #fff; font-size: 20px; letter-spacing: .5px;
+    margin-bottom: 3px;
+  }
+  .app-header p { color: rgba(255,255,255,0.75); font-size: 11px; }
+  .flag { font-size: 30px; display: block; margin-bottom: 4px; }
+
+  /* ── Week tabs ── */
+  .week-tabs { display: flex; border-bottom: 2px solid var(--border); background: var(--warm); }
+  .week-tab {
+    flex: 1; padding: 10px 4px; border: none; cursor: pointer;
+    background: var(--warm); color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 11px; font-weight: 700;
+    border-bottom: 3px solid transparent; transition: all .2s; line-height: 1.3;
+  }
+  .week-tab.active { color: #fff; border-bottom-color: currentColor; }
+  .week-tab span { font-weight: 400; font-size: 9px; opacity: .85; display: block; }
+
+  /* ── Kana chart ── */
+  .kana-view { padding: 0 12px 24px; }
+  .kana-header {
+    margin: 10px 0 12px;
+    background: linear-gradient(135deg, #c0392b, #922b21);
+    border-radius: 12px; padding: 13px 16px; color: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+  }
+  .kana-header h2 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+  .kana-header p  { font-size: 11px; opacity: .8; }
+  .kana-subtabs {
+    display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .kana-subtab {
+    padding: 7px 14px; border-radius: 20px; border: 2px solid var(--border);
+    background: #fff; color: var(--muted); font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px; font-weight: 700; cursor: pointer; transition: all .2s;
+  }
+  .kana-subtab.active {
+    background: var(--red); border-color: var(--red); color: #fff;
+  }
+  .kana-section { margin-bottom: 18px; }
+  .kana-section-title {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .08em;
+    margin-bottom: 8px; padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .kana-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+  }
+  .kana-grid.compounds { grid-template-columns: repeat(3, 1fr); }
+  .kana-cell {
+    background: #fff; border: 1.5px solid var(--border); border-radius: 9px;
+    padding: 8px 4px 6px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    transition: all .15s; min-height: 72px; justify-content: center;
+  }
+  .kana-cell:empty, .kana-cell.empty {
+    background: transparent; border-color: transparent; pointer-events: none;
+  }
+  .kana-cell.playing {
+    background: #fff8ec; border-color: var(--gold);
+    box-shadow: 0 0 0 3px var(--gold)33;
+  }
+  .kana-char {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 24px; line-height: 1; color: var(--ink);
+  }
+  .kana-romaji {
+    font-size: 10px; color: var(--red); font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif; letter-spacing: .02em;
+  }
+  .kana-hear {
+    background: none; border: 1px solid var(--gold)88; border-radius: 5px;
+    color: var(--gold); font-size: 11px; padding: 2px 6px; cursor: pointer;
+    margin-top: 2px; transition: all .15s; font-family: 'Noto Sans JP', sans-serif;
+  }
+  .kana-hear:active { background: var(--gold); color: #fff; }
+
+  /* ── Day grid ── */
+  .day-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 5px; padding: 10px 12px; background: #fdf3de;
+    border-bottom: 1px solid var(--border);
+  }
+  .day-btn {
+    padding: 7px 2px; border: 2px solid var(--border); border-radius: 7px;
+    cursor: pointer; background: #fff; color: var(--ink);
+    font-family: 'Noto Sans JP', sans-serif; font-weight: 700; font-size: 12px;
+    transition: all .15s; display: flex; flex-direction: column;
+    align-items: center; gap: 1px;
+  }
+  .day-btn .label { font-size: 6px; opacity: .7; }
+  .day-btn .check { font-size: 8px; }
+  .day-btn.done    { background: #efffef; border-color: var(--green); }
+  .day-btn.test    { background: #f5effe; border-color: var(--purple); color: var(--purple); }
+  .day-btn.active  { color: #fff; }
+
+  /* ── Day header ── */
+  .day-header {
+    margin: 10px 12px 8px; border-radius: 12px;
+    padding: 13px 16px; display: flex;
+    justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    color: #fff;
+  }
+  .day-header .meta   { font-size: 10px; opacity: .75; margin-bottom: 3px; }
+  .day-header .theme  { font-size: 17px; font-weight: 700; }
+  .day-header .timer  {
+    background: rgba(255,255,255,0.2); border-radius: 20px;
+    padding: 4px 11px; font-size: 12px; font-weight: 700; white-space: nowrap;
+  }
+
+  /* ── Task cards ── */
+  .task-list { padding: 0 12px; }
+  .task-card {
+    border: 2px solid transparent; border-radius: 10px;
+    margin-bottom: 8px; overflow: hidden; transition: all .2s;
+  }
+  .task-card.done { background: #f5fff5 !important; border-color: var(--green) !important; }
+  .task-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 13px; cursor: pointer; user-select: none;
+  }
+  .task-icon  { font-size: 16px; flex-shrink: 0; }
+  .task-label { font-weight: 700; font-size: 13px; }
+  .task-mins  { color: #888; font-size: 11px; margin-left: 6px; }
+  .task-done-badge { color: var(--green); font-size: 11px; font-weight: 700; margin-left: 6px; }
+  .task-chevron { color: #bbb; font-size: 10px; margin-left: auto; flex-shrink: 0; }
+  .task-manual-btn {
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid currentColor; background: transparent;
+    font-size: 11px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all .15s;
+  }
+  .task-manual-btn.checked { background: currentColor; }
+  .task-manual-btn.checked span { color: #fff; }
+  .task-body {
+    padding: 0 13px 14px;
+    border-top: 1px solid rgba(0,0,0,.06);
+    display: none;
+  }
+  .task-body.open { display: block; }
+
+  /* ── Furigana / Ruby ── */
+  ruby { ruby-align: center; }
+  rt { font-size: .58em; color: var(--red); font-weight: 700; letter-spacing: .03em; }
+  .content-text {
+    font-size: 14px; line-height: 3.2; color: var(--ink);
+    padding-top: 10px; word-break: break-word;
+  }
+  .content-text p { margin-bottom: 0; }
+
+  /* ── Vocab task ── */
+  .vocab-intro { font-size: 12.5px; color: #777; margin: 8px 0 12px; line-height: 1.6; }
+  .vocab-card {
+    background: #fff; border: 2px solid #e8dcc8;
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; transition: all .2s;
+  }
+  .vocab-card.done    { background: #efffef; border-color: var(--green); }
+  .vocab-card.ok      { border-color: var(--green); }
+  .vocab-card.bad     { border-color: #e05c5c; background: #fff0f0; }
+  .vocab-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .vocab-jp  { font-size: 22px; line-height: 2.6; }
+  .vocab-meaning { font-size: 12px; color: #888; margin-left: 10px; }
+  .vocab-controls { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+  .speak-btn {
+    background: none; border: 1px solid currentColor; border-radius: 6px;
+    padding: 3px 8px; font-size: 12px; cursor: pointer; transition: all .15s;
+  }
+  .speak-btn:active { opacity: .7; }
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #ddd; transition: background .3s;
+  }
+  .dot.filled { background: var(--gold); }
+  .vocab-input {
+    width: 100%; padding: 8px 10px; font-size: 20px;
+    border: 2px solid #d4c09a; border-radius: 8px; outline: none;
+    background: #fdf6e3; font-family: 'Noto Sans JP', sans-serif;
+    transition: all .15s;
+  }
+  .vocab-input.ok  { border-color: var(--green); background: #efffef; }
+  .vocab-input.bad { border-color: #e05c5c; background: #fff0f0; }
+  .vocab-hint { font-size: 11px; color: #e05c5c; margin-top: 3px; }
+  .vocab-mastered { color: var(--green); font-weight: 700; font-size: 13px; }
+
+  /* ── Syllable player ── */
+  .syll-wrap { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin: 5px 0; }
+  .syll {
+    padding: 3px 7px; border-radius: 5px; font-size: 15px; font-weight: 700;
+    background: #f0e8d8; color: var(--ink); transition: all .15s;
+  }
+  .syll.active { background: var(--red); color: #fff; transform: scale(1.1); }
+  .syll-guide {
+    background: #fdf6e3; border-radius: 8px; padding: 8px 12px;
+    margin-bottom: 8px; text-align: center;
+  }
+  .syll-guide-label { font-size: 10px; color: #888; margin-bottom: 3px; }
+  .syll-full { font-size: 11px; color: #999; margin-top: 3px; }
+
+  /* ── Speaking task ── */
+  .speaking-info {
+    background: #fff8ec; border: 1px solid #e8dcc8; border-radius: 8px;
+    padding: 9px 11px; margin-bottom: 12px; font-size: 12px; color: #5a3e28; line-height: 1.6;
+  }
+  .phrase-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .phrase-pill {
+    padding: 4px 12px; border-radius: 20px; font-size: 12px;
+    cursor: pointer; font-weight: 700; transition: all .2s; color: #5a3e28;
+    background: #e8dcc8; border: none;
+  }
+  .phrase-pill.active  { color: #fff; }
+  .phrase-pill.passed  { background: var(--green) !important; color: #fff !important; }
+  .phrase-box {
+    background: #fff; border: 2px solid rgba(0,0,0,.08);
+    border-radius: 12px; padding: 14px;
+  }
+  .phrase-step { font-size: 10px; color: #999; margin-bottom: 4px; }
+  .phrase-jp   { font-size: 22px; line-height: 2.8; margin-bottom: 6px; }
+  .phrase-guide-btn {
+    background: none; border: 1px solid rgba(0,0,0,.15); border-radius: 6px;
+    padding: 4px 10px; font-size: 11px; cursor: pointer; margin-bottom: 10px;
+    transition: all .15s;
+  }
+  .mic-section { margin-top: 14px; }
+  .mic-step { font-size: 10px; color: #999; margin-bottom: 6px; }
+
+  /* ── Mic button ── */
+  .mic-btn {
+    width: 72px; height: 72px; border-radius: 50%; border: none;
+    font-size: 26px; cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; margin: 0 auto;
+    box-shadow: 0 4px 14px rgba(0,0,0,.18); transition: all .2s;
+    color: #fff; line-height: 1.2; padding: 4px;
+  }
+  .mic-btn:active { transform: scale(.95); }
+  @keyframes mic-pulse {
+    0%,100% { box-shadow: 0 0 0 4px rgba(224,92,92,.3); }
+    50%      { box-shadow: 0 0 0 18px rgba(224,92,92,.07); }
+  }
+  .mic-btn.listening { animation: mic-pulse 1s infinite; }
+  .mic-status { text-align: center; margin-top: 8px; font-size: 12px; color: #888; min-height: 18px; }
+  .mic-transcript { text-align: center; margin-top: 5px; font-size: 12px; color: #666; font-style: italic; }
+  .mic-feedback {
+    margin-top: 10px; padding: 10px 12px; border-radius: 8px;
+    font-size: 13px; line-height: 1.5;
+  }
+  .mic-feedback.pass { background: #efffef; color: #2d6a2d; border: 1px solid #5cb85c44; }
+  .mic-feedback.fail { background: #fff0f0; color: #8b2020; border: 1px solid #e05c5c44; }
+
+  /* ── Listening task ── */
+  .listen-progress-wrap {
+    background: #fff; border: 2px solid rgba(0,0,0,.08);
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
+  }
+  .listen-count-row { display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-bottom: 6px; }
+  .listen-count-row strong { color: var(--blue); }
+  .progress-bar { background: #ecdfc7; border-radius: 8px; height: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 8px; transition: width .4s; }
+  .listen-dots { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
+  .listen-dot {
+    width: 18px; height: 18px; border-radius: 50%; background: #ddd;
+    transition: background .3s; display: flex; align-items: center;
+    justify-content: center; font-size: 10px; color: #fff;
+  }
+  .listen-dot.filled { background: var(--blue); }
+  .play-all-btn {
+    width: 100%; padding: 9px; border-radius: 8px;
+    font-weight: 700; font-size: 13px; cursor: pointer; transition: all .2s;
+    border: 2px solid var(--blue); color: #fff; background: var(--blue);
+  }
+  .play-all-btn:disabled { background: #eee; color: #999; border-color: #ddd; cursor: not-allowed; }
+  .listen-phrase-row {
+    background: #fff; border: 2px solid #e8dcc8;
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+    display: flex; align-items: flex-start; gap: 10px; transition: all .2s;
+  }
+  .listen-phrase-row.played { border-color: #4a9eda55; background: #eef6fd88; }
+  .play-btn {
+    width: 46px; height: 46px; border-radius: 50%; border: none; flex-shrink: 0;
+    font-size: 18px; cursor: pointer; transition: all .2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .play-btn:disabled { cursor: not-allowed; opacity: .5; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .play-btn.playing { animation: mic-pulse 1s infinite; }
+  .listen-phrase-jp { font-size: 18px; line-height: 2.6; flex: 1; }
+  .listen-count-badge { font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 12px; }
+  .listen-repeat-hint { font-size: 11px; color: #888; margin-top: 4px; padding-left: 56px; }
+
+  /* ── Progress footer ── */
+  .progress-footer {
+    margin: 10px 12px 0; padding: 10px 13px;
+    background: #fff9ee; border-radius: 10px; border: 1px solid var(--border);
+  }
+  .progress-footer p { font-size: 11px; color: #888; margin-bottom: 5px; }
+  .day-nav { display: flex; gap: 10px; margin: 10px 12px 0; }
+  .nav-btn {
+    flex: 1; padding: 10px; border-radius: 8px; font-size: 13px;
+    font-family: 'Noto Serif JP', serif; cursor: pointer; transition: all .15s;
+  }
+  .nav-btn.prev { border: 2px solid var(--border); background: #fff; color: var(--ink); }
+  .nav-btn.next { border: 2px solid; color: #fff; font-weight: 700; }
+
+  /* ── Complete banner ── */
+  .complete-banner {
+    text-align: center; padding: 12px; margin-top: 10px;
+    border-radius: 10px; color: #fff; font-weight: 700; font-size: 15px;
+  }
+
+  /* ── Utility ── */
+  .text-green { color: var(--green); }
+  .hidden { display: none !important; }
+
+  /* ── Permission warning ── */
+  .perm-warning {
+    background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;
+    padding: 10px 12px; font-size: 12px; color: #856404; margin-bottom: 10px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+<!-- Header -->
+<header class="app-header">
+  <span class="flag">🇯🇵</span>
+  <h1>30-Day Japanese Holiday Coach</h1>
+  <p>Beginner → Holiday-ready · Real audio · Mic pronunciation · Progress saved</p>
+  <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center">
+    <span id="tts-badge" class="hidden" style="font-size:10px;background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:10px"></span>
+    <button onclick="exportProgress()" style="font-size:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:3px 10px;border-radius:10px;cursor:pointer">💾 Export progress</button>
+    <button onclick="importProgress()" style="font-size:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:3px 10px;border-radius:10px;cursor:pointer">📂 Import progress</button>
+  </div>
+</header>
+
+<!-- Week tabs -->
+<div class="week-tabs" id="weekTabs"></div>
+
+<!-- Day grid -->
+<div class="day-grid" id="dayGrid"></div>
+
+<!-- Day header -->
+<div class="day-header" id="dayHeader"></div>
+
+<!-- Tasks -->
+<div class="task-list" id="taskList"></div>
+
+<!-- Progress footer -->
+<div class="progress-footer" id="progressFooter">
+  <p id="progressLabel"></p>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<!-- Nav -->
+<div class="day-nav" id="dayNav"></div>
+
+<!-- Kana chart view (hidden by default) -->
+<div class="kana-view hidden" id="kanaView"></div>
+
+</div><!-- /app -->
+
+<script>
+'use strict';
+
+// ── Plan data ─────────────────────────────────────────────────────────────────
+const PLAN = [
+  { day:1, week:1, theme:"Greetings & Politeness", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:8, content:"Learn 5 core greetings:\n• おはようございます (Ohayou gozaimasu) — Good morning\n• こんにちは (Konnichiwa) — Hello / Good afternoon\n• こんばんは (Konbanwa) — Good evening\n• ありがとうございます (Arigatou gozaimasu) — Thank you\n• すみません (Sumimasen) — Excuse me / Sorry" },
+    { type:"speaking", label:"Speaking", mins:7, content:"Say each greeting out loud clearly!\n• すみません！ (Sumimasen!) — Excuse me, to get attention.\n• こんにちは (Konnichiwa) — Hello, entering a shop.\n• ありがとうございます (Arigatou gozaimasu) — Thank you, after being helped." },
+    { type:"listening", label:"Listening", mins:8, content:"Listen and repeat. Japanese has even timing — every syllable is equal!\n• おはようございます (Ohayou gozaimasu) — Good morning\n• こんにちは (Konnichiwa) — Hello\n• ありがとうございます (Arigatou gozaimasu) — Thank you" },
+    { type:"grammar", label:"Grammar", mins:5, content:"For tourists, always use the polite form.\nRule: End sentences with です (desu) or ます (masu).\nExample: たべます (tabemasu) = I eat.\nです (desu) = it is / I am." },
+    { type:"review", label:"Review", mins:2, content:"Write the 5 greetings from memory. Check yourself. ✓" },
+  ]},
+  { day:2, week:1, theme:"Numbers 1–10", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:10, content:"Numbers 1–10:\n• いち (ichi) — one\n• に (ni) — two\n• さん (san) — three\n• し (shi) — four\n• ご (go) — five\n• ろく (roku) — six\n• なな (nana) — seven\n• はち (hachi) — eight\n• きゅう (kyuu) — nine\n• じゅう (juu) — ten" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Count your fingers aloud!\n• いち (ichi) — one!\n• さん (san) — three!\n• ご (go) — five!\n• なな (nana) — seven!\n• じゅう (juu) — ten!" },
+    { type:"listening", label:"Listening", mins:7, content:"Listen carefully to each number:\n• いち (ichi) — one\n• さん (san) — three\n• ご (go) — five\n• なな (nana) — seven\n• じゅう (juu) — ten" },
+    { type:"grammar", label:"Grammar", mins:3, content:"Numbers go BEFORE what you count.\nふたつ (futatsu) = two items.\nひとつ (hitotsu) = one item." },
+    { type:"review", label:"Review", mins:2, content:"Say 3, 7, 10 without looking." },
+  ]},
+  { day:3, week:1, theme:"Where is...?", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Holiday must-knows:\n• トイレ (toire) — toilet\n• えき (eki) — train station\n• ホテル (hoteru) — hotel\n• レストラン (resutoran) — restaurant\n• コンビニ (konbini) — convenience store\n• みぎ (migi) — right\n• ひだり (hidari) — left\n• まっすぐ (massugu) — straight ahead" },
+    { type:"speaking", label:"Speaking", mins:8, content:"The magic direction phrase!\n• トイレはどこですか？ (Toire wa doko desu ka?) — Where is the toilet?\n• えきはどこですか？ (Eki wa doko desu ka?) — Where is the station?\n• ホテルはどこですか？ (Hoteru wa doko desu ka?) — Where is the hotel?" },
+    { type:"listening", label:"Listening", mins:8, content:"Listen and learn directions:\n• みぎ (migi) — right\n• ひだり (hidari) — left\n• まっすぐ (massugu) — straight ahead\n• トイレはどこですか？ (Toire wa doko desu ka?) — Where is the toilet?" },
+    { type:"grammar", label:"Grammar", mins:5, content:"Formula: [Place] + は + どこですか？\nは (wa) = topic marker\nどこ = where\nですか = polite question ending" },
+    { type:"review", label:"Review", mins:2, content:"Say all 3 'where is' sentences without looking." },
+  ]},
+  { day:4, week:1, theme:"Ordering Food & Drink", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:8, content:"Restaurant essentials:\n• みず (mizu) — water\n• ビール (biiru) — beer\n• これ (kore) — this\n• ひとつ (hitotsu) — one item\n• ふたつ (futatsu) — two items\n• おいしい (oishii) — delicious\n• メニュー (menyuu) — menu\n• おすすめ (osusume) — recommendation" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Order by pointing and speaking!\n• これをください。 (Kore wo kudasai.) — This please.\n• みずをふたつください。 (Mizu wo futatsu kudasai.) — Two waters please.\n• すみません！ (Sumimasen!) — Excuse me! to call a waiter." },
+    { type:"listening", label:"Listening", mins:7, content:"Restaurant phrases:\n• これをください。 (Kore wo kudasai.) — This please.\n• みずをください。 (Mizu wo kudasai.) — Water please.\n• おいしいですね！ (Oishii desu ne!) — It's delicious!" },
+    { type:"grammar", label:"Grammar", mins:5, content:"を (wo) = object marker — marks WHAT you want.\n[Item] + を + ください = Please give me [item]" },
+    { type:"review", label:"Review", mins:2, content:"Role-play: order water + one dish using これをください。" },
+  ]},
+  { day:5, week:1, theme:"Shopping Phrases", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Shopping words:\n• いくら (ikura) — how much?\n• たかい (takai) — expensive\n• やすい (yasui) — cheap\n• ください (kudasai) — please give me\n• けっこうです (kekkou desu) — no thank you\n• カード (kaado) — card payment\n• げんきん (genkin) — cash" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Key shopping sentences:\n• これはいくらですか？ (Kore wa ikura desu ka?) — How much is this?\n• カードでいいですか？ (Kaado de ii desu ka?) — Is card okay?\n• これをください。 (Kore wo kudasai.) — I'll take this please." },
+    { type:"listening", label:"Listening", mins:8, content:"Shopping phrases:\n• いくら (ikura) — how much\n• これはいくらですか？ (Kore wa ikura desu ka?) — How much is this?\n• ありがとうございます (Arigatou gozaimasu) — Thank you" },
+    { type:"grammar", label:"Grammar", mins:5, content:"で (de) = method/means:\nカードで = by card\nいいですか？= Is that okay?" },
+    { type:"review", label:"Review", mins:2, content:"Imagine a souvenir shop. Run through the full shopping interaction." },
+  ]},
+  { day:6, week:1, theme:"Transport & Tickets", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Getting around:\n• きっぷ (kippu) — ticket\n• のりば (noriba) — platform\n• つぎ (tsugi) — next\n• でんしゃ (densha) — train\n• バス (basu) — bus\n• タクシー (takushii) — taxi\n• まで (made) — to / until" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Tell drivers where to go!\n• しんじゅくまでおねがいします。 (Shinjuku made onegaishimasu.) — To Shinjuku please.\n• とうきょうまでおねがいします。 (Toukyou made onegaishimasu.) — To Tokyo please.\n• つぎはどこですか？ (Tsugi wa doko desu ka?) — What is the next stop?" },
+    { type:"listening", label:"Listening", mins:8, content:"Transport phrases:\n• つぎ (tsugi) — next\n• でんしゃ (densha) — train\n• おねがいします (onegaishimasu) — please\n• しんじゅくまでおねがいします。 (Shinjuku made onegaishimasu.) — To Shinjuku please." },
+    { type:"grammar", label:"Grammar", mins:5, content:"おねがいします = please (asking someone to DO something)\nくださ い (kudasai) = please (asking for an OBJECT)\n\nIn a taxi: [Destination] + まで + おねがいします！" },
+    { type:"review", label:"Review", mins:2, content:"Practice: get to Tokyo Tower by taxi. What do you say?" },
+  ]},
+  { day:7, week:1, theme:"Week 1 Checkpoint + Test", tasks:[
+    { type:"review", label:"Full Review", mins:10, content:"Week 1 Summary:\n✓ Greetings\n✓ Numbers 1–10\n✓ Asking where things are\n✓ Ordering food\n✓ Shopping\n✓ Transport" },
+    { type:"speaking", label:"Speaking Practice", mins:8, content:"Narrate a full day in Japan:\n• こんにちは！ (Konnichiwa!) — greet hotel staff\n• トイレはどこですか？ (Toire wa doko desu ka?) — ask directions\n• これをください。 (Kore wo kudasai.) — order food\n• これはいくらですか？ (Kore wa ikura desu ka?) — ask a price" },
+    { type:"grammar", label:"Mini Test 1", mins:12, content:"TEST YOURSELF:\n\n1. 'Where is the toilet?'\n2. 'Two beers please'\n3. What does すみません mean?\n4. 'How much is this?'\n5. 'To Kyoto please' in a taxi\n6. Count 1 to 10\n7. What is おはようございます?\n8. What does まで mean?\n\nAnswers:\n1. トイレはどこですか？\n2. ビールをふたつください\n3. Excuse me / Sorry\n4. これはいくらですか？\n5. きょうとまでおねがいします\n6. いち、に、さん、し、ご、ろく、しち、はち、く、じゅう\n7. Good morning\n8. To / Until" },
+  ]},
+  { day:8, week:2, theme:"Introducing Yourself", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"About me:\n• わたし (watashi) — I / me\n• なまえ (namae) — name\n• くに (kuni) — country\n• きました (kimashita) — came\n• はじめまして (hajimemashite) — nice to meet you\n• よろしく (yoroshiku) — pleased to meet you" },
+    { type:"speaking", label:"Speaking", mins:10, content:"Your self-introduction:\n• はじめまして。 (Hajimemashite.) — Nice to meet you.\n• わたしはスミスです。 (Watashi wa Sumisu desu.) — I am Smith.\n• よろしくおねがいします。 (Yoroshiku onegaishimasu.) — Pleased to meet you." },
+    { type:"listening", label:"Listening", mins:7, content:"Self-introduction phrases:\n• はじめまして (hajimemashite) — nice to meet you\n• よろしくおねがいします (yoroshiku onegaishimasu) — pleased to meet you\n• はじめまして。よろしくおねがいします。 (Hajimemashite. Yoroshiku onegaishimasu.) — Nice to meet you. Pleased to meet you." },
+    { type:"grammar", label:"Grammar", mins:4, content:"です (desu) = am / is / are\nわたしは [name] です = I am [name]\n\nJapanese word order: Subject → Object → Verb\nI eat sushi → わたしはすしをたべます。" },
+    { type:"review", label:"Review", mins:2, content:"Recite your full self-introduction 3 times from memory." },
+  ]},
+  { day:9, week:2, theme:"Saying What You Like", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Preferences:\n• すき (suki) — like\n• きらい (kirai) — dislike\n• だいすき (daisuki) — love\n• たべもの (tabemono) — food\n• おんがく (ongaku) — music\n• りょこう (ryokou) — travel\n• スポーツ (supootsu) — sports" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Express what you love!\n• すしがだいすきです。 (Sushi ga daisuki desu.) — I love sushi!\n• りょこうがすきです。 (Ryokou ga suki desu.) — I like travelling.\n• おんがくがすきですか？ (Ongaku ga suki desu ka?) — Do you like music?" },
+    { type:"listening", label:"Listening", mins:8, content:"Listen for すき and だいすき:\n• すき (suki) — like\n• だいすき (daisuki) — love\n• すしがだいすきです。 (Sushi ga daisuki desu.) — I love sushi!\n• りょこうがすきです。 (Ryokou ga suki desu.) — I like travelling." },
+    { type:"grammar", label:"Grammar", mins:5, content:"が (ga) is used with feelings:\n[thing] + が + すきです = I like [thing]\n[thing] + が + きらいです = I dislike [thing]" },
+    { type:"review", label:"Review", mins:2, content:"Say 3 things you like and 1 dislike in Japanese." },
+  ]},
+  { day:10, week:2, theme:"At the Hotel", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Hotel words:\n• チェックイン (chekkuin) — check-in\n• よやく (yoyaku) — reservation\n• へや (heya) — room\n• かぎ (kagi) — key\n• あさごはん (asagohan) — breakfast\n• なんじ (nanji) — what time?\n• チェックアウト (chekkuauto) — check-out" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Hotel check-in:\n• よやくしました。 (Yoyaku shimashita.) — I have a reservation.\n• あさごはんはなんじですか？ (Asagohan wa nanji desu ka?) — What time is breakfast?\n• へやのかぎをおねがいします。 (Heya no kagi wo onegaishimasu.) — Room key please." },
+    { type:"listening", label:"Listening", mins:8, content:"Hotel vocabulary:\n• よやく (yoyaku) — reservation\n• へや (heya) — room\n• よやくしました。 (Yoyaku shimashita.) — I have a reservation.\n• あさごはんはなんじですか？ (Asagohan wa nanji desu ka?) — What time is breakfast?" },
+    { type:"grammar", label:"Grammar", mins:5, content:"の (no) = possessive like 's\nへやのかぎ = room key\nわたしのなまえ = my name\nにほんのたべもの = Japanese food" },
+    { type:"review", label:"Review", mins:2, content:"Role-play checking into a hotel using all 3 phrases." },
+  ]},
+  { day:11, week:2, theme:"Telling the Time", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:8, content:"Time words:\n• じ (ji) — o'clock\n• ふん (fun) — minutes\n• いま (ima) — now\n• ごぜん (gozen) — AM\n• ごご (gogo) — PM\n• はん (han) — half past\n• なんじ (nanji) — what time?" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Tell and ask the time!\n• いまなんじですか？ (Ima nanji desu ka?) — What time is it now?\n• ごぜんはちじです。 (Gozen hachiji desu.) — It is 8 AM.\n• さんじはんです。 (Sanji han desu.) — It is 3:30." },
+    { type:"listening", label:"Listening", mins:7, content:"Time phrases:\n• いま (ima) — now\n• なんじ (nanji) — what time\n• いまなんじですか？ (Ima nanji desu ka?) — What time is it?\n• ごぜんはちじです。 (Gozen hachiji desu.) — It is 8 AM." },
+    { type:"grammar", label:"Grammar", mins:5, content:"から (kara) = from / まで (made) = until\nじゅうじからにじまで = from 10am to 2pm." },
+    { type:"review", label:"Review", mins:2, content:"Say when you wake up, have lunch, and sleep in Japanese." },
+  ]},
+  { day:12, week:2, theme:"Describing Things", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Useful adjectives:\n• おおきい (ookii) — big\n• ちいさい (chiisai) — small\n• あつい (atsui) — hot\n• つめたい (tsumetai) — cold to touch\n• さむい (samui) — cold weather\n• おいしい (oishii) — delicious\n• たのしい (tanoshii) — fun" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Describe things!\n• おおきいホテルですね。 (Ookii hoteru desu ne.) — Big hotel!\n• つめたいみずをください。 (Tsumetai mizu wo kudasai.) — Cold water please.\n• おいしいですね！ (Oishii desu ne!) — It's delicious!" },
+    { type:"listening", label:"Listening", mins:8, content:"Adjectives to recognise:\n• おおきい (ookii) — big\n• ちいさい (chiisai) — small\n• おいしい (oishii) — delicious\n• おいしいですね！ (Oishii desu ne!) — It's delicious!\n• たのしいですね！ (Tanoshii desu ne!) — So fun!" },
+    { type:"grammar", label:"Grammar", mins:5, content:"い-adjectives end in い and go before nouns:\nおいしい + ラーメン = おいしいラーメン\n\nTo negate: replace い with くない:\nおいしい → おいしくない" },
+    { type:"review", label:"Review", mins:2, content:"Describe today's weather and your last meal using adjectives." },
+  ]},
+  { day:13, week:2, theme:"Handling Problems", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"When things go wrong:\n• わかりません (wakarimasen) — I don't understand\n• えいご (eigo) — English\n• もういちど (mou ichido) — one more time\n• ゆっくり (yukkuri) — slowly\n• たすけて (tasukete) — help me\n• はなせます (hanasemasu) — can speak" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Your survival sequence:\n• わかりません。 (Wakarimasen.) — I don't understand.\n• えいごがはなせますか？ (Eigo ga hanasemasu ka?) — Can you speak English?\n• もういちどゆっくりおねがいします。 (Mou ichido yukkuri onegaishimasu.) — Once more slowly please." },
+    { type:"listening", label:"Listening", mins:8, content:"Emergency phrases:\n• わかりません (wakarimasen) — I don't understand\n• ゆっくり (yukkuri) — slowly\n• もういちどゆっくりおねがいします。 (Mou ichido yukkuri onegaishimasu.) — Once more slowly please.\n• えいごがはなせますか？ (Eigo ga hanasemasu ka?) — Do you speak English?" },
+    { type:"grammar", label:"Grammar", mins:5, content:"ません = negative polite ending:\nわかります → わかりません\nはなせます → はなせません\n\nSwap ます for ません to negate any verb!" },
+    { type:"review", label:"Review", mins:2, content:"Say your 3 survival phrases without looking." },
+  ]},
+  { day:14, week:2, theme:"Week 2 Checkpoint + Test", tasks:[
+    { type:"review", label:"Full Review", mins:10, content:"Week 2 Summary:\n✓ Self-introduction\n✓ Saying what you like\n✓ Hotel phrases\n✓ Telling the time\n✓ Describing things\n✓ Handling problems" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Speak out loud!\n• はじめまして。 (Hajimemashite.) — Nice to meet you.\n• よやくしました。 (Yoyaku shimashita.) — I have a reservation.\n• あさごはんはなんじですか？ (Asagohan wa nanji desu ka?) — What time is breakfast?" },
+    { type:"grammar", label:"Mini Test 2", mins:12, content:"TEST YOURSELF:\n1. 'Nice to meet you'\n2. 'I love sushi'\n3. What does の do?\n4. 'What time is breakfast?'\n5. 'Delicious ramen'\n6. 'I don't understand'\n7. 'Once more slowly please'\n8. さむい vs つめたい?\n\nAnswers:\n1. はじめまして\n2. すしがだいすきです\n3. Possessive — へやのかぎ = room key\n4. あさごはんはなんじですか？\n5. おいしいラーメン\n6. わかりません\n7. もういちどゆっくりおねがいします\n8. さむい = cold weather; つめたい = cold to touch" },
+  ]},
+  { day:15, week:3, theme:"Talking About Plans", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Plans and wishes:\n• たべたい (tabetai) — want to eat\n• いきたい (ikitai) — want to go\n• みたい (mitai) — want to see\n• かいたい (kaitai) — want to buy\n• あした (ashita) — tomorrow\n• きょう (kyou) — today\n• らいねん (rainen) — next year" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Holiday wants!\n• すしをたべたいです。 (Sushi wo tabetai desu.) — I want to eat sushi.\n• きょうとにいきたいです。 (Kyouto ni ikitai desu.) — I want to go to Kyoto.\n• おみやげをかいたいです。 (Omiyage wo kaitai desu.) — I want to buy souvenirs." },
+    { type:"listening", label:"Listening", mins:8, content:"Listen for たいです:\n• たべたいです (tabetai desu) — want to eat\n• いきたいです (ikitai desu) — want to go\n• すしをたべたいです。 (Sushi wo tabetai desu.) — I want to eat sushi.\n• きょうとにいきたいです。 (Kyouto ni ikitai desu.) — I want to go to Kyoto." },
+    { type:"grammar", label:"Grammar", mins:5, content:"Verb + たいです = want to [verb]\nたべる → たべたい\nみる → みたい\nいく → いきたい\n\nAdd です for politeness." },
+    { type:"review", label:"Review", mins:2, content:"Say 5 things you want to do in Japan using たいです." },
+  ]},
+  { day:16, week:3, theme:"Getting Recommendations", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Recommendation words:\n• おすすめ (osusume) — recommendation\n• ゆうめい (yuumei) — famous\n• にんき (ninki) — popular\n• ちかく (chikaku) — nearby\n• ぜひ (zehi) — definitely\n• あります (arimasu) — there is" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Get local recommendations!\n• おすすめはなんですか？ (Osusume wa nan desu ka?) — What do you recommend?\n• ちかくにレストランはありますか？ (Chikaku ni resutoran wa arimasu ka?) — Is there a restaurant nearby?\n• ぜひいってみます！ (Zehi itte mimasu!) — I'll definitely try going!" },
+    { type:"listening", label:"Listening", mins:8, content:"Recommendation phrases:\n• おすすめ (osusume) — recommendation\n• ちかく (chikaku) — nearby\n• おすすめはなんですか？ (Osusume wa nan desu ka?) — What do you recommend?\n• ぜひいってみます！ (Zehi itte mimasu!) — I'll definitely try!" },
+    { type:"grammar", label:"Grammar", mins:5, content:"ありますか？= Is there? / Do you have?\n• トイレはありますか？= Is there a toilet?\n• えいごのメニューはありますか？= English menu?\n\nいますか？= Is there? (for people & animals)" },
+    { type:"review", label:"Review", mins:2, content:"Ask for a local food recommendation and respond enthusiastically." },
+  ]},
+  { day:17, week:3, theme:"Expressing Feelings", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Feelings and reactions:\n• うれしい (ureshii) — happy\n• たのしい (tanoshii) — fun\n• つかれた (tsukareta) — tired\n• すごい (sugoi) — amazing\n• きれい (kirei) — beautiful\n• やばい (yabai) — incredible (slang)" },
+    { type:"speaking", label:"Speaking", mins:8, content:"React with feeling!\n• すごいですね！ (Sugoi desu ne!) — That's amazing!\n• きれいですね！ (Kirei desu ne!) — It's beautiful!\n• たのしいですね！ (Tanoshii desu ne!) — It's so fun!" },
+    { type:"listening", label:"Listening", mins:8, content:"Reaction phrases:\n• すごい (sugoi) — amazing\n• きれい (kirei) — beautiful\n• すごいですね！ (Sugoi desu ne!) — That's amazing!\n• きれいですね！ (Kirei desu ne!) — So beautiful!" },
+    { type:"grammar", label:"Grammar", mins:5, content:"ね (ne) = 'right?' — invites agreement\nよ (yo) = strong assertion\n\nきれいですね = Beautiful, isn't it!\nきれいですよ = It IS beautiful!" },
+    { type:"review", label:"Review", mins:2, content:"Imagine seeing Mt. Fuji. React out loud in Japanese for 30 seconds!" },
+  ]},
+  { day:18, week:3, theme:"Past Tense", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Past tense words:\n• ました (mashita) — did (polite past)\n• きのう (kinou) — yesterday\n• せんしゅう (senshuu) — last week\n• もう (mou) — already\n• まだ (mada) — not yet\n• いきました (ikimashita) — went" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Talk about what you did!\n• きのうすしをたべました。 (Kinou sushi wo tabemashita.) — I ate sushi yesterday.\n• きょうとにいきました！ (Kyouto ni ikimashita!) — I went to Kyoto!\n• まだたべていません。 (Mada tabete imasen.) — I haven't eaten yet." },
+    { type:"listening", label:"Listening", mins:8, content:"Catch ました in sentences:\n• たべました (tabemashita) — ate\n• いきました (ikimashita) — went\n• きのうすしをたべました。 (Kinou sushi wo tabemashita.) — I ate sushi yesterday.\n• きょうとにいきました！ (Kyouto ni ikimashita!) — I went to Kyoto!" },
+    { type:"grammar", label:"Grammar", mins:5, content:"Polite verb endings:\nPresent/Future: ～ます\nPast: ～ました\nNeg present: ～ません\nNeg past: ～ませんでした\n\nJust swap the ending!" },
+    { type:"review", label:"Review", mins:2, content:"Say 3 things you did yesterday in Japanese." },
+  ]},
+  { day:19, week:3, theme:"Numbers & Prices", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:8, content:"Big numbers:\n• ひゃく (hyaku) — one hundred\n• せん (sen) — one thousand\n• まん (man) — ten thousand\n• えん (en) — yen\n• おつり (otsuri) — change (money)\n• レシート (reshiito) — receipt" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Say prices confidently!\n• ひゃくえんです。 (Hyaku en desu.) — It is 100 yen.\n• せんえんです。 (Sen en desu.) — It is 1000 yen.\n• おつりをください。 (Otsuri wo kudasai.) — Change please." },
+    { type:"listening", label:"Listening", mins:7, content:"Price phrases:\n• ひゃく (hyaku) — hundred\n• せん (sen) — thousand\n• ひゃくえんです。 (Hyaku en desu.) — 100 yen.\n• せんえんです。 (Sen en desu.) — 1000 yen.\n• おつりをください。 (Otsuri wo kudasai.) — Change please." },
+    { type:"grammar", label:"Grammar", mins:5, content:"Numbers combine:\n300 = さんびゃく\n600 = ろっぴゃく\n3000 = さんぜん\n\nPointing + いくら？always works!" },
+    { type:"review", label:"Review", mins:2, content:"Say 5 random prices between ¥100 and ¥5,000." },
+  ]},
+  { day:20, week:3, theme:"Cultural Phrases", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Cultural essentials:\n• いただきます (itadakimasu) — before eating\n• ごちそうさま (gochisousama) — after eating\n• おじゃまします (ojamashimasu) — sorry to intrude\n• おつかれさま (otsukaresama) — you worked hard\n• どうぞ (douzo) — please go ahead" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Phrases that locals love!\n• いただきます。 (Itadakimasu.) — Before every meal!\n• ごちそうさまでした。 (Gochisousama deshita.) — After every meal!\n• おつかれさまです。 (Otsukaresama desu.) — After someone helps you." },
+    { type:"listening", label:"Listening", mins:8, content:"Cultural rituals:\n• いただきます (itadakimasu) — before eating\n• ごちそうさまでした (gochisousama deshita) — after eating\n• いただきます。 (Itadakimasu.) — before a meal\n• ごちそうさまでした。 (Gochisousama deshita.) — after a meal" },
+    { type:"grammar", label:"Grammar", mins:5, content:"Fixed social rituals — use them every time!\nいただきます = EVERY time before food.\nごちそうさまでした = EVERY time after food.\n\nLocals will be delighted!" },
+    { type:"review", label:"Review", mins:2, content:"Run through a full restaurant experience using cultural phrases." },
+  ]},
+  { day:21, week:3, theme:"Week 3 Checkpoint + Test", tasks:[
+    { type:"review", label:"Full Review", mins:10, content:"Week 3 Summary:\n✓ Plans with たいです\n✓ Recommendations\n✓ Feelings & reactions\n✓ Past tense ました\n✓ Numbers & prices\n✓ Cultural phrases" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Narrate Day 1 of your Japan trip!\n• すしをたべたいです。 (Sushi wo tabetai desu.) — I want to eat sushi.\n• きょうとにいきました！ (Kyouto ni ikimashita!) — I went to Kyoto!\n• おいしいですね！ (Oishii desu ne!) — It's delicious!" },
+    { type:"grammar", label:"Mini Test 3", mins:12, content:"TEST YOURSELF:\n1. 'I want to go to Tokyo'\n2. 'Do you have an English menu?'\n3. What does ね mean?\n4. Past tense of たべます?\n5. Say ¥3,500\n6. Before eating?\n7. After eating?\n8. 'I went to Kyoto yesterday'\n\nAnswers:\n1. とうきょうにいきたいです\n2. えいごのメニューはありますか？\n3. Seeking agreement / 'right?'\n4. たべました\n5. さんぜんごひゃくえん\n6. いただきます\n7. ごちそうさまでした\n8. きのうきょうとにいきました" },
+  ]},
+  { day:22, week:4, theme:"Complimenting People", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:6, content:"Compliment words:\n• じょうず (jouzu) — skillful / good at\n• かっこいい (kakkoii) — cool / stylish\n• かわいい (kawaii) — cute\n• すてき (suteki) — lovely\n• センス (sensu) — taste / style\n• にほんご (nihongo) — Japanese language" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Give compliments freely!\n• にほんごがじょうずですね！ (Nihongo ga jouzu desu ne!) — Your Japanese is great!\n• すてきなおみせですね。 (Suteki na omise desu ne.) — What a lovely shop!\n• かわいいですね！ (Kawaii desu ne!) — So cute!" },
+    { type:"listening", label:"Listening", mins:8, content:"Compliment phrases:\n• じょうず (jouzu) — skillful\n• かわいい (kawaii) — cute\n• すてきなおみせですね。 (Suteki na omise desu ne.) — What a lovely shop!\n• にほんごがじょうずですね！ (Nihongo ga jouzu desu ne!) — Your Japanese is great!" },
+    { type:"grammar", label:"Grammar", mins:6, content:"な-adjectives use な before nouns:\nすてきな + 店 = すてきなお店\n\nBut stand-alone: すてきです / きれいです (no な needed)." },
+    { type:"review", label:"Review", mins:2, content:"Compliment 3 imaginary things you see in Japan." },
+  ]},
+  { day:23, week:4, theme:"Making Small Talk", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:6, content:"Conversation fillers:\n• そうですね (sou desu ne) — I see / that's right\n• なるほど (naruhodo) — makes sense\n• ほんとうですか (hontou desu ka) — really?\n• もちろん (mochiron) — of course\n• たぶん (tabun) — probably\n• ちょっと (chotto) — a little / soft no" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Sound natural with fillers!\n• そうですね。 (Sou desu ne.) — I see, that's right.\n• ほんとうですか？ (Hontou desu ka?) — Really?\n• なるほど！ (Naruhodo!) — Makes sense!" },
+    { type:"listening", label:"Listening", mins:8, content:"Conversation fillers:\n• そうですね (sou desu ne) — I see\n• なるほど (naruhodo) — I see\n• ほんとうですか？ (Hontou desu ka?) — Really?\n• そうですね。なるほど！ (Sou desu ne. Naruhodo!) — I see. Makes sense!" },
+    { type:"grammar", label:"Grammar", mins:6, content:"ちょっと = 'a little' but used as polite refusal:\nちょっと... (trailing off) = polite no\nちょっとまってください = just a moment please" },
+    { type:"review", label:"Review", mins:2, content:"Have a 1-minute imaginary chat with a local shopkeeper." },
+  ]},
+  { day:24, week:4, theme:"Emergencies & Health", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Emergency words:\n• たすけて (tasukete) — help!\n• びょういん (byouin) — hospital\n• くすり (kusuri) — medicine\n• いたいです (itai desu) — it hurts\n• あたま (atama) — head\n• おなか (onaka) — stomach\n• アレルギー (arerugii) — allergy" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Know these by heart!\n• たすけてください！ (Tasukete kudasai!) — Please help!\n• おなかがいたいです。 (Onaka ga itai desu.) — My stomach hurts.\n• アレルギーがあります。 (Arerugii ga arimasu.) — I have an allergy." },
+    { type:"listening", label:"Listening", mins:8, content:"Emergency phrases:\n• たすけて (tasukete) — help\n• いたいです (itai desu) — it hurts\n• たすけてください！ (Tasukete kudasai!) — Please help!\n• おなかがいたいです。 (Onaka ga itai desu.) — My stomach hurts." },
+    { type:"grammar", label:"Grammar", mins:5, content:"[Body part] + が + いたいです = [body part] hurts\nあたまがいたいです = headache\nはがいたいです = toothache\nのどがいたいです = sore throat" },
+    { type:"review", label:"Review", mins:2, content:"Practice 3 different ailments out loud." },
+  ]},
+  { day:25, week:4, theme:"Sightseeing", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Sightseeing words:\n• しゃしん (shashin) — photo\n• にゅうじょう (nyuujou) — admission\n• チケット (chiketto) — ticket\n• ガイド (gaido) — guide\n• まえ (mae) — in front of\n• きれい (kirei) — beautiful\n• すごい (sugoi) — amazing" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Sightseeing phrases!\n• しゃしんをとってもいいですか？ (Shashin wo totte mo ii desu ka?) — May I take a photo?\n• これはなんですか？ (Kore wa nan desu ka?) — What is this?\n• とてもきれいですね！ (Totemo kirei desu ne!) — It's really beautiful!" },
+    { type:"listening", label:"Listening", mins:8, content:"Sightseeing phrases:\n• しゃしん (shashin) — photo\n• きれい (kirei) — beautiful\n• しゃしんをとってもいいですか？ (Shashin wo totte mo ii desu ka?) — May I take a photo?\n• とてもきれいですね！ (Totemo kirei desu ne!) — So beautiful!" },
+    { type:"grammar", label:"Grammar", mins:5, content:"～てもいいですか？= May I ~?\nとってもいいですか？= May I take [photo]?\nはいってもいいですか？= May I enter?\nすわってもいいですか？= May I sit?" },
+    { type:"review", label:"Review", mins:2, content:"At a temple: ask to take a photo, then react to how beautiful it is." },
+  ]},
+  { day:26, week:4, theme:"Advanced Dining", tasks:[
+    { type:"vocab", label:"Vocabulary", mins:7, content:"Advanced dining:\n• からい (karai) — spicy\n• あまい (amai) — sweet\n• アレルギー (arerugii) — allergy\n• おかわり (okawari) — another / refill\n• おかんじょう (okanjou) — the bill\n• ベジタリアン (bejitarian) — vegetarian\n• はいっています (haitte imasu) — contains" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Advanced restaurant confidence!\n• からくないものはありますか？ (Karakunai mono wa arimasu ka?) — Any non-spicy options?\n• おかわりをください！ (Okawari wo kudasai!) — Another one please!\n• おかんじょうおねがいします。 (Okanjou onegaishimasu.) — Bill please." },
+    { type:"listening", label:"Listening", mins:8, content:"Advanced dining phrases:\n• おかわり (okawari) — refill / another\n• おかんじょう (okanjou) — the bill\n• おかわりをください！ (Okawari wo kudasai!) — Another please!\n• おかんじょうおねがいします。 (Okanjou onegaishimasu.) — Bill please." },
+    { type:"grammar", label:"Grammar", mins:5, content:"Past tense of い-adjectives:\nおいしい → おいしかった (was delicious)\nたのしい → たのしかった (was fun)\n\nおいしかったです！— say this to every restaurant!" },
+    { type:"review", label:"Review", mins:2, content:"Order a full meal, ask about ingredients, end the dinner properly." },
+  ]},
+  { day:27, week:4, theme:"Putting It All Together", tasks:[
+    { type:"speaking", label:"Speaking Marathon", mins:15, content:"The big practice day!\n• こんにちは！よやくしました。 (Konnichiwa! Yoyaku shimashita.) — Hello! I have a reservation.\n• トイレはどこですか？ (Toire wa doko desu ka?) — Where is the toilet?\n• これをください。おいしいですね！ (Kore wo kudasai. Oishii desu ne!) — This please. Delicious!\n• これはいくらですか？ (Kore wa ikura desu ka?) — How much is this?\n• しんじゅくまでおねがいします。 (Shinjuku made onegaishimasu.) — To Shinjuku please." },
+    { type:"listening", label:"Listening", mins:8, content:"Full holiday dialogue:\n• こんにちは (Konnichiwa) — hello\n• おねがいします (onegaishimasu) — please\n• ありがとうございます (Arigatou gozaimasu) — thank you\n• こんにちは！おねがいします。ありがとうございます！ (Konnichiwa! Onegaishimasu. Arigatou gozaimasu!) — Hello! Please. Thank you!" },
+    { type:"review", label:"Review", mins:7, content:"Note any words you struggled with today. Focus on those before Day 28." },
+  ]},
+  { day:28, week:4, theme:"Week 4 Checkpoint + Test", tasks:[
+    { type:"review", label:"Full Review", mins:10, content:"Week 4 Summary:\n✓ Compliments\n✓ Small talk fillers\n✓ Emergencies & health\n✓ Sightseeing\n✓ Advanced dining\n✓ Full scenarios" },
+    { type:"speaking", label:"Speaking", mins:8, content:"Speak your dream Japan day!\n• しゃしんをとってもいいですか？ (Shashin wo totte mo ii desu ka?) — May I take a photo?\n• おかんじょうおねがいします。 (Okanjou onegaishimasu.) — Bill please.\n• きれいですね！ (Kirei desu ne!) — It's beautiful!" },
+    { type:"grammar", label:"Mini Test 4", mins:12, content:"TEST YOURSELF:\n1. 'May I take a photo?'\n2. 'My stomach hurts'\n3. Difference between ね and よ?\n4. 'It was delicious'\n5. 'The bill please'\n6. ちょっと as soft refusal?\n7. 'Does it contain [ingredient]?'\n8. When staff say いらっしゃいませ, what do you do?\n\nAnswers:\n1. しゃしんをとってもいいですか？\n2. おなかがいたいです\n3. ね = seeking agreement; よ = asserting\n4. おいしかったです\n5. おかんじょうおねがいします\n6. Polite 'no' / hesitation\n7. ～がはいっていますか？\n8. Nothing — just smile!" },
+  ]},
+  { day:29, week:4, theme:"Final Vocabulary Blitz", tasks:[
+    { type:"vocab", label:"Bonus Vocab", mins:10, content:"October holiday words:\n• こうよう (kouyou) — autumn leaves\n• おまつり (omatsuri) — festival\n• やたい (yatai) — food stall\n• おみやげ (omiyage) — souvenir\n• おんせん (onsen) — hot spring\n• さくら (sakura) — cherry blossom\n• ゆかた (yukata) — casual kimono" },
+    { type:"speaking", label:"Speaking", mins:10, content:"Autumn holiday phrases!\n• こうようがとてもきれいですね！ (Kouyou ga totemo kirei desu ne!) — The autumn leaves are beautiful!\n• おまつりはどこですか？ (Omatsuri wa doko desu ka?) — Where is the festival?\n• おんせんにはいりたいです！ (Onsen ni hairitai desu!) — I want to try the hot spring!" },
+    { type:"listening", label:"Listening", mins:8, content:"October seasonal phrases:\n• こうよう (kouyou) — autumn leaves\n• おんせん (onsen) — hot spring\n• こうようがとてもきれいですね！ (Kouyou ga totemo kirei desu ne!) — Autumn leaves are so beautiful!\n• おんせんにはいりたいです！ (Onsen ni hairitai desu!) — I want to try the hot spring!" },
+    { type:"review", label:"Review", mins:2, content:"Review any words from the full 30 days that still feel shaky!" },
+  ]},
+  { day:30, week:4, theme:"Final Review & Confidence Day", tasks:[
+    { type:"review", label:"Full 30-Day Review", mins:10, content:"You have covered:\n✅ Greetings & politeness\n✅ Numbers & prices\n✅ Directions & transport\n✅ Ordering food & drinks\n✅ Shopping\n✅ Hotel & accommodation\n✅ Self-introduction\n✅ Expressing likes & feelings\n✅ Past tense\n✅ Making plans\n✅ Recommendations\n✅ Cultural phrases\n✅ Emergencies\n✅ Sightseeing\n✅ Small talk\n\nYou are READY for Japan! 🇯🇵" },
+    { type:"speaking", label:"Final Speaking Test", mins:12, content:"ULTIMATE CHALLENGE — no notes!\n• はじめまして。わたしはスミスです。 (Hajimemashite. Watashi wa Sumisu desu.) — Nice to meet you, I'm Smith.\n• トイレはどこですか？ (Toire wa doko desu ka?) — Where is the toilet?\n• これをください。おいしかったです！ (Kore wo kudasai. Oishikatta desu!) — This please. It was delicious!\n• ありがとうございました！ (Arigatou gozaimashita!) — Thank you very much!\n• またきます！ (Mata kimasu!) — I'll come again!" },
+    { type:"grammar", label:"Your Japanese Toolkit", mins:8, content:"10 patterns covering 80% of tourist situations:\n\n1. [X]はどこですか？— Where is X?\n2. [X]をください — Please give me X\n3. [X]はいくらですか？— How much is X?\n4. [X]がすきです — I like X\n5. [X]がいたいです — X hurts\n6. [X]たいです — I want to do X\n7. [X]てもいいですか？— May I X?\n8. わかりません — I don't understand\n9. もういちどゆっくりおねがいします — Once more slowly\n10. すみません！— Excuse me!\n\nEnjoy Japan! 🗾" },
+  ]},
+];
+
+const WEEK_COLORS = { 1:'#e05c5c', 2:'#4a9eda', 3:'#e8a838', 4:'#5cb85c' };
+const WEEK_LABELS = { 1:'Survival Basics', 2:'Conversations', 3:'Deeper Talk', 4:'Confidence' };
+const TYPE_CFG = {
+  vocab:    { color:'#e8a838', bg:'#fff8ec', icon:'📚', label:'Vocabulary' },
+  speaking: { color:'#e05c5c', bg:'#fff0f0', icon:'🗣️', label:'Speaking'   },
+  listening:{ color:'#4a9eda', bg:'#eef6fd', icon:'👂', label:'Listening'  },
+  grammar:  { color:'#5cb85c', bg:'#efffef', icon:'✏️', label:'Grammar'    },
+  review:   { color:'#9b6fd4', bg:'#f5effe', icon:'🔁', label:'Review'     },
+};
+
+// ── State ────────────────────────────────────────────────────────────────────
+let currentDay = 1;
+let openTaskIdx = null;
+let completed = {};  // key: "day-taskIdx" => true
+
+function saveState() {
+  localStorage.setItem('jp30_completed', JSON.stringify(completed));
+  localStorage.setItem('jp30_day', String(currentDay));
+}
+function loadState() {
+  try { completed = JSON.parse(localStorage.getItem('jp30_completed') || '{}'); } catch(e){}
+  const d = parseInt(localStorage.getItem('jp30_day') || '1');
+  if (d >= 1 && d <= 30) currentDay = d;
+}
+
+// ── Furigana renderer ────────────────────────────────────────────────────────
+function renderContent(text) {
+  const lines = text.split('\n');
+  return lines.map(line => {
+    const pat = /(\.?\.?\.?(?:[\u3041-\u3096\u309B\u309C\u30A0-\u30FF\u4E00-\u9FAF\uFF00-\uFFEF\u3000-\u303F\u30A0-\u30FF]+)\s*\(([^)]+)\))/g;
+    let result = '';
+    let last = 0;
+    let m;
+    // Simpler: match japanese chars followed by (romaji)
+    const p2 = /([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\uFF66-\uFF9F\u3000-\u303F！？、。「」『』【】ー～〜・]+)\s*\(([^)]+)\)/g;
+    while ((m = p2.exec(line)) !== null) {
+      result += escHtml(line.slice(last, m.index));
+      result += `<ruby>${escHtml(m[1])}<rt>${escHtml(m[2])}</rt></ruby>`;
+      last = p2.lastIndex;
+    }
+    result += escHtml(line.slice(last));
+    return `<span style="display:block;min-height:1.1em">${result}</span>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function extractVocab(content) {
+  return content.split('\n').reduce((a, line) => {
+    const m = line.match(/•\s*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\uFF66-\uFF9F！？ー～〜・]+)\s*\(([^)]+)\)\s*(?:—|-)\s*(.+)/);
+    if (m) a.push({ japanese: m[1].trim(), romaji: m[2].trim(), meaning: m[3].trim() });
+    return a;
+  }, []);
+}
+
+function extractPhrases(content) {
+  const seen = new Set();
+  return content.split('\n').reduce((a, line) => {
+    const m = line.match(/([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF！？、。「」『』【】ー～〜・\s]{6,})\s*\(([^)]+)\)/);
+    if (m && !seen.has(m[1].trim()) && m[1].trim().length > 3) {
+      seen.add(m[1].trim()); a.push({ japanese: m[1].trim(), romaji: m[2].trim() });
+    }
+    return a;
+  }, []).slice(0, 5);
+}
+
+// ── TTS — Local audio files → Google TTS → SpeechSynthesis ───────────────────
+//
+// PRIORITY ORDER:
+//   1. Local MP3 file from audio/ directory (committed to GitHub repo)
+//      → Works offline, no CORS, no rate-limiting, guaranteed to play
+//   2. Google Translate TTS via HTML5 <audio> (media stream routing)
+//      → Requires internet, occasionally rate-limited
+//   3. SpeechSynthesis fallback
+//      → Routes via call/accessibility audio on Android (often silent)
+//
+// The audio manifest maps Japanese text → relative MP3 path.
+// Run generate_audio.py once to download all the MP3 files into audio/.
+
+// Inline manifest — Japanese text → local file path
+const AUDIO_MANIFEST = {"あ":"audio/8c0c3027e3.mp3","い":"audio/655dcb0e65.mp3","う":"audio/31e55ff7f8.mp3","え":"audio/4565057233.mp3","お":"audio/1cfa7b2136.mp3","か":"audio/b19ca85e62.mp3","き":"audio/02485a52b7.mp3","く":"audio/d9d3327f0d.mp3","け":"audio/fbd0909bdc.mp3","こ":"audio/9b9b7e95c6.mp3","さ":"audio/880beff92b.mp3","し":"audio/fc0e89edd8.mp3","す":"audio/052cd511c8.mp3","せ":"audio/18f507c55c.mp3","そ":"audio/2d5f27ce2f.mp3","た":"audio/14cc9288ee.mp3","ち":"audio/033547bb33.mp3","つ":"audio/38332eba47.mp3","て":"audio/66b6491143.mp3","と":"audio/a5401f0cb2.mp3","な":"audio/2b8cb2efd8.mp3","に":"audio/8b63626ad3.mp3","ぬ":"audio/0240ca37aa.mp3","ね":"audio/448d36c51a.mp3","の":"audio/359ebee169.mp3","は":"audio/b7a83b3be2.mp3","ひ":"audio/c89b06a70b.mp3","ふ":"audio/ab8c953c89.mp3","へ":"audio/40346ed000.mp3","ほ":"audio/4b77b80010.mp3","ま":"audio/f25fb3210b.mp3","み":"audio/810c137178.mp3","む":"audio/08f736b4e1.mp3","め":"audio/9f7031cd04.mp3","も":"audio/ac50f83054.mp3","や":"audio/3cb21c442c.mp3","ゆ":"audio/31c8f22ffa.mp3","よ":"audio/66cb79a006.mp3","ら":"audio/fa887b39a3.mp3","り":"audio/0e8f23d1bc.mp3","る":"audio/c1dbaa16c4.mp3","れ":"audio/2573123cac.mp3","ろ":"audio/6d338062aa.mp3","わ":"audio/95ae7ce6fb.mp3","を":"audio/96ac23a752.mp3","ん":"audio/8a9f198246.mp3","が":"audio/2f9adf3c12.mp3","ぎ":"audio/603f4f8cc7.mp3","ぐ":"audio/979084e267.mp3","げ":"audio/31bfe08262.mp3","ご":"audio/e729be1d05.mp3","ざ":"audio/fa22c714f0.mp3","じ":"audio/c272e7aa4e.mp3","ず":"audio/29c9d24a69.mp3","ぜ":"audio/d96c4e5a29.mp3","ぞ":"audio/f5c4896755.mp3","だ":"audio/27422aa1ff.mp3","ぢ":"audio/4a0c1bcff1.mp3","づ":"audio/75edd3c1be.mp3","で":"audio/3b9b371a09.mp3","ど":"audio/d46f7300d3.mp3","ば":"audio/d607db23d7.mp3","び":"audio/ac1e3fa2b1.mp3","ぶ":"audio/f8c48e5b2a.mp3","べ":"audio/0358d6048c.mp3","ぼ":"audio/106bc93a5e.mp3","ぱ":"audio/82c3cfaa26.mp3","ぴ":"audio/d3d504d0bc.mp3","ぷ":"audio/1ddda96e93.mp3","ぺ":"audio/578d3d7dfd.mp3","ぽ":"audio/1d1c468856.mp3","きゃ":"audio/3d14ede697.mp3","きゅ":"audio/2ea4771e19.mp3","きょ":"audio/e0b91424e7.mp3","しゃ":"audio/5229ea7e26.mp3","しゅ":"audio/a6954999d4.mp3","しょ":"audio/b3ec74edd9.mp3","ちゃ":"audio/e2bd8c0763.mp3","ちゅ":"audio/cdaf2fbd5c.mp3","ちょ":"audio/430549b41b.mp3","にゃ":"audio/0d2c58c2ee.mp3","にゅ":"audio/0d774e1d99.mp3","にょ":"audio/cdfee51696.mp3","ひゃ":"audio/46c902f0dd.mp3","ひゅ":"audio/e42bdef725.mp3","ひょ":"audio/1adfa01b3b.mp3","みゃ":"audio/29553a92b3.mp3","みゅ":"audio/bb83e7f4f4.mp3","みょ":"audio/810630d94f.mp3","りゃ":"audio/1033528cdb.mp3","りゅ":"audio/4db283181e.mp3","りょ":"audio/95d3d08925.mp3","ぎゃ":"audio/848c54e5a8.mp3","ぎゅ":"audio/32868c1f19.mp3","ぎょ":"audio/dd1c4213df.mp3","じゃ":"audio/22e1a448f9.mp3","じゅ":"audio/fd08026652.mp3","じょ":"audio/655b67570e.mp3","びゃ":"audio/f60e6b3d97.mp3","びゅ":"audio/99e36d6120.mp3","びょ":"audio/fac20291ef.mp3","ぴゃ":"audio/096209f993.mp3","ぴゅ":"audio/7c7426b43d.mp3","ぴょ":"audio/12a8c2fd56.mp3","ファ":"audio/0e73cc94a7.mp3","フィ":"audio/9a6777b1ab.mp3","フェ":"audio/b4982b367e.mp3","フォ":"audio/71bfe85c0b.mp3","ティ":"audio/0370cdc0be.mp3","トゥ":"audio/928b97f476.mp3","ディ":"audio/53ce0b3024.mp3","デュ":"audio/7465605112.mp3","ウィ":"audio/c1efc0d35e.mp3","ウェ":"audio/2c57a8a997.mp3","ウォ":"audio/9b052210b0.mp3","ツァ":"audio/a1e5ffe2c9.mp3","ツィ":"audio/d1c4a636d8.mp3","ツェ":"audio/4ffb1b6bbb.mp3","ツォ":"audio/2690b3a237.mp3","チェ":"audio/aceed82404.mp3","シェ":"audio/a57ffe55de.mp3","ジェ":"audio/c385acb08d.mp3","イェ":"audio/0c66275d4e.mp3","ヴァ":"audio/454072c423.mp3","ヴィ":"audio/aceae44674.mp3","ヴ":"audio/a1cb733393.mp3","ヴェ":"audio/6ad71639ab.mp3","ヴォ":"audio/1de25d53e5.mp3","ー":"audio/1f47598e2d.mp3","一":"audio/7941da94db.mp3","いち":"audio/cb1b789d7b.mp3","右":"audio/4d9c32c23d.mp3","みぎ":"audio/df8376086c.mp3","雨":"audio/95433763b3.mp3","あめ":"audio/3db742ffbc.mp3","円":"audio/a6de4cbffa.mp3","えん":"audio/d31ff5f304.mp3","王":"audio/891b65a1d1.mp3","おう":"audio/8f8ce69631.mp3","音":"audio/43ad15e73d.mp3","おと":"audio/b7e2e48106.mp3","下":"audio/3850a186c3.mp3","した":"audio/6db68e310a.mp3","火":"audio/df3bbd5232.mp3","花":"audio/22dbba75b9.mp3","はな":"audio/3d212e44a6.mp3","貝":"audio/21b16e394f.mp3","かい":"audio/ceecfc5e35.mp3","学":"audio/65f27a2413.mp3","がく":"audio/2023ca28a3.mp3","気":"audio/40b0ae6d87.mp3","九":"audio/9b4851f85d.mp3","きゅう":"audio/e0624fd9ff.mp3","休":"audio/51147c2152.mp3","玉":"audio/b4f965683f.mp3","たま":"audio/490350a6ec.mp3","金":"audio/9c41898568.mp3","きん":"audio/5e12578e9b.mp3","空":"audio/b7612b71c0.mp3","そら":"audio/2baa7b404c.mp3","月":"audio/e42b99d599.mp3","つき":"audio/b384ae58e4.mp3","犬":"audio/b3a3a30c86.mp3","いぬ":"audio/818e2b4481.mp3","見":"audio/e88bafd4e1.mp3","みる":"audio/d4f4a15eca.mp3","五":"audio/1fcc29d077.mp3","口":"audio/c941757431.mp3","くち":"audio/3ef2efbbe4.mp3","校":"audio/750800b75d.mp3","こう":"audio/bfe4a79c42.mp3","左":"audio/d2aff14178.mp3","ひだり":"audio/ec442a982c.mp3","三":"audio/e662ff59a0.mp3","さん":"audio/5c8a429e6d.mp3","山":"audio/86fa9c82d8.mp3","やま":"audio/50f1003ef7.mp3","子":"audio/ff6ae520d1.mp3","四":"audio/21716cf311.mp3","糸":"audio/eb162d526e.mp3","いと":"audio/f3154a672e.mp3","字":"audio/a95dbb0ea4.mp3","耳":"audio/78e4f46b19.mp3","みみ":"audio/4164cfc52a.mp3","七":"audio/aad6914f8f.mp3","しち":"audio/ec1f10795b.mp3","車":"audio/ae9290a5af.mp3","くるま":"audio/0ea60ce7f5.mp3","手":"audio/3c7d183f1b.mp3","十":"audio/181245720b.mp3","じゅう":"audio/d1cf3c41e2.mp3","出":"audio/58f0210610.mp3","でる":"audio/022a74da64.mp3","女":"audio/87c835a6b1.mp3","おんな":"audio/4b970bfa1f.mp3","小":"audio/391b8fa9c7.mp3","しょう":"audio/d21b838752.mp3","上":"audio/af767b7e4a.mp3","うえ":"audio/1001fdc342.mp3","森":"audio/0d9aeb6eae.mp3","もり":"audio/74ad3c91ea.mp3","人":"audio/465afe3c11.mp3","ひと":"audio/67fcc09ffc.mp3","水":"audio/eab619fba2.mp3","みず":"audio/72f4c40d85.mp3","正":"audio/0f756c3fad.mp3","ただしい":"audio/873f06f8d3.mp3","生":"audio/b30c1a985e.mp3","せい":"audio/14562629dc.mp3","青":"audio/1ca69c4be0.mp3","あお":"audio/87888431e1.mp3","夕":"audio/47e0d0f6fe.mp3","ゆう":"audio/cec45435c0.mp3","石":"audio/87cc016a08.mp3","いし":"audio/5354a673b4.mp3","赤":"audio/489378dc9f.mp3","あか":"audio/80dbaa7527.mp3","千":"audio/c821e52231.mp3","せん":"audio/5f18816374.mp3","川":"audio/e130dbe0a5.mp3","かわ":"audio/35162d37d8.mp3","先":"audio/f9a03fb302.mp3","早":"audio/d6cb15b9a6.mp3","はやい":"audio/c7ab9144f4.mp3","草":"audio/7d3cfe8c4e.mp3","くさ":"audio/e00508cb66.mp3","足":"audio/fbb4674dab.mp3","あし":"audio/9385c0acb8.mp3","村":"audio/79c5bcc158.mp3","むら":"audio/cf01db7c85.mp3","大":"audio/ab18e30c0d.mp3","だい":"audio/bb1ba4ed76.mp3","男":"audio/36a4908a55.mp3","おとこ":"audio/d9b20df680.mp3","竹":"audio/50064b40e1.mp3","たけ":"audio/11feff3c93.mp3","中":"audio/aed1dfbc31.mp3","なか":"audio/fe79a51bda.mp3","虫":"audio/aed372359c.mp3","むし":"audio/b77f78e406.mp3","町":"audio/82a1d77ff3.mp3","まち":"audio/decb1d665d.mp3","天":"audio/249aba7632.mp3","てん":"audio/9deb1af3f7.mp3","田":"audio/3db5087bec.mp3","土":"audio/06da773f58.mp3","つち":"audio/64f46da321.mp3","二":"audio/2d8be272c9.mp3","日":"audio/3edddd85ac.mp3","にち":"audio/c17081da20.mp3","入":"audio/4e6a4b2813.mp3","はいる":"audio/ffa98111f2.mp3","年":"audio/465260fe80.mp3","ねん":"audio/b8f860bb7b.mp3","白":"audio/9b9a35c22a.mp3","しろ":"audio/b7bec3c3e5.mp3","八":"audio/edf1acd5c6.mp3","はち":"audio/424dde6436.mp3","百":"audio/81ec89a2a8.mp3","ひゃく":"audio/8ffc95811c.mp3","文":"audio/56b69ecf51.mp3","ぶん":"audio/50a2d6e88a.mp3","木":"audio/e0a5e08af3.mp3","本":"audio/a4fb8425cd.mp3","ほん":"audio/ee1163b7f6.mp3","名":"audio/4f8ca95e7b.mp3","目":"audio/4064560fbd.mp3","立":"audio/d3d2b63d4d.mp3","たつ":"audio/bd3dad4cde.mp3","力":"audio/3003cba5bd.mp3","ちから":"audio/0c03f22c41.mp3","林":"audio/70c4b42ab0.mp3","はやし":"audio/9240bc3b2d.mp3","六":"audio/61b453523d.mp3","ろく":"audio/465ec92f71.mp3","引":"audio/bb8bbf8952.mp3","いん":"audio/507ec7f48b.mp3","羽":"audio/389b8c20d9.mp3","雲":"audio/c3a0ce2d24.mp3","くも":"audio/861f36d437.mp3","遠":"audio/8a850515a6.mp3","何":"audio/ffd4e49ee6.mp3","なに":"audio/6ad90d3761.mp3","科":"audio/5e0fade5e9.mp3","夏":"audio/d4b37c9f04.mp3","なつ":"audio/3861296220.mp3","家":"audio/a6cdd2a00b.mp3","いえ":"audio/e8fe609d17.mp3","歌":"audio/f45782691b.mp3","うた":"audio/8da448f3aa.mp3","画":"audio/2287851dee.mp3","回":"audio/e0a113160c.mp3","会":"audio/647477bbc5.mp3","海":"audio/9aa7f82989.mp3","うみ":"audio/ce9b66aaf5.mp3","絵":"audio/50605ea3b1.mp3","外":"audio/0e0e0111aa.mp3","そと":"audio/ee3fcd54d7.mp3","角":"audio/2f11f44fe9.mp3","かど":"audio/f4b74907e7.mp3","活":"audio/e6c42c1f65.mp3","かつ":"audio/9ae395aaf8.mp3","間":"audio/47c77e6f84.mp3","あいだ":"audio/0e387ca5ac.mp3","丸":"audio/9d5195dab9.mp3","まる":"audio/802e88f018.mp3","岩":"audio/d7e0da09e1.mp3","いわ":"audio/9b40cd3f97.mp3","顔":"audio/90db765cb4.mp3","かお":"audio/cfb10f7ef2.mp3","帰":"audio/92640d0b4c.mp3","かえる":"audio/8f85891477.mp3","記":"audio/4f6d0fbcac.mp3","弓":"audio/ee5894c7d3.mp3","ゆみ":"audio/12a5e91e01.mp3","牛":"audio/a933ef6a9b.mp3","うし":"audio/e3dadfe37c.mp3","魚":"audio/ee4a1ce61e.mp3","さかな":"audio/8b984b5732.mp3","京":"audio/eb3c993953.mp3","きょう":"audio/adfefaa458.mp3","強":"audio/bf43b92b92.mp3","つよい":"audio/b6b83426ce.mp3","教":"audio/d3db75fca3.mp3","おしえる":"audio/8fcd967283.mp3","近":"audio/c68a31cb46.mp3","ちかい":"audio/10c60f3d2b.mp3","兄":"audio/63b9b59ee9.mp3","あに":"audio/7201d19229.mp3","形":"audio/04fa9412bb.mp3","かたち":"audio/5cbd3773e7.mp3","計":"audio/50178b2d0c.mp3","はかる":"audio/f603b640fb.mp3","元":"audio/c16655df81.mp3","もと":"audio/de94bb61ec.mp3","言":"audio/098a366cd1.mp3","いう":"audio/a51e57f2e5.mp3","原":"audio/9c7b5f6911.mp3","はら":"audio/c07b99c3f5.mp3","戸":"audio/234aadc491.mp3","古":"audio/71951a0f1c.mp3","ふるい":"audio/34fcf1d316.mp3","午":"audio/1933b5e736.mp3","後":"audio/8fe061b0c1.mp3","あと":"audio/e8e1ea1e5c.mp3","語":"audio/c950cc9438.mp3","工":"audio/a626497bc3.mp3","公":"audio/7d6c6b0efe.mp3","広":"audio/e12a71743e.mp3","ひろい":"audio/27c8daaf11.mp3","交":"audio/07875df400.mp3","光":"audio/4af845a4cd.mp3","ひかり":"audio/ef72cdeba6.mp3","考":"audio/e7b196a121.mp3","かんがえる":"audio/32df321f84.mp3","行":"audio/2d5aef4f24.mp3","いく":"audio/8e5f230d76.mp3","高":"audio/4296d7d293.mp3","たかい":"audio/4b96fc902d.mp3","黄":"audio/12401e3443.mp3","合":"audio/c5ef4ac43d.mp3","あう":"audio/8c96a83e94.mp3","谷":"audio/ee176efed6.mp3","たに":"audio/a4ba24d2d8.mp3","国":"audio/62f8ae5410.mp3","くに":"audio/17a71ce3ff.mp3","黒":"audio/b399eac098.mp3","くろ":"audio/f26a1f8190.mp3","今":"audio/ba4b5ed1ab.mp3","いま":"audio/34fab81a7f.mp3","才":"audio/cef3bb04c6.mp3","さい":"audio/2aaf39a2a4.mp3","細":"audio/51a76bdae0.mp3","ほそい":"audio/62f2d5174e.mp3","作":"audio/4cde0dec60.mp3","つくる":"audio/94b871217e.mp3","算":"audio/0ffa26f7ec.mp3","止":"audio/a2bf2b413e.mp3","とまる":"audio/ea8c3469ed.mp3","市":"audio/371528ffb7.mp3","矢":"audio/51e971b13a.mp3","姉":"audio/1c90c5dc24.mp3","あね":"audio/5efbb2ea2d.mp3","思":"audio/a363a77bd7.mp3","おもう":"audio/5d47ba564e.mp3","紙":"audio/b9ebead760.mp3","かみ":"audio/d2b29aa659.mp3","寺":"audio/2af73fbdd5.mp3","てら":"audio/5302378e9c.mp3","自":"audio/fc051a9f89.mp3","みずから":"audio/0dc59087a5.mp3","時":"audio/267e239957.mp3","室":"audio/9d730376f5.mp3","しつ":"audio/3f85e083a3.mp3","社":"audio/322b2db34b.mp3","弱":"audio/5490777b9c.mp3","よわい":"audio/73578b5c34.mp3","首":"audio/ef67981a2b.mp3","くび":"audio/2d81f62829.mp3","秋":"audio/fdf31ff3a8.mp3","あき":"audio/24ad6ff247.mp3","週":"audio/f5ccf886a7.mp3","しゅう":"audio/1b1c2023ef.mp3","春":"audio/dd201928f7.mp3","はる":"audio/0cec0575d6.mp3","書":"audio/8c4f0c64d9.mp3","かく":"audio/3456d2b789.mp3","少":"audio/bd2282db35.mp3","すくない":"audio/951569183d.mp3","場":"audio/5d6e07abd3.mp3","色":"audio/9122c53716.mp3","いろ":"audio/e7a8ab2387.mp3","食":"audio/24bbbad0a6.mp3","たべる":"audio/273013c059.mp3","心":"audio/bf08c05e00.mp3","こころ":"audio/e4902b2658.mp3","新":"audio/5a631c6c29.mp3","あたらしい":"audio/d08aea2c69.mp3","親":"audio/84c10711ec.mp3","おや":"audio/2f4d99a64f.mp3","図":"audio/da9c8fe340.mp3","数":"audio/54af0a5df5.mp3","かず":"audio/8bf58ba3cb.mp3","西":"audio/d62cb2a2a1.mp3","にし":"audio/f4e96c1b98.mp3","声":"audio/52fe83e6df.mp3","こえ":"audio/51ba54bb68.mp3","星":"audio/d1cde6adff.mp3","ほし":"audio/0409c96239.mp3","晴":"audio/eabe42f713.mp3","はれる":"audio/97b9ededeb.mp3","切":"audio/0229764abb.mp3","きる":"audio/1466ca6479.mp3","雪":"audio/c4fccd8dd1.mp3","ゆき":"audio/a2d5d86f85.mp3","船":"audio/7def9ee0ca.mp3","ふね":"audio/a654ccc1c9.mp3","線":"audio/134cb7b0a0.mp3","前":"audio/d8cbd04657.mp3","まえ":"audio/83610a2f55.mp3","組":"audio/27db8a0757.mp3","くみ":"audio/6fbbb7ae87.mp3","走":"audio/0154e79e14.mp3","はしる":"audio/be92b238e9.mp3","多":"audio/7b1568e679.mp3","おおい":"audio/ac922d0724.mp3","太":"audio/2b2daab200.mp3","ふとい":"audio/d256463568.mp3","体":"audio/49dd5c7b9a.mp3","からだ":"audio/3ac1d20ee9.mp3","台":"audio/f923606a39.mp3","地":"audio/1ee506bf5e.mp3","池":"audio/da6a42d24a.mp3","いけ":"audio/c6a6a7738d.mp3","知":"audio/e46ce29982.mp3","しる":"audio/e59eecb914.mp3","茶":"audio/a001ed1cf1.mp3","昼":"audio/fe4a27c060.mp3","ひる":"audio/7124f888b4.mp3","長":"audio/8d226db035.mp3","ながい":"audio/f1fe20412d.mp3","鳥":"audio/62e09a03d4.mp3","とり":"audio/1246d52fc1.mp3","朝":"audio/1cfa3d288d.mp3","あさ":"audio/4e5c032f23.mp3","直":"audio/a62341d6d6.mp3","なおす":"audio/9b877d0dd0.mp3","通":"audio/b527c7714b.mp3","とおる":"audio/7c1b172f0d.mp3","弟":"audio/10b8e3ca50.mp3","おとうと":"audio/5a09a0c6d6.mp3","店":"audio/e852c9a47d.mp3","みせ":"audio/f7c60ba6b8.mp3","点":"audio/be604f8b7e.mp3","電":"audio/08b3cd6252.mp3","でん":"audio/51ebb4a517.mp3","刀":"audio/83f6c0da39.mp3","かたな":"audio/7fe50f8ab6.mp3","冬":"audio/5d6e3b1dd1.mp3","ふゆ":"audio/2029cd1dca.mp3","当":"audio/249e061b35.mp3","あたる":"audio/f938e52442.mp3","東":"audio/dde7b201c3.mp3","ひがし":"audio/fb1b261c4b.mp3","答":"audio/416f535478.mp3","こたえ":"audio/fa7554bf90.mp3","頭":"audio/2ce17249e6.mp3","あたま":"audio/502952cc28.mp3","同":"audio/49cd6e0ab7.mp3","おなじ":"audio/64697af5c2.mp3","道":"audio/b39cecc625.mp3","みち":"audio/28caa84b13.mp3","読":"audio/cfc27dd6a0.mp3","よむ":"audio/cbf8cb9de4.mp3","内":"audio/45a5242566.mp3","うち":"audio/a4822d8332.mp3","南":"audio/48029ea208.mp3","みなみ":"audio/a1600c6d6b.mp3","肉":"audio/f37896e63b.mp3","にく":"audio/aee982ae54.mp3","馬":"audio/6a853ca999.mp3","うま":"audio/106988a0de.mp3","売":"audio/e1e561f67e.mp3","うる":"audio/18b026c095.mp3","買":"audio/ce3ecb85a6.mp3","かう":"audio/714c2e99d6.mp3","麦":"audio/a8027886ff.mp3","むぎ":"audio/fc981131a9.mp3","半":"audio/2475dea6e8.mp3","はん":"audio/012bdc404d.mp3","番":"audio/a02a83a806.mp3","ばん":"audio/7b2ca4feec.mp3","父":"audio/e7378bffb2.mp3","ちち":"audio/daa554aa71.mp3","風":"audio/bb425bdf5e.mp3","かぜ":"audio/7487e0d144.mp3","分":"audio/daf783c8cd.mp3","聞":"audio/49506af9d5.mp3","きく":"audio/797f8264c6.mp3","米":"audio/8227e17a67.mp3","こめ":"audio/abd4776fbf.mp3","歩":"audio/9e22488bf5.mp3","あるく":"audio/be581e4073.mp3","母":"audio/21e4bd76c0.mp3","はは":"audio/9706ca7186.mp3","方":"audio/c26236c2e1.mp3","ほう":"audio/97fd28b971.mp3","北":"audio/9e08f63a9c.mp3","きた":"audio/186930ebd7.mp3","毎":"audio/926dfae27e.mp3","まい":"audio/d982f475c1.mp3","妹":"audio/aa8098078b.mp3","いもうと":"audio/d06c135047.mp3","万":"audio/9d03206671.mp3","まん":"audio/d9f97548d2.mp3","明":"audio/e647d10f14.mp3","あかるい":"audio/31a6284895.mp3","鳴":"audio/9de2ed4bf9.mp3","なく":"audio/604c3cc9dc.mp3","毛":"audio/6f74ec994e.mp3","門":"audio/94837f884b.mp3","もん":"audio/4da06140e2.mp3","夜":"audio/7345a62ec1.mp3","よる":"audio/6bc302a890.mp3","野":"audio/806b80f2d8.mp3","友":"audio/b75aa526b1.mp3","とも":"audio/2c57adc9a1.mp3","用":"audio/2f7919916a.mp3","もちいる":"audio/85c181069b.mp3","曜":"audio/b99c6caed4.mp3","よう":"audio/5191e05c91.mp3","来":"audio/f7b0a3bd20.mp3","くる":"audio/70145327f5.mp3","里":"audio/ff875e9074.mp3","理":"audio/55abae73fb.mp3","話":"audio/80ecea039c.mp3","はなす":"audio/02a48498f4.mp3","ひく":"audio/354a88007c.mp3","悪":"audio/2fe28f7565.mp3","わるい":"audio/d6bdeb248a.mp3","安":"audio/83c21f40f1.mp3","やすい":"audio/6d43689057.mp3","暗":"audio/428fe9a2c6.mp3","くらい":"audio/472caed8fe.mp3","医":"audio/c1fad4ce89.mp3","委":"audio/fac4922cdb.mp3","意":"audio/ace41f4057.mp3","育":"audio/c1edd09f8c.mp3","そだてる":"audio/9754058131.mp3","員":"audio/703fc7570c.mp3","院":"audio/bd3a007487.mp3","飲":"audio/c7b3793e12.mp3","のむ":"audio/4f4ea0e0a5.mp3","運":"audio/db5b5f9ffe.mp3","うん":"audio/6677278ac0.mp3","泳":"audio/11f4f8dd7b.mp3","およぐ":"audio/c033fc3e89.mp3","駅":"audio/f9485cd4bc.mp3","えき":"audio/47546dc177.mp3","央":"audio/7b5438846d.mp3","横":"audio/8cac9e056a.mp3","よこ":"audio/5273f15c72.mp3","屋":"audio/9a117e2bf9.mp3","温":"audio/35c8a8b071.mp3","あたたかい":"audio/dc76580428.mp3","化":"audio/d5b2b9099b.mp3","荷":"audio/afef5c60be.mp3","界":"audio/abc5cbd76b.mp3","開":"audio/137fa73ea2.mp3","ひらく":"audio/6470ac3391.mp3","階":"audio/bbd0c68dbf.mp3","寒":"audio/3a99e9068d.mp3","さむい":"audio/151bc73d37.mp3","感":"audio/ef538fc3e7.mp3","かん":"audio/13b6ffeda5.mp3","漢":"audio/46123efddf.mp3","館":"audio/d39643caa6.mp3","岸":"audio/4d4f1e5c0f.mp3","きし":"audio/5c3af3b1d2.mp3","起":"audio/308fdfa05b.mp3","おきる":"audio/f1e80ce99e.mp3","期":"audio/570f6c2eb2.mp3","客":"audio/f5ddece95b.mp3","きゃく":"audio/7020942680.mp3","究":"audio/fd959affd4.mp3","急":"audio/6da09b9834.mp3","級":"audio/ad018074d8.mp3","宮":"audio/20d60743fb.mp3","球":"audio/1b2527d8ae.mp3","去":"audio/dfb9366c91.mp3","さる":"audio/ed569ff368.mp3","橋":"audio/78ac3df8c7.mp3","はし":"audio/2f3fd35e5d.mp3","業":"audio/db0b8cc889.mp3","ぎょう":"audio/d8c8143037.mp3","曲":"audio/fe4ece4d4b.mp3","きょく":"audio/a2b19a66ad.mp3","局":"audio/e4fa105bfb.mp3","銀":"audio/e8afb0ae46.mp3","ぎん":"audio/58e6bb7146.mp3","区":"audio/47c7622067.mp3","苦":"audio/a4f47becb0.mp3","くるしい":"audio/c4ae0965f2.mp3","具":"audio/682bdd87be.mp3","君":"audio/c5cc7577a2.mp3","きみ":"audio/aa737fa3bc.mp3","係":"audio/872a98eb00.mp3","かかり":"audio/4e8c87bded.mp3","軽":"audio/d827a164a6.mp3","かるい":"audio/e49479a0bb.mp3","血":"audio/3ab8ad4fb6.mp3","決":"audio/bd2601c28c.mp3","きめる":"audio/bf2cc2b2fc.mp3","研":"audio/55dc1fb2f3.mp3","けん":"audio/642b48da7b.mp3","県":"audio/3379515d82.mp3","庫":"audio/23f35f0f26.mp3","湖":"audio/3849c239c7.mp3","みずうみ":"audio/42c6e276ec.mp3","向":"audio/a510ac9d05.mp3","むく":"audio/40cf787294.mp3","幸":"audio/41abbd4b27.mp3","しあわせ":"audio/a992321a29.mp3","港":"audio/1521886362.mp3","みなと":"audio/d08099b6f5.mp3","号":"audio/f7b3204e43.mp3","ごう":"audio/90daa9f0e0.mp3","根":"audio/99ef7b0d09.mp3","祭":"audio/a07555b983.mp3","まつり":"audio/5fe518659a.mp3","皿":"audio/b58a42ffff.mp3","さら":"audio/4e547410ab.mp3","仕":"audio/ef47ef925a.mp3","死":"audio/093a1a4516.mp3","しぬ":"audio/9d78e8e7d9.mp3","使":"audio/0a65025ef0.mp3","つかう":"audio/bb0e5d2206.mp3","始":"audio/0a520e8b16.mp3","はじめる":"audio/af915dc0df.mp3","指":"audio/73490b8c10.mp3","ゆび":"audio/8d3416e568.mp3","歯":"audio/b49bf7df42.mp3","詩":"audio/42675c1140.mp3","次":"audio/7229ecc631.mp3","つぎ":"audio/f6fe5186de.mp3","事":"audio/a2618bdd43.mp3","こと":"audio/a61f45bc6f.mp3","持":"audio/f02e4e803b.mp3","もつ":"audio/9197e4fd83.mp3","式":"audio/8f3e11e948.mp3","しき":"audio/0a96662cf4.mp3","実":"audio/d6131c4595.mp3","じつ":"audio/c57063f2b7.mp3","写":"audio/4d7dc6c5f8.mp3","者":"audio/b8639d5869.mp3","もの":"audio/fc5538cad0.mp3","主":"audio/7bbc73646a.mp3","ぬし":"audio/2bc2ec646f.mp3","守":"audio/5ab075d65b.mp3","まもる":"audio/2a14de9edb.mp3","取":"audio/55c3f66036.mp3","とる":"audio/49234a8274.mp3","酒":"audio/811ba9ddbf.mp3","さけ":"audio/b606bd2614.mp3","受":"audio/d01afbab33.mp3","うける":"audio/e915502cae.mp3","州":"audio/b1f48f947c.mp3","拾":"audio/15cf9cdd03.mp3","ひろう":"audio/77910ed62d.mp3","終":"audio/2fc1683be9.mp3","おわる":"audio/282e7ad765.mp3","習":"audio/f311405064.mp3","ならう":"audio/815c9429c1.mp3","集":"audio/8ae2b69295.mp3","あつめる":"audio/7f7d797b18.mp3","住":"audio/84f3602f49.mp3","すむ":"audio/42073ff345.mp3","重":"audio/fa71326880.mp3","おもい":"audio/b497869329.mp3","宿":"audio/dcbe3c3a57.mp3","やど":"audio/58f72d6587.mp3","所":"audio/1def10bd27.mp3","ところ":"audio/ea88ed11ac.mp3","暑":"audio/9c91a8d6fd.mp3","あつい":"audio/b4b8b4b6a3.mp3","助":"audio/ed7b6e1c7a.mp3","たすける":"audio/427208b7c1.mp3","昭":"audio/f247cec053.mp3","消":"audio/aa4d946d06.mp3","きえる":"audio/868d62fd70.mp3","商":"audio/85f5c20bf3.mp3","章":"audio/13cbe1b8a3.mp3","勝":"audio/5d440c3523.mp3","乗":"audio/9bcdf53943.mp3","のる":"audio/82276e1ffa.mp3","植":"audio/16c2ef9078.mp3","うえる":"audio/47ced460a8.mp3","申":"audio/04d88acfe7.mp3","もうす":"audio/f90d1f1454.mp3","身":"audio/11414d7268.mp3","神":"audio/bad1480541.mp3","真":"audio/5a7958d89e.mp3","しん":"audio/20e469be70.mp3","深":"audio/21ac5a493a.mp3","ふかい":"audio/1cdb4577c9.mp3","進":"audio/376d83d796.mp3","すすむ":"audio/da88dd2149.mp3","世":"audio/ec9a6f6b09.mp3","整":"audio/ad471bfe73.mp3","ととのえる":"audio/afe2f1a5b6.mp3","昔":"audio/312741488b.mp3","むかし":"audio/c22588ef48.mp3","全":"audio/1e5142e81a.mp3","ぜん":"audio/c730a8fade.mp3","相":"audio/052be3fb2c.mp3","あい":"audio/f9b5c76a29.mp3","送":"audio/040f3943c3.mp3","おくる":"audio/db6ec419d8.mp3","想":"audio/291837bd5b.mp3","そう":"audio/0774ffcccd.mp3","息":"audio/4ce4ef96c1.mp3","いき":"audio/7dc2322e66.mp3","速":"audio/4325df7173.mp3","族":"audio/ece08950fb.mp3","ぞく":"audio/799dcb607d.mp3","他":"audio/5fe86c60de.mp3","打":"audio/0e1ceeea46.mp3","うつ":"audio/fb57e9b92b.mp3","対":"audio/4922a17a3d.mp3","たい":"audio/530d347b23.mp3","待":"audio/9f8e275297.mp3","まつ":"audio/aec76c47fe.mp3","代":"audio/b93f7977c1.mp3","第":"audio/ac00774608.mp3","題":"audio/38a6253889.mp3","炭":"audio/a1b03e96b3.mp3","たん":"audio/34a69f7b5c.mp3","短":"audio/b58b94d807.mp3","みじかい":"audio/14b930f166.mp3","談":"audio/fa3344bed4.mp3","だん":"audio/02864e16ea.mp3","着":"audio/7d49b35ca8.mp3","注":"audio/f6349c4416.mp3","ちゅう":"audio/f046c26a34.mp3","柱":"audio/885a8826f1.mp3","はしら":"audio/b0e9abfd81.mp3","丁":"audio/b03a723b48.mp3","てい":"audio/e5f5a62170.mp3","帳":"audio/a589861b0a.mp3","ちょう":"audio/5563cd495c.mp3","調":"audio/30394c8796.mp3","しらべる":"audio/cc5e99a4ae.mp3","追":"audio/eb986c1c2f.mp3","定":"audio/a7a342d213.mp3","さだめる":"audio/1b5a12c941.mp3","庭":"audio/5d03322473.mp3","にわ":"audio/e93ef6eb9a.mp3","笛":"audio/203f27e66a.mp3","ふえ":"audio/bc4f1deae3.mp3","鉄":"audio/c7fa32bf1b.mp3","てつ":"audio/1201fbbdad.mp3","転":"audio/58b122300d.mp3","ころがる":"audio/476172845a.mp3","都":"audio/de44f194cf.mp3","度":"audio/a9f36f53f1.mp3","投":"audio/3943fec31c.mp3","なげる":"audio/7e1ecc9358.mp3","豆":"audio/49823b1003.mp3","まめ":"audio/c6d2096058.mp3","島":"audio/1b33d22a11.mp3","しま":"audio/6d0168ecd0.mp3","湯":"audio/5064c8e91c.mp3","登":"audio/d046dbbca2.mp3","のぼる":"audio/b6d7fa8e7c.mp3","等":"audio/11ccee3ac8.mp3","ひとしい":"audio/5453d11f0d.mp3","動":"audio/5360190cbb.mp3","うごく":"audio/1425a9fce0.mp3","童":"audio/a5f4da2f47.mp3","どう":"audio/25f0978b7d.mp3","農":"audio/47c38d0509.mp3","のう":"audio/75eb0b525b.mp3","波":"audio/63e4479b69.mp3","なみ":"audio/c7d90e399a.mp3","配":"audio/591882d88b.mp3","くばる":"audio/7aec7b9c07.mp3","倍":"audio/a9071b454b.mp3","ばい":"audio/21eea7e610.mp3","箱":"audio/231206dd93.mp3","はこ":"audio/0e543adcac.mp3","畑":"audio/4efd6fed1a.mp3","はたけ":"audio/93361daf78.mp3","発":"audio/d051481279.mp3","はつ":"audio/4306682c8e.mp3","反":"audio/3d2eeee72f.mp3","坂":"audio/7e804f881a.mp3","さか":"audio/a973bc0036.mp3","板":"audio/19aefe96dd.mp3","いた":"audio/d6533efe22.mp3","皮":"audio/c5e0100fa6.mp3","悲":"audio/34607a652a.mp3","かなしい":"audio/eb9d3ac892.mp3","美":"audio/5a93a27052.mp3","うつくしい":"audio/8a0a811cc1.mp3","鼻":"audio/abf53f44d2.mp3","筆":"audio/a4b79795f7.mp3","ふで":"audio/5d266d74ca.mp3","氷":"audio/68406f4fa6.mp3","こおり":"audio/1d3e7f5f9b.mp3","表":"audio/43df8b77ae.mp3","あらわす":"audio/4781a4bcb8.mp3","秒":"audio/0c1fec657f.mp3","びょう":"audio/4a36af42e2.mp3","病":"audio/e659182e15.mp3","やむ":"audio/2a4322ab90.mp3","品":"audio/49aa6d7db5.mp3","しな":"audio/4cb4196b9e.mp3","負":"audio/9a4376d813.mp3","まける":"audio/b47a84c2d3.mp3","部":"audio/c59c8cf208.mp3","服":"audio/7a4ec5e09d.mp3","ふく":"audio/4bcf130172.mp3","福":"audio/13c2add0ec.mp3","物":"audio/7d8e2314e8.mp3","平":"audio/f81ab58623.mp3","たいら":"audio/59a3095a2b.mp3","返":"audio/b79a4e165b.mp3","かえす":"audio/37b6928144.mp3","勉":"audio/94d1681ffd.mp3","べん":"audio/ce535f3650.mp3","放":"audio/cedaabc91c.mp3","味":"audio/e38a9cf0d5.mp3","あじ":"audio/75253cd3bd.mp3","命":"audio/11c1f2747b.mp3","いのち":"audio/d975770c3f.mp3","面":"audio/fd6a0e7d36.mp3","めん":"audio/b895df5f7b.mp3","問":"audio/576c1129b0.mp3","とう":"audio/f00d00f286.mp3","役":"audio/18cf80580b.mp3","やく":"audio/ddae6220bf.mp3","薬":"audio/b0af76f501.mp3","くすり":"audio/5d54cb7108.mp3","由":"audio/4b075caf74.mp3","油":"audio/da82fdfc33.mp3","あぶら":"audio/a748209948.mp3","有":"audio/cc4ad2fd27.mp3","ある":"audio/b8345a6153.mp3","遊":"audio/4f7d4cdc83.mp3","あそぶ":"audio/0a81a103d9.mp3","予":"audio/0c6a46f19b.mp3","羊":"audio/a136f339af.mp3","ひつじ":"audio/a65969dfeb.mp3","洋":"audio/962067f787.mp3","葉":"audio/0ed150d761.mp3","陽":"audio/1ee1ecb4f1.mp3","様":"audio/2cc7ef940c.mp3","落":"audio/4398ffaf53.mp3","おちる":"audio/f4ce0cb0af.mp3","流":"audio/3f4a00cfa3.mp3","ながれる":"audio/6fee91b957.mp3","旅":"audio/f76e884828.mp3","たび":"audio/f0bb37230e.mp3","両":"audio/94b9003454.mp3","りょう":"audio/b94905add7.mp3","緑":"audio/c8f0492c88.mp3","みどり":"audio/243c9d0aac.mp3","礼":"audio/b7a0b6138c.mp3","れい":"audio/f44fa296b3.mp3","列":"audio/cb2f68c9c2.mp3","れつ":"audio/6e0dd8e865.mp3","練":"audio/6c03e62054.mp3","れん":"audio/5bef2d6507.mp3","路":"audio/d047a27f42.mp3","和":"audio/ab20cc42f3.mp3","愛":"audio/988e2bd184.mp3","案":"audio/70fb63955c.mp3","あん":"audio/22a06c8b3d.mp3","以":"audio/0de67b95d7.mp3","位":"audio/cf10dcb8d7.mp3","囲":"audio/569fa787e3.mp3","かこむ":"audio/3b609cb655.mp3","胃":"audio/4ef7e26e3c.mp3","印":"audio/92ab76e19e.mp3","しるし":"audio/10027408f9.mp3","英":"audio/b7671c81de.mp3","えい":"audio/5d9183dd7b.mp3","栄":"audio/d6c833249f.mp3","さかえる":"audio/718cd75e4d.mp3","塩":"audio/62b5d415c3.mp3","しお":"audio/24e49afa20.mp3","億":"audio/ba0c3dc69f.mp3","おく":"audio/fc7721eff7.mp3","加":"audio/85be08f926.mp3","くわえる":"audio/038907a1cb.mp3","果":"audio/2bbb3b3992.mp3","はたす":"audio/2c4e580d8d.mp3","貨":"audio/ad7663d39b.mp3","課":"audio/ca007b19fc.mp3","芽":"audio/13026bc185.mp3","改":"audio/fc242f9296.mp3","あらためる":"audio/42d1b7f0c5.mp3","械":"audio/fa032e7f8d.mp3","各":"audio/ac46c3aa38.mp3","覚":"audio/f80d51f32d.mp3","おぼえる":"audio/e9ccbd29c4.mp3","完":"audio/68b6c8104e.mp3","官":"audio/64380b8bd3.mp3","管":"audio/c30d99fba9.mp3","くだ":"audio/ccec3ffc40.mp3","関":"audio/4f204ec738.mp3","観":"audio/ac2ed07f97.mp3","願":"audio/9731201023.mp3","ねがう":"audio/b4a3ad392f.mp3","希":"audio/ca182a2ad0.mp3","季":"audio/afcd9a4cb1.mp3","旗":"audio/331575be2e.mp3","はた":"audio/62dc621ea0.mp3","器":"audio/c656ce7ab5.mp3","うつわ":"audio/91fac47d4e.mp3","機":"audio/5ac4e8d44b.mp3","議":"audio/ed5485be81.mp3","求":"audio/514dc06cfd.mp3","もとめる":"audio/1e6901de1e.mp3","泣":"audio/af5db28e13.mp3","救":"audio/4efd01ed59.mp3","すくう":"audio/ae26e38cfe.mp3","給":"audio/202547a7c7.mp3","挙":"audio/29b868cbda.mp3","あげる":"audio/feb367cc5e.mp3","漁":"audio/9ee12d00c2.mp3","共":"audio/fbd2b1fb73.mp3","協":"audio/e8c4fd303a.mp3","鏡":"audio/7cf98c5c36.mp3","かがみ":"audio/ab13f4ec01.mp3","競":"audio/173872802a.mp3","きそう":"audio/a8c3d448c4.mp3","極":"audio/5536564a6c.mp3","きわめる":"audio/70127cd25f.mp3","訓":"audio/6699415514.mp3","くん":"audio/11afa0b3b0.mp3","軍":"audio/c3e43c9549.mp3","ぐん":"audio/682efe1cb3.mp3","郡":"audio/9b585323b6.mp3","径":"audio/94a5e58bec.mp3","けい":"audio/9fd641b82e.mp3","型":"audio/a9b8950a23.mp3","かた":"audio/0bcfde60d2.mp3","景":"audio/721fb88696.mp3","芸":"audio/a79b332d1d.mp3","げい":"audio/48ef6ebe13.mp3","欠":"audio/8f9d2200a4.mp3","かける":"audio/54f5f5518f.mp3","結":"audio/37e6d8b6fe.mp3","むすぶ":"audio/47834a0eef.mp3","建":"audio/d248d9bfc2.mp3","たてる":"audio/21b53cac0a.mp3","健":"audio/b31314f9e4.mp3","験":"audio/b722fe7126.mp3","固":"audio/61519da0ec.mp3","かたい":"audio/af530cc653.mp3","功":"audio/a822c28bb7.mp3","好":"audio/ac2c8f13c6.mp3","すき":"audio/48bf2ba0fe.mp3","候":"audio/588ef62ed5.mp3","航":"audio/b34c7324a3.mp3","康":"audio/204ec6eb7a.mp3","告":"audio/11696f22e0.mp3","つげる":"audio/8160e61af9.mp3","差":"audio/796a506e5f.mp3","最":"audio/084fa77fa0.mp3","もっとも":"audio/048cf5cfdd.mp3","材":"audio/a8bc634d37.mp3","ざい":"audio/3607d60612.mp3","昨":"audio/ccbcdbcd3f.mp3","さく":"audio/182a2bb18c.mp3","察":"audio/3077abd619.mp3","さつ":"audio/8ad9f1252f.mp3","参":"audio/8fb1ccc958.mp3","散":"audio/8de53fd645.mp3","ちる":"audio/f64b583907.mp3","産":"audio/761ab600e7.mp3","うむ":"audio/8d1298018e.mp3","残":"audio/d5aaf5f437.mp3","のこる":"audio/758bfbf905.mp3","士":"audio/3dd2f6a7b6.mp3","氏":"audio/e61a98b348.mp3","史":"audio/3d008e6419.mp3","司":"audio/ac95937ea4.mp3","試":"audio/52bf0349db.mp3","こころみる":"audio/2719117035.mp3","児":"audio/ebf88a3c18.mp3","治":"audio/2b383f6cd5.mp3","なおる":"audio/718b235017.mp3","辞":"audio/d5338117f0.mp3","失":"audio/bc1673060d.mp3","うしなう":"audio/51acf46b98.mp3","借":"audio/03a60113f9.mp3","かりる":"audio/95d2b59783.mp3","種":"audio/8a2f09aef4.mp3","たね":"audio/185fd51e4d.mp3","周":"audio/a657f46f5b.mp3","まわり":"audio/7aae6439b6.mp3","祝":"audio/f207ea8d54.mp3","いわう":"audio/ac84bbf351.mp3","順":"audio/b5493c6d5e.mp3","じゅん":"audio/e55e8d245f.mp3","初":"audio/cca7977f4a.mp3","はじめ":"audio/2b59ad8ca5.mp3","松":"audio/161e45f0ce.mp3","笑":"audio/1300f40cb6.mp3","わらう":"audio/8534bc7393.mp3","唱":"audio/bf4e101d6b.mp3","となえる":"audio/609add16d4.mp3","焼":"audio/ae2fd3596a.mp3","やける":"audio/0906aad9df.mp3","象":"audio/175141b4ad.mp3","ぞう":"audio/1fcd4a78e6.mp3","照":"audio/e73bba6804.mp3","てらす":"audio/cc127b473d.mp3","城":"audio/3e2b12c521.mp3","信":"audio/bf94136271.mp3","成":"audio/3fe84c082f.mp3","なる":"audio/08520987ee.mp3","省":"audio/3d14d1a1f9.mp3","清":"audio/adcfe4db21.mp3","きよい":"audio/297a5f9278.mp3","静":"audio/861a7657ed.mp3","しずか":"audio/02ac11a111.mp3","席":"audio/e5951b7c0f.mp3","せき":"audio/238cc9e918.mp3","積":"audio/0665224704.mp3","つむ":"audio/fb48e01118.mp3","節":"audio/735f9788d5.mp3","ふし":"audio/211e955908.mp3","説":"audio/335c5c5b55.mp3","せつ":"audio/48201add40.mp3","浅":"audio/b37c14c493.mp3","あさい":"audio/51aaf9e8bc.mp3","戦":"audio/60469d5c5b.mp3","たたかう":"audio/b17dffa184.mp3","選":"audio/a902d0e512.mp3","えらぶ":"audio/6560cfafb1.mp3","然":"audio/21d3e9c69e.mp3","争":"audio/6a4fae8e37.mp3","あらそう":"audio/858522f0cb.mp3","倉":"audio/37d9f1df90.mp3","くら":"audio/6eb80fd3ae.mp3","巣":"audio/be804e357e.mp3","束":"audio/ac9c134945.mp3","たば":"audio/2def8aa60d.mp3","側":"audio/bd9ed5239c.mp3","そば":"audio/ea88ab205a.mp3","続":"audio/7274eb0f3c.mp3","つづく":"audio/0913182a31.mp3","卒":"audio/f775058825.mp3","そつ":"audio/df26e220e9.mp3","孫":"audio/d2829785b3.mp3","まご":"audio/094b363c46.mp3","帯":"audio/5b203d5475.mp3","おびる":"audio/7d678d87f4.mp3","隊":"audio/78f9fec1fe.mp3","達":"audio/8e1461011e.mp3","単":"audio/d43eb706e6.mp3","置":"audio/8511757c0a.mp3","仲":"audio/17bf3363b1.mp3","貯":"audio/3f024a9e7a.mp3","たくわえる":"audio/60424f649b.mp3","兆":"audio/1264816474.mp3","腸":"audio/aaab5291a8.mp3","低":"audio/19ac677ac0.mp3","ひくい":"audio/cdf89b23af.mp3","底":"audio/9f7035af1b.mp3","そこ":"audio/8315399d60.mp3","的":"audio/01d7aa494b.mp3","てき":"audio/5e1e3c41ae.mp3","典":"audio/dfa2002656.mp3","伝":"audio/65b0afc791.mp3","つたえる":"audio/38c2241113.mp3","徒":"audio/e9906b62de.mp3","努":"audio/d6e80d1e35.mp3","つとめる":"audio/054bb9aa6a.mp3","灯":"audio/7ccb13782a.mp3","堂":"audio/1ef99eb137.mp3","働":"audio/231a6323a1.mp3","はたらく":"audio/b39fc5526c.mp3","特":"audio/24507b7ad4.mp3","とく":"audio/6cb27dcd70.mp3","得":"audio/49f12aa61d.mp3","える":"audio/e052017cef.mp3","毒":"audio/a487f2e667.mp3","どく":"audio/351e62777d.mp3","熱":"audio/3d77c509e3.mp3","ねつ":"audio/d205549efe.mp3","念":"audio/8d32e5f54a.mp3","敗":"audio/8a6974cebc.mp3","梅":"audio/4edc8d4916.mp3","うめ":"audio/15c2b1dca9.mp3","博":"audio/5472ddc027.mp3","はく":"audio/ed0921d26d.mp3","飯":"audio/3a3b3fe3df.mp3","めし":"audio/ee3cf69b9c.mp3","飛":"audio/42dec2e25b.mp3","とぶ":"audio/042b2c2e5e.mp3","費":"audio/bded792396.mp3","ついやす":"audio/f9cf1531fa.mp3","必":"audio/e711a0229e.mp3","かならず":"audio/f64887b02e.mp3","票":"audio/e46f3b4fe1.mp3","ひょう":"audio/cf212129e1.mp3","標":"audio/b067e058ac.mp3","しるべ":"audio/13cf854840.mp3","不":"audio/9eba1ab697.mp3","夫":"audio/000478ee58.mp3","おっと":"audio/f25053ff78.mp3","付":"audio/5d52841be2.mp3","つける":"audio/6b49b1dacb.mp3","府":"audio/5da80b1f93.mp3","副":"audio/48718fec82.mp3","粉":"audio/8bb6651f01.mp3","こな":"audio/3e86b7ec17.mp3","兵":"audio/31015c2f21.mp3","へい":"audio/270036054f.mp3","別":"audio/a0b9df5673.mp3","べつ":"audio/b7d7c8e5b5.mp3","辺":"audio/2e3bbbbe68.mp3","へん":"audio/2c0b9f9d1b.mp3","変":"audio/4e1e7bc1df.mp3","かわる":"audio/5c336ca12e.mp3","便":"audio/3d5856a7eb.mp3","包":"audio/5442dfce9b.mp3","つつむ":"audio/e10021983f.mp3","法":"audio/82d85ed8a3.mp3","望":"audio/0b3b0d0e3a.mp3","のぞむ":"audio/7943fa2548.mp3","牧":"audio/40b68ea15e.mp3","まき":"audio/e8d62ba8ad.mp3","末":"audio/6f214ea0ca.mp3","すえ":"audio/dd50e59d7f.mp3","満":"audio/0a539597dc.mp3","みたす":"audio/50227b3695.mp3","未":"audio/401edd87c2.mp3","民":"audio/7e4b5d8c41.mp3","たみ":"audio/68aee37652.mp3","無":"audio/9e108af5d0.mp3","約":"audio/ebb4a14348.mp3","勇":"audio/de04614241.mp3","いさましい":"audio/00ec5b740e.mp3","要":"audio/5438c873f9.mp3","かなめ":"audio/5606c4e2de.mp3","養":"audio/c1882f382c.mp3","やしなう":"audio/29dc3c03e6.mp3","浴":"audio/dd7f1d60c3.mp3","あびる":"audio/d1eb8e1140.mp3","利":"audio/89d9a9ba3a.mp3","陸":"audio/3a5fe557c1.mp3","りく":"audio/6a0442108f.mp3","良":"audio/8f0e8efd47.mp3","よい":"audio/c872796e6f.mp3","料":"audio/aeb56c4858.mp3","量":"audio/2da16149fb.mp3","輪":"audio/f796841ee4.mp3","類":"audio/89b87da4be.mp3","るい":"audio/d0f501a16c.mp3","令":"audio/fadfc80049.mp3","冷":"audio/74eaee9656.mp3","つめたい":"audio/b71274964e.mp3","例":"audio/eb24e72168.mp3","歴":"audio/6eae940cf7.mp3","れき":"audio/b4ff816475.mp3","連":"audio/00c475080f.mp3","つらなる":"audio/20e066611c.mp3","老":"audio/04837a0cbc.mp3","おい":"audio/df18eb8cb9.mp3","労":"audio/ae895efb42.mp3","ろう":"audio/5f7ec141a6.mp3","録":"audio/ecb009e7db.mp3","圧":"audio/9cf187c3fb.mp3","あつ":"audio/4735c9e12f.mp3","移":"audio/072fddcb17.mp3","うつる":"audio/c7c2d534ce.mp3","因":"audio/be6616c7f6.mp3","永":"audio/84edf3e4d9.mp3","営":"audio/18e1448d36.mp3","衛":"audio/bf4fb72d61.mp3","易":"audio/0d0e451a96.mp3","益":"audio/7722a30fd4.mp3","液":"audio/091bbb7d0b.mp3","演":"audio/381bacb64a.mp3","応":"audio/613c259c3f.mp3","往":"audio/a3cc6922c7.mp3","桜":"audio/4a8c5aa4d9.mp3","さくら":"audio/1501d48816.mp3","恩":"audio/638dc40c45.mp3","おん":"audio/0efb04b7e8.mp3","仮":"audio/8b37363795.mp3","かり":"audio/300cb24e98.mp3","価":"audio/6ea7a7beb4.mp3","河":"audio/5ea03ddf50.mp3","過":"audio/59185fe6ca.mp3","すぎる":"audio/faafba6e2f.mp3","賀":"audio/c213ad38da.mp3","解":"audio/728d81b6da.mp3","格":"audio/e7e160441d.mp3","確":"audio/83e5aef4df.mp3","たしかめる":"audio/90e2916a75.mp3","額":"audio/95877b0f9c.mp3","刊":"audio/d42f2cb8ca.mp3","幹":"audio/82e7ae1987.mp3","みき":"audio/31f0c76027.mp3","慣":"audio/25e1d84126.mp3","なれる":"audio/3a533cdc1f.mp3","眼":"audio/d456c933f3.mp3","まなこ":"audio/ce604f0ccf.mp3","基":"audio/4d3610a645.mp3","寄":"audio/a861160989.mp3","規":"audio/1bfc8aa00e.mp3","技":"audio/300ff5e315.mp3","わざ":"audio/6ed6c445ea.mp3","義":"audio/eb6371285a.mp3","逆":"audio/d39c976fa9.mp3","さかさ":"audio/6621d4d8a0.mp3","久":"audio/1a2c726632.mp3","ひさしい":"audio/ebb15f7516.mp3","旧":"audio/fdfeb111e0.mp3","居":"audio/9bb8fecd61.mp3","いる":"audio/bb9d44f870.mp3","許":"audio/9cd809ebcc.mp3","ゆるす":"audio/6890ea927c.mp3","境":"audio/e8da851469.mp3","さかい":"audio/1ab4d455f9.mp3","均":"audio/bb55b8d1d0.mp3","禁":"audio/0f20f4ddf5.mp3","句":"audio/e1b9163e38.mp3","経":"audio/8196369942.mp3","潔":"audio/7ad70236f5.mp3","いさぎよい":"audio/50871ca2f7.mp3","件":"audio/f7edf5acc7.mp3","険":"audio/8eef58ea35.mp3","けわしい":"audio/8329702b5a.mp3","検":"audio/fa5ec68d3d.mp3","限":"audio/e0e27d3d94.mp3","かぎる":"audio/d347b270ab.mp3","現":"audio/37c48de1ad.mp3","あらわれる":"audio/9453694b88.mp3","減":"audio/2350525b46.mp3","へる":"audio/cb25f2b90c.mp3","故":"audio/e2aa22a0db.mp3","ゆえ":"audio/82dc58cae2.mp3","個":"audio/087637ac83.mp3","護":"audio/4ad860903b.mp3","効":"audio/b1fb229a70.mp3","厚":"audio/ba8c173b23.mp3","耕":"audio/326131fdcc.mp3","たがやす":"audio/eb1a1c9393.mp3","鉱":"audio/82778d16c1.mp3","構":"audio/a6173b5258.mp3","かまえる":"audio/8fb4b994be.mp3","興":"audio/86493ac4e5.mp3","おこる":"audio/5b3716b97c.mp3","講":"audio/cf6347a6c2.mp3","混":"audio/1e6ebf6b73.mp3","まじる":"audio/e9211b508a.mp3","査":"audio/a30a6b80cc.mp3","再":"audio/bec7a0c664.mp3","ふたたび":"audio/8fdedf24a0.mp3","災":"audio/971de1d1ca.mp3","わざわい":"audio/af23835dfb.mp3","妻":"audio/7ffb415998.mp3","つま":"audio/1f04536e6d.mp3","採":"audio/2aa794f523.mp3","際":"audio/f522056f02.mp3","きわ":"audio/4e1da07c4c.mp3","在":"audio/241d47a3ee.mp3","財":"audio/67babe77d7.mp3","たから":"audio/61bc02b1c3.mp3","罪":"audio/58fa0ea649.mp3","つみ":"audio/fb438b2ba2.mp3","雑":"audio/c1d86115fe.mp3","ざつ":"audio/06f77c72ff.mp3","酸":"audio/778b84ebf8.mp3","賛":"audio/65dbd2f200.mp3","支":"audio/3e8ecac2d9.mp3","ささえる":"audio/61f647e0db.mp3","志":"audio/376dbbbe59.mp3","こころざし":"audio/b1be3b37ba.mp3","枝":"audio/ed2087f4c4.mp3","えだ":"audio/5f04c51886.mp3","師":"audio/448f224621.mp3","資":"audio/07dc74f96b.mp3","飼":"audio/754777d5de.mp3","示":"audio/66d9867708.mp3","しめす":"audio/1671b7cda6.mp3","似":"audio/996b82083d.mp3","にる":"audio/c272a433b1.mp3","識":"audio/3afb022613.mp3","質":"audio/756fb1ddfe.mp3","舎":"audio/665f60dbe0.mp3","謝":"audio/582dc626db.mp3","あやまる":"audio/484c5e2e27.mp3","授":"audio/0db992280c.mp3","さずける":"audio/ca1b49fc12.mp3","修":"audio/5608f15385.mp3","おさめる":"audio/fa68e9e2c0.mp3","述":"audio/ca633abfeb.mp3","のべる":"audio/48bfdd2e98.mp3","術":"audio/8dfa3988b8.mp3","じゅつ":"audio/2335d397de.mp3","準":"audio/5b5caa1726.mp3","序":"audio/06f2b086c7.mp3","承":"audio/9407ae4d0a.mp3","招":"audio/6148e9ae92.mp3","まねく":"audio/fadaa97386.mp3","証":"audio/1c0223d8dd.mp3","賞":"audio/8b60b59dc5.mp3","条":"audio/cc1bacb511.mp3","じょう":"audio/a500248af8.mp3","状":"audio/b622392c35.mp3","常":"audio/5ad8bea218.mp3","つね":"audio/e012c2b305.mp3","情":"audio/a90c24fde2.mp3","織":"audio/56191ac2f5.mp3","おる":"audio/281fdc1510.mp3","職":"audio/f5c1c9631c.mp3","しょく":"audio/20039840dc.mp3","制":"audio/fb0e529674.mp3","性":"audio/2451516b8d.mp3","政":"audio/572eccb13d.mp3","勢":"audio/3fec48a258.mp3","いきおい":"audio/8d26db28de.mp3","精":"audio/02d154d71e.mp3","製":"audio/faeedf2eb9.mp3","税":"audio/2380db870f.mp3","ぜい":"audio/d7c88bc613.mp3","責":"audio/7d5ae0d3e9.mp3","せめる":"audio/03024180fa.mp3","績":"audio/8da6c2d803.mp3","接":"audio/60efc0710c.mp3","つぐ":"audio/392053519f.mp3","設":"audio/f887f27ffb.mp3","もうける":"audio/1ae4f59e83.mp3","絶":"audio/22f9848b6d.mp3","たえる":"audio/80cff89754.mp3","祖":"audio/7757611d16.mp3","素":"audio/758aff19b3.mp3","総":"audio/9c5cb48866.mp3","造":"audio/076edbd731.mp3","像":"audio/2774eb215f.mp3","増":"audio/97dd0a6a9a.mp3","ふえる":"audio/81cf59c25b.mp3","則":"audio/1363b26ed6.mp3","のり":"audio/9b5ce4755d.mp3","測":"audio/3dd617a54d.mp3","属":"audio/7ce9ba6b42.mp3","率":"audio/1139179491.mp3","りつ":"audio/0431915f2a.mp3","損":"audio/fe776ea690.mp3","そこなう":"audio/33c7149151.mp3","退":"audio/cf502bdc0a.mp3","しりぞく":"audio/10be912191.mp3","貸":"audio/e3eddabb12.mp3","かす":"audio/d91a49e422.mp3","態":"audio/45061c7d68.mp3","団":"audio/8816ed9b25.mp3","断":"audio/b2b91aa587.mp3","築":"audio/5f7c598d4c.mp3","きずく":"audio/c4875e79be.mp3","張":"audio/4dbcfd6c8f.mp3","提":"audio/5aceffe46d.mp3","さげる":"audio/99b43c9a88.mp3","程":"audio/2971c96735.mp3","ほど":"audio/a3eab62fb5.mp3","敵":"audio/d1569be0d6.mp3","かたき":"audio/a1fbd56b34.mp3","統":"audio/8034e089f9.mp3","すべる":"audio/5f44da4fe5.mp3","銅":"audio/b4f1fb6d8d.mp3","導":"audio/5a7d83b71f.mp3","みちびく":"audio/87fabcc4b7.mp3","徳":"audio/b0fe7d7806.mp3","独":"audio/b1960cddf7.mp3","ひとり":"audio/14f3f3549f.mp3","任":"audio/0e3e0e14c5.mp3","まかせる":"audio/82dd3f3b72.mp3","燃":"audio/c6da9faf5a.mp3","もえる":"audio/5071438f9d.mp3","能":"audio/9c0479617b.mp3","破":"audio/39f9dff8ce.mp3","やぶる":"audio/65831785ab.mp3","犯":"audio/a24fbc26b3.mp3","おかす":"audio/76c8a1bf41.mp3","判":"audio/c8346583cc.mp3","わかる":"audio/c3f975958c.mp3","版":"audio/47595ba356.mp3","比":"audio/d6eea35759.mp3","くらべる":"audio/89579f0f04.mp3","肥":"audio/bf2f5c1819.mp3","こえる":"audio/9d1cd902b4.mp3","非":"audio/4339282fc9.mp3","備":"audio/47305965da.mp3","そなえる":"audio/364e8cf247.mp3","評":"audio/9180f24b41.mp3","貧":"audio/d86c2acfa3.mp3","まずしい":"audio/065d0b8377.mp3","布":"audio/cfc2f0139a.mp3","ぬの":"audio/6608fb460e.mp3","婦":"audio/1481889239.mp3","富":"audio/3d62a861d7.mp3","とむ":"audio/f579bc791c.mp3","武":"audio/1a29f99bbe.mp3","復":"audio/9ae9f12758.mp3","もとにもどる":"audio/47df4b9469.mp3","複":"audio/dedab6bab6.mp3","仏":"audio/eac6cf74f4.mp3","ほとけ":"audio/a082394fe1.mp3","編":"audio/d17a13417e.mp3","あむ":"audio/cbbe9e0346.mp3","弁":"audio/020a54126a.mp3","保":"audio/b553703b6e.mp3","たもつ":"audio/2c7a36ee45.mp3","墓":"audio/10466328b8.mp3","はか":"audio/05e0d7d7b6.mp3","報":"audio/3cf68b85ab.mp3","むくいる":"audio/0c31db7c0a.mp3","豊":"audio/4b021e274f.mp3","ゆたか":"audio/ba44020d02.mp3","防":"audio/b6cab53f76.mp3","ふせぐ":"audio/b5e5baa470.mp3","貿":"audio/4143908912.mp3","ぼう":"audio/406a8dd5ee.mp3","暴":"audio/e27234bd7a.mp3","あばれる":"audio/b97cb3f11a.mp3","脈":"audio/6e31f0f6ed.mp3","みゃく":"audio/f2159808c3.mp3","務":"audio/2d3f425ccd.mp3","夢":"audio/6f7e368290.mp3","ゆめ":"audio/1d5d907eb0.mp3","迷":"audio/0a5ad2f185.mp3","まよう":"audio/5d4cce034d.mp3","綿":"audio/109470ce3c.mp3","わた":"audio/561d47b5dd.mp3","輸":"audio/8bf0971326.mp3","余":"audio/82b32841ef.mp3","あまる":"audio/ecc838a393.mp3","預":"audio/9b98aaba0f.mp3","あずける":"audio/c69e489342.mp3","容":"audio/f414313618.mp3","いれる":"audio/8aee63b865.mp3","略":"audio/cdb456974f.mp3","りゃく":"audio/caed8117fe.mp3","留":"audio/e4de2171ff.mp3","領":"audio/ca0bc0ee2e.mp3","異":"audio/f33f480bcd.mp3","遺":"audio/b69153438a.mp3","域":"audio/aa659e754b.mp3","宇":"audio/987e8f1de4.mp3","映":"audio/29aa3857dd.mp3","うつす":"audio/b32e83f141.mp3","延":"audio/da4c3afdee.mp3","のびる":"audio/19142119c9.mp3","沿":"audio/79ad818341.mp3","我":"audio/1681525453.mp3","われ":"audio/a88746bdad.mp3","灰":"audio/3e35a89155.mp3","はい":"audio/c4836ea5ab.mp3","拡":"audio/a399aded39.mp3","ひろげる":"audio/11be917517.mp3","革":"audio/9dac8c9089.mp3","閣":"audio/d3c62fdf1b.mp3","割":"audio/b051bb69ac.mp3","わる":"audio/f3d5415f4d.mp3","株":"audio/4468ebc248.mp3","かぶ":"audio/882eda436c.mp3","干":"audio/4648b90345.mp3","かわかす":"audio/5ab84fb58b.mp3","巻":"audio/9bc501b654.mp3","まく":"audio/f5fd2952ea.mp3","看":"audio/9302446f9b.mp3","簡":"audio/044ba0d06f.mp3","危":"audio/9e9607914e.mp3","あぶない":"audio/02c39d869e.mp3","机":"audio/23a732e61c.mp3","つくえ":"audio/db1a3c9514.mp3","揮":"audio/3aa5be97dc.mp3","ふるう":"audio/7cd3092160.mp3","貴":"audio/702b979c08.mp3","とうとい":"audio/a09acb76d6.mp3","疑":"audio/67713d8448.mp3","うたがう":"audio/65f97ef8f0.mp3","吸":"audio/c202d38a69.mp3","すう":"audio/dfcfa83b99.mp3","供":"audio/cf35e6ac68.mp3","胸":"audio/88ed7a21ee.mp3","むね":"audio/b0f694745d.mp3","郷":"audio/c1f046c0d8.mp3","勤":"audio/9bc68b9b8a.mp3","筋":"audio/3acbff09c7.mp3","すじ":"audio/c616b91509.mp3","系":"audio/cd4c423945.mp3","敬":"audio/699cc37930.mp3","うやまう":"audio/5e82afcd81.mp3","警":"audio/d67835b019.mp3","けいかい":"audio/3ad8f59cd5.mp3","劇":"audio/ed6af9af17.mp3","げき":"audio/4eab38cbb3.mp3","激":"audio/e111d5f31e.mp3","はげしい":"audio/37b722be3f.mp3","穴":"audio/fb404a46f5.mp3","あな":"audio/7f7a6a0be8.mp3","憲":"audio/ec4609935b.mp3","権":"audio/59bf1e4b9b.mp3","絹":"audio/e34ea75439.mp3","きぬ":"audio/bfd822a0a7.mp3","厳":"audio/d080b850b1.mp3","きびしい":"audio/8190969ce8.mp3","源":"audio/66f5e225b7.mp3","みなもと":"audio/aa49ad7bb3.mp3","呼":"audio/fa9c440316.mp3","よぶ":"audio/b2a028fc95.mp3","誤":"audio/51dbcc2fde.mp3","まちがい":"audio/fea1f75b7a.mp3","后":"audio/2038d4bae7.mp3","きさき":"audio/7ceb04228f.mp3","孝":"audio/4d47513dc1.mp3","皇":"audio/01a511157c.mp3","紅":"audio/f233dec4f6.mp3","くれない":"audio/784f2ad6a3.mp3","降":"audio/ec927c762d.mp3","おりる":"audio/6432570a47.mp3","鋼":"audio/01f2381f08.mp3","はがね":"audio/62297579c0.mp3","刻":"audio/d49dc1c4a5.mp3","きざむ":"audio/6f003806ac.mp3","穀":"audio/207cb5bba9.mp3","こく":"audio/dc555db340.mp3","骨":"audio/aeac48c6c0.mp3","ほね":"audio/4344ac86b3.mp3","困":"audio/dba64cc14e.mp3","こまる":"audio/d26238f649.mp3","砂":"audio/726b3299b3.mp3","すな":"audio/38bcd96316.mp3","座":"audio/12b97c5baf.mp3","すわる":"audio/3aa3423c97.mp3","済":"audio/b487786393.mp3","裁":"audio/879a0f8a86.mp3","さばく":"audio/cfc2d35a25.mp3","策":"audio/ce04dbac55.mp3","冊":"audio/be3c29a53a.mp3","蚕":"audio/32efb6bc50.mp3","かいこ":"audio/3d945451f3.mp3","至":"audio/981cbe312b.mp3","いたる":"audio/9f57e8aceb.mp3","私":"audio/b511e6815b.mp3","わたし":"audio/df551410e7.mp3","姿":"audio/a63f34f08a.mp3","すがた":"audio/836f7b6bbd.mp3","視":"audio/a7d4339664.mp3","詞":"audio/83626c7c31.mp3","誌":"audio/eb22de797a.mp3","磁":"audio/2fba1272ce.mp3","射":"audio/0442df0da2.mp3","捨":"audio/496cb9d54b.mp3","すてる":"audio/19b1cb3414.mp3","尺":"audio/977314f941.mp3","しゃく":"audio/0d11c084fe.mp3","若":"audio/cf8a0f253d.mp3","わかい":"audio/4c8d7b37e7.mp3","樹":"audio/f8ab5ffb7e.mp3","収":"audio/e89d16d38d.mp3","宗":"audio/be5297cd37.mp3","就":"audio/1ff3ffeeb1.mp3","つく":"audio/907d391453.mp3","衆":"audio/78a75f0ade.mp3","従":"audio/f9e00aa3a1.mp3","したがう":"audio/6034de8cd8.mp3","縦":"audio/a1e5b09b81.mp3","たて":"audio/41e43ce531.mp3","縮":"audio/6ae419b7fc.mp3","ちぢむ":"audio/98aaccc9ee.mp3","熟":"audio/dadfc51f35.mp3","じゅく":"audio/37d8ff0d24.mp3","純":"audio/a3098378d1.mp3","処":"audio/910068e1f0.mp3","署":"audio/f2a8a6d36a.mp3","諸":"audio/04409092d4.mp3","除":"audio/9fdac49d5e.mp3","のぞく":"audio/edea85e37b.mp3","将":"audio/0645cb3f9e.mp3","傷":"audio/d00d52ad3d.mp3","きず":"audio/06dd1a4d7d.mp3","障":"audio/c85bf60215.mp3","さまたげる":"audio/ed5585b4e7.mp3","蒸":"audio/48abb82162.mp3","むす":"audio/d4b2646e09.mp3","針":"audio/f965003b4a.mp3","はり":"audio/f04f47ade1.mp3","仁":"audio/cfa6a08f21.mp3","じん":"audio/7fbde3eb9a.mp3","垂":"audio/b39bd61df8.mp3","たれる":"audio/0023311a5b.mp3","推":"audio/615eb6d622.mp3","おす":"audio/818c7d4323.mp3","寸":"audio/c5c6bab49d.mp3","すん":"audio/9a4801566d.mp3","盛":"audio/7c7fedd2c4.mp3","もる":"audio/57368161a0.mp3","聖":"audio/cc9b87a9ca.mp3","誠":"audio/b3920db8fc.mp3","まこと":"audio/931fa299eb.mp3","舌":"audio/16f3616ed3.mp3","宣":"audio/16355b73c8.mp3","専":"audio/32638089e7.mp3","もっぱら":"audio/f115a37bc4.mp3","泉":"audio/5b87bd70bf.mp3","いずみ":"audio/02009d8428.mp3","洗":"audio/d96561075f.mp3","あらう":"audio/390ef05f50.mp3","染":"audio/1730e41503.mp3","そめる":"audio/a33e389554.mp3","銭":"audio/3f70752d9c.mp3","ぜに":"audio/6fea7185c8.mp3","善":"audio/2fca8cbcd2.mp3","奏":"audio/5257b3ee13.mp3","かなでる":"audio/2694b470fc.mp3","窓":"audio/2a50949a39.mp3","まど":"audio/5cc516dc7c.mp3","創":"audio/95c14d7da9.mp3","装":"audio/688bbb54e7.mp3","よそおう":"audio/e91a2f2606.mp3","層":"audio/356ddac2ce.mp3","操":"audio/155b9447c9.mp3","あやつる":"audio/b14f100c87.mp3","蔵":"audio/9bf948d37c.mp3","臓":"audio/4b524db134.mp3","存":"audio/0a91d3f389.mp3","尊":"audio/d42626123d.mp3","宅":"audio/be094d60f5.mp3","たく":"audio/0d5b8215f5.mp3","担":"audio/00bc1ca2f4.mp3","になう":"audio/8ee805cf89.mp3","探":"audio/469eb35883.mp3","さがす":"audio/f4c20ff38a.mp3","誕":"audio/7d5ba151f7.mp3","うまれる":"audio/cdf7568435.mp3","値":"audio/90013fa35b.mp3","宙":"audio/7d77ec6c1d.mp3","忠":"audio/448fefe72f.mp3","著":"audio/e84cbeca37.mp3","いちじるしい":"audio/a800b83712.mp3","庁":"audio/0b1456f00e.mp3","頂":"audio/ca5ddec81d.mp3","いただく":"audio/dbcf1b85bf.mp3","潮":"audio/d72557e289.mp3","賃":"audio/3bf9ab57ae.mp3","ちん":"audio/47287e9bbe.mp3","痛":"audio/1627e73912.mp3","いたい":"audio/d24f8b6231.mp3","展":"audio/272c321ef8.mp3","のばす":"audio/a008ab8ad7.mp3","討":"audio/c9e4d156bf.mp3","党":"audio/4f6a9649c8.mp3","糖":"audio/a0b763d871.mp3","届":"audio/5353f7901d.mp3","とどける":"audio/154c5637e5.mp3","難":"audio/692049cc84.mp3","むずかしい":"audio/00493cabfc.mp3","乳":"audio/0390840472.mp3","認":"audio/c2f21bd12c.mp3","みとめる":"audio/795c1e7980.mp3","納":"audio/30aa49fd7d.mp3","脳":"audio/7e8bb411c8.mp3","派":"audio/bed611f085.mp3","拝":"audio/b5fca44882.mp3","おがむ":"audio/232d5285a9.mp3","背":"audio/a6d9108337.mp3","肺":"audio/9365ff1b5e.mp3","俳":"audio/04fd7d93ad.mp3","班":"audio/043aaa7176.mp3","晩":"audio/ce32d370d7.mp3","否":"audio/c9744f45e7.mp3","いな":"audio/6799dea6bb.mp3","批":"audio/394fb76141.mp3","秘":"audio/26b336605a.mp3","ひみつ":"audio/e6d71a9668.mp3","腹":"audio/28ea2915f4.mp3","奮":"audio/7f1a5a9fd4.mp3","並":"audio/90b4f23c28.mp3","ならぶ":"audio/e79ff6d976.mp3","閉":"audio/df08ff8827.mp3","とじる":"audio/2b2a3ffeb4.mp3","陛":"audio/21506b7f77.mp3","片":"audio/b26fc74c57.mp3","補":"audio/467c647dee.mp3","おぎなう":"audio/500324a0d5.mp3","暮":"audio/d99ce74edb.mp3","くれる":"audio/a98f3e33a5.mp3","宝":"audio/c114b0b494.mp3","訪":"audio/622a467ebc.mp3","おとずれる":"audio/4d23effc52.mp3","亡":"audio/a800570c38.mp3","なくなる":"audio/fabdaac6f7.mp3","忘":"audio/9a707d96b2.mp3","わすれる":"audio/9040ec2104.mp3","棒":"audio/c71d2a67db.mp3","枚":"audio/e1e6fe8987.mp3","幕":"audio/4b5fe8b54d.mp3","密":"audio/4456be84db.mp3","みつ":"audio/a2354720a1.mp3","盟":"audio/62b1349dce.mp3","めい":"audio/72a9f73f1c.mp3","模":"audio/bb73d93889.mp3","訳":"audio/130573b438.mp3","わけ":"audio/794daf9462.mp3","優":"audio/9b8418feb3.mp3","やさしい":"audio/0ca26fbf49.mp3","幼":"audio/084b619201.mp3","おさない":"audio/bbeaa64ba7.mp3","欲":"audio/d82a8025c2.mp3","よく":"audio/a7fb6500ec.mp3","翌":"audio/81aafcc3cf.mp3","乱":"audio/48046f6849.mp3","みだれる":"audio/d704a664dc.mp3","卵":"audio/6e750fbf9b.mp3","たまご":"audio/b783b2b16e.mp3","覧":"audio/87a8ace31f.mp3","裏":"audio/fec6b9aba3.mp3","うら":"audio/eeee92fdf9.mp3","律":"audio/23a2b54c60.mp3","臨":"audio/4614ceae80.mp3","朗":"audio/774af26773.mp3","ほがらか":"audio/cd01dbf208.mp3","論":"audio/55c7552cf9.mp3","ろん":"audio/b85d82d4fe.mp3","亜":"audio/aa594445bb.mp3","哀":"audio/5fb44db52c.mp3","あわれ":"audio/61cb7e1228.mp3","握":"audio/7791d0be3e.mp3","にぎる":"audio/2ee3b6df06.mp3","扱":"audio/1ddff04702.mp3","あつかう":"audio/34bd08fe4b.mp3","依":"audio/cdf8f2872e.mp3","偉":"audio/eada6fba0a.mp3","えらい":"audio/5f904bc19f.mp3","威":"audio/08e9f00552.mp3","慰":"audio/afe1b9c811.mp3","なぐさめる":"audio/4360b1cefa.mp3","為":"audio/191e11bf23.mp3","ため":"audio/9bd5ffd8c0.mp3","尉":"audio/ca1cb4f7c3.mp3","緯":"audio/7227e39dbf.mp3","壱":"audio/03b6000f0d.mp3","逸":"audio/1c6488d109.mp3","いつ":"audio/c36f889c17.mp3","稲":"audio/e3f2b1bf59.mp3","いね":"audio/0bb8248855.mp3","芋":"audio/d174f2fa2f.mp3","いも":"audio/a923ab1986.mp3","陰":"audio/c2c1f51688.mp3","かげ":"audio/b38d80d8de.mp3","隠":"audio/9a2925875b.mp3","かくれる":"audio/0720837bff.mp3","韻":"audio/84a9674638.mp3","渦":"audio/8c3657c52f.mp3","うず":"audio/4b3b255146.mp3","浦":"audio/719003a5e2.mp3","影":"audio/bfe38bd3e3.mp3","鋭":"audio/b5ff1952bc.mp3","するどい":"audio/51f26120f7.mp3","疫":"audio/bcae50f287.mp3","悦":"audio/d9d28cb2a0.mp3","よろこぶ":"audio/5d5cbe3a26.mp3","越":"audio/9ab7c6476a.mp3","謁":"audio/58799fb7ce.mp3","えつ":"audio/0e4c6fc2ee.mp3","閲":"audio/8810d9cc3c.mp3","援":"audio/9de154ba64.mp3","炎":"audio/f620d89a5a.mp3","ほのお":"audio/e95455c77f.mp3","猿":"audio/98f38ae9d8.mp3","縁":"audio/76cbffd5cb.mp3","艶":"audio/223314e5cf.mp3","つや":"audio/c9b095186d.mp3","汚":"audio/69912c2f2d.mp3","けがす":"audio/09172034ca.mp3","凹":"audio/73e682a9d1.mp3","乙":"audio/baa9ade498.mp3","おつ":"audio/25becf9adc.mp3","卸":"audio/c3ee3f9f3e.mp3","おろす":"audio/099289d806.mp3","穏":"audio/cee40e6765.mp3","おだやか":"audio/c462e7e5f2.mp3","嫁":"audio/d09afd958e.mp3","とつぐ":"audio/c2a2536f58.mp3","暇":"audio/8539789790.mp3","ひま":"audio/1c78f713dd.mp3","禍":"audio/687cf3233e.mp3","稼":"audio/020f555391.mp3","かせぐ":"audio/3763aeb240.mp3","雅":"audio/5070603b46.mp3","みやび":"audio/9b6f619bc8.mp3","介":"audio/81460c718f.mp3","塊":"audio/d60e79f520.mp3","かたまり":"audio/4ae2bf3c76.mp3","懐":"audio/57d2d2afb2.mp3","なつかしい":"audio/98eba6e822.mp3","戒":"audio/78b9457305.mp3","いましめる":"audio/6690468e8e.mp3","皆":"audio/99abb8a010.mp3","みな":"audio/960bbcab02.mp3","概":"audio/82125c5634.mp3","おおむね":"audio/5933569c3b.mp3","殻":"audio/b94b6b5c7b.mp3","から":"audio/0dbdaf807f.mp3","岳":"audio/ea5d3fd53c.mp3","掛":"audio/7a2f8b8c59.mp3","喝":"audio/57df27116d.mp3","渇":"audio/f0a2bb0f85.mp3","かわく":"audio/acfda4c5f3.mp3","褐":"audio/5d667e6431.mp3","轄":"audio/978a571b2c.mp3","且":"audio/1dea3af764.mp3","刈":"audio/09b7ffff23.mp3","かる":"audio/68c8ecab29.mp3","乾":"audio/1d462f051b.mp3","勘":"audio/c3cad54a50.mp3","患":"audio/6ecb88db63.mp3","わずらう":"audio/6ad4042928.mp3","憾":"audio/78aec339a0.mp3","還":"audio/bc39acd548.mp3","監":"audio/5dacbd85ec.mp3","緩":"audio/35d62b0cb3.mp3","ゆるい":"audio/d1d7760384.mp3","肝":"audio/28729c6577.mp3","きも":"audio/4a97fdac0c.mp3","陥":"audio/b3c21be234.mp3","おちいる":"audio/3250e7d450.mp3","欺":"audio/25e586b4d1.mp3","あざむく":"audio/f3ef7f0170.mp3","擬":"audio/e738ad8272.mp3","まがい":"audio/8e65339164.mp3","凶":"audio/dd71da75e5.mp3","享":"audio/dc566557b7.mp3","况":"audio/4f9a0da808.mp3","峡":"audio/fd2d84c288.mp3","挟":"audio/2a3988aa16.mp3","はさむ":"audio/9f8e555071.mp3","恐":"audio/8e1df6c7e4.mp3","おそれる":"audio/5d45efaff5.mp3","恭":"audio/3ba81bca81.mp3","うやうやしい":"audio/353132e17a.mp3","脅":"audio/e291583f05.mp3","おびやかす":"audio/b89b75cfc2.mp3","矯":"audio/8ecc1ea1d4.mp3","ためる":"audio/de2c0547ae.mp3","錦":"audio/ce53286491.mp3","にしき":"audio/1dd7b2edbf.mp3","謹":"audio/ad2d023c58.mp3","つつしむ":"audio/df5e64cddd.mp3","襟":"audio/e9bb0a92e3.mp3","えり":"audio/e8f748b458.mp3","惧":"audio/4942be931a.mp3","愚":"audio/bd5dad2e34.mp3","おろか":"audio/fe59a6fbbb.mp3","隅":"audio/aa240a0f91.mp3","すみ":"audio/2c857c42b6.mp3","屈":"audio/e4161aa854.mp3","かがむ":"audio/acbcfe18a1.mp3","掘":"audio/651b941077.mp3","ほる":"audio/ebfbd9f1cc.mp3","繰":"audio/503793cdbf.mp3","勲":"audio/7fc79601c1.mp3","いさお":"audio/8361036369.mp3","薫":"audio/46abed05b0.mp3","かおる":"audio/73de964ae7.mp3","傾":"audio/a4f9be02ba.mp3","かたむく":"audio/756381a37b.mp3","携":"audio/32a1f5497d.mp3","たずさえる":"audio/f94f91f758.mp3","継":"audio/d0d90c5785.mp3","慶":"audio/36fef1b205.mp3","憩":"audio/294e846139.mp3","いこう":"audio/eb61345159.mp3","鶏":"audio/bb6565ed10.mp3","にわとり":"audio/8e5f770f73.mp3","迎":"audio/2cc49d156d.mp3","むかえる":"audio/2261ff02b3.mp3","鯨":"audio/3c3691d7f4.mp3","くじら":"audio/974f1b7dac.mp3","撃":"audio/fbfa74fda3.mp3","懸":"audio/4016bc8b54.mp3","遣":"audio/ef32e62703.mp3","つかわす":"audio/d25ef70340.mp3","謙":"audio/69d474e396.mp3","顕":"audio/0e35d10307.mp3","あきらか":"audio/7c0d1521bb.mp3","弦":"audio/7dede8be34.mp3","つる":"audio/b0b4906c2f.mp3","孤":"audio/a027f93a08.mp3","枯":"audio/ae5fea0603.mp3","かれる":"audio/a94677c1ec.mp3","誇":"audio/39a2b2ac1f.mp3","ほこる":"audio/c0786cc9c4.mp3","鼓":"audio/c6a438efad.mp3","つづみ":"audio/a1dfe15460.mp3","錯":"audio/b3cfee8bb1.mp3","まがう":"audio/87b2f42c92.mp3","撮":"audio/b95bac08c9.mp3","擦":"audio/e849d91006.mp3","こする":"audio/e4bf00e683.mp3","傘":"audio/2cca6389e4.mp3","かさ":"audio/4078635d95.mp3","惨":"audio/a4d7efd800.mp3","むごい":"audio/33e21b359c.mp3","暫":"audio/5e1962d485.mp3","しばらく":"audio/bbdb088e21.mp3","肢":"audio/22d167c0ee.mp3","嗣":"audio/f8febcd7b8.mp3","雌":"audio/3efed04779.mp3","めす":"audio/f4efa24599.mp3","賜":"audio/20de170a4c.mp3","たまわる":"audio/bb22a15a19.mp3","璽":"audio/907b4d2aa9.mp3","執":"audio/37a3228daa.mp3","嫉":"audio/053c1712b7.mp3","そねむ":"audio/c11df2c789.mp3","赦":"audio/dafe183e09.mp3","斜":"audio/dcb69e9fc5.mp3","ななめ":"audio/4819cf18f9.mp3","煮":"audio/86380247a7.mp3","遮":"audio/18e993b03f.mp3","さえぎる":"audio/e0bdb55d83.mp3","蛇":"audio/37e76c8a41.mp3","へび":"audio/f7c8a50273.mp3","爵":"audio/9f84e3b96b.mp3","寂":"audio/ba7f616627.mp3","さびしい":"audio/43380118e2.mp3","酌":"audio/12cb694faa.mp3","くむ":"audio/ac04536680.mp3","醒":"audio/badaebd509.mp3","さめる":"audio/c91c44320f.mp3","髄":"audio/018fea26eb.mp3","ずい":"audio/bed947d184.mp3","崇":"audio/518aba8a67.mp3","あがめる":"audio/7d369b52be.mp3","据":"audio/dadb9fa35c.mp3","すえる":"audio/ae3be874ed.mp3","杉":"audio/7ec519ef3f.mp3","すぎ":"audio/054ea438a5.mp3","澄":"audio/9fa2be1560.mp3","錐":"audio/bcc6ee9250.mp3","きり":"audio/d3a00bbd5f.mp3","瀬":"audio/eadf6f23b8.mp3","脊":"audio/7862d95b71.mp3","籍":"audio/4d29499dee.mp3","摂":"audio/66def28d94.mp3","折":"audio/96c015eb6f.mp3","窃":"audio/a0cc829db5.mp3","ぬすむ":"audio/79013fb561.mp3","繊":"audio/b3c5327162.mp3","遷":"audio/8ab3f30ef4.mp3","薦":"audio/f7798a31ad.mp3","すすめる":"audio/baaa141630.mp3","践":"audio/5d0c31bc92.mp3","ふむ":"audio/94ed41a7ff.mp3","繕":"audio/4e8f409651.mp3","つくろう":"audio/2f5d8007af.mp3","阻":"audio/d1c4883ff2.mp3","はばむ":"audio/0d26b3f622.mp3","礎":"audio/4e9874e24c.mp3","いしずえ":"audio/19e2b5b141.mp3","双":"audio/ff8f4688ff.mp3","ふた":"audio/9b83e1629d.mp3","壮":"audio/7914f515fc.mp3","さかん":"audio/824d09b2b7.mp3","掃":"audio/64551f3b1e.mp3","挿":"audio/1fcf387de5.mp3","さす":"audio/c3dcbe17dc.mp3","曹":"audio/b0bd66e6eb.mp3","槽":"audio/580dd19e06.mp3","おけ":"audio/8327b8b4cc.mp3","踪":"audio/576630f1ae.mp3","藻":"audio/9941629140.mp3","胎":"audio/d3f02580c4.mp3","怠":"audio/87cfa79834.mp3","なまける":"audio/659d4b90f3.mp3","滞":"audio/e6ecd69834.mp3","とどこおる":"audio/c1c1fb6ba5.mp3","泰":"audio/af10baeb43.mp3","濁":"audio/351a339199.mp3","にごる":"audio/d75214006c.mp3","諾":"audio/4c2999b378.mp3","だく":"audio/7aedb272f5.mp3","奪":"audio/101fca4baf.mp3","うばう":"audio/4b125ad8b6.mp3","棚":"audio/0a4355afb4.mp3","たな":"audio/499817cd76.mp3","嘆":"audio/afc7b383df.mp3","なげく":"audio/54dca71810.mp3","端":"audio/da51d25f6d.mp3","綻":"audio/7a28a267ef.mp3","ほころびる":"audio/90b10e73e1.mp3","逐":"audio/c59a2c0348.mp3","窒":"audio/9835404bf4.mp3","ちっそ":"audio/8b7d35b56c.mp3","嫡":"audio/dda854d053.mp3","ちゃく":"audio/a53b9f36e8.mp3","抽":"audio/2d5e6f6e89.mp3","ひきだす":"audio/5244ae5328.mp3","鋳":"audio/fc1347bda8.mp3","駐":"audio/5cf16f87ed.mp3","とどまる":"audio/e49b70a1d8.mp3","彫":"audio/2c8e3e21ff.mp3","眺":"audio/c2689e36dc.mp3","ながめる":"audio/056d287d7c.mp3","とばり":"audio/e7a95530d8.mp3","聴":"audio/63a53042ed.mp3","跳":"audio/f4965ce10c.mp3","はねる":"audio/963d05425b.mp3","剃":"audio/2fd4f44908.mp3","そる":"audio/f853076d54.mp3","貞":"audio/2cfc3de011.mp3","邸":"audio/5548ce8f31.mp3","溺":"audio/74c7b1e70e.mp3","おぼれる":"audio/8bec236cf5.mp3","哲":"audio/facc904ab7.mp3","迭":"audio/92a5da26ca.mp3","添":"audio/897bd1e94d.mp3","そえる":"audio/2ee5a8a7f3.mp3","殿":"audio/fb74781ead.mp3","との":"audio/9c157a6172.mp3","吐":"audio/37a03b5e5e.mp3","塗":"audio/6a3ef59c72.mp3","ぬる":"audio/7a6e9ee01c.mp3","斗":"audio/a7d6a7e6f3.mp3","妬":"audio/d1b86d7199.mp3","ねたむ":"audio/f41396d801.mp3","途":"audio/f50ef2b5ba.mp3","栃":"audio/5458bc544d.mp3","とち":"audio/be503552b1.mp3","凸":"audio/7ecefd0ba5.mp3","とつ":"audio/fc51033622.mp3","賭":"audio/4893c39547.mp3","謄":"audio/75e2558098.mp3","騰":"audio/0cdf64e428.mp3","あがる":"audio/4804a504ed.mp3","洞":"audio/30c64b2c0b.mp3","ほら":"audio/f7d5230f88.mp3","胴":"audio/9b0de0c55f.mp3","峠":"audio/37ac97db3e.mp3","とうげ":"audio/2b88f095e7.mp3","匿":"audio/ae7c91e7fe.mp3","かくす":"audio/9a8c1273e8.mp3","鈍":"audio/6ea4e03798.mp3","にぶい":"audio/a0d7c7fb94.mp3","軟":"audio/04821bb84b.mp3","やわらかい":"audio/74e43d96a4.mp3","尼":"audio/9652daef01.mp3","あま":"audio/99d3a978a2.mp3","如":"audio/bcc4f9e5ca.mp3","ごとく":"audio/b77b369e18.mp3","尿":"audio/af13525c9b.mp3","にょう":"audio/5535ad1742.mp3","妊":"audio/c9cc01abd2.mp3","にんしん":"audio/34eb817e0e.mp3","忍":"audio/a1ead715d6.mp3","しのぶ":"audio/c597ebc944.mp3","寧":"audio/f6476b8b00.mp3","ねい":"audio/cdc8e5b3b3.mp3","粘":"audio/678992de99.mp3","ねばる":"audio/cde502c9b8.mp3","悩":"audio/a95e694005.mp3","なやむ":"audio/18f1e25ab7.mp3","濃":"audio/95cfb519e7.mp3","こい":"audio/59d9c51d38.mp3","把":"audio/a37a9be784.mp3","覇":"audio/8e0dea2471.mp3","廃":"audio/0497da2302.mp3","すたれる":"audio/30a8d1f9e9.mp3","排":"audio/670f1d5556.mp3","おしのける":"audio/f716595120.mp3","媒":"audio/0a3cd77b6f.mp3","なかだち":"audio/65907b7402.mp3","僕":"audio/c9ab799b88.mp3","ぼく":"audio/6e86f89eb0.mp3","漠":"audio/7ee62fca7e.mp3","ばく":"audio/6c7d505bdb.mp3","縛":"audio/f0247ea2aa.mp3","しばる":"audio/b63f74ccbd.mp3","肌":"audio/0568896930.mp3","はだ":"audio/e7f4dcc6f4.mp3","髪":"audio/73199b0078.mp3","伐":"audio/475509e3f2.mp3","罰":"audio/4f215c5543.mp3","ばつ":"audio/407b0e5b49.mp3","閥":"audio/eac3d16260.mp3","帆":"audio/15f70b636a.mp3","氾":"audio/32816c4476.mp3","汎":"audio/0ba75bd48f.mp3","煩":"audio/bd518293eb.mp3","頒":"audio/6bd29c155c.mp3","わける":"audio/ae89664006.mp3","卑":"audio/017ded0a85.mp3","いやしい":"audio/330c5d315d.mp3","碑":"audio/0aeb00a7c8.mp3","膝":"audio/15482405e5.mp3","ひざ":"audio/e824e91b83.mp3","泌":"audio/7f3761c7ea.mp3","ひつ":"audio/690379dde6.mp3","弊":"audio/fbac36bb67.mp3","蔑":"audio/e429012921.mp3","さげすむ":"audio/c02c9a5ba5.mp3","偏":"audio/f4abd01473.mp3","かたよる":"audio/cef3a6e5d2.mp3","遍":"audio/1026276829.mp3","あまねく":"audio/df952d2bf0.mp3","舗":"audio/b241cff004.mp3","捕":"audio/3de20f754f.mp3","つかまえる":"audio/de540d73dc.mp3","泡":"audio/bca695fcbc.mp3","あわ":"audio/34d2882285.mp3","俸":"audio/861ecfb4a4.mp3","胞":"audio/52de26f947.mp3","倣":"audio/e9b34daa28.mp3","慕":"audio/ab4f3c36ca.mp3","したう":"audio/0bf73035ed.mp3","簿":"audio/04b46a77e1.mp3","堀":"audio/a2bf6d0e0a.mp3","ほり":"audio/6689f0d1a3.mp3","奔":"audio/ea62ad167a.mp3","翻":"audio/6a8136ecdc.mp3","ひるがえる":"audio/2210dac27d.mp3","摩":"audio/ff4a855588.mp3","みがく":"audio/9d530f2c34.mp3","磨":"audio/4792832244.mp3","魔":"audio/3efb036034.mp3","昧":"audio/4adfe601d5.mp3","又":"audio/1689ddd7ff.mp3","また":"audio/bc38295b4c.mp3","漫":"audio/090e1fbff0.mp3","みだりに":"audio/44e89eb4e0.mp3","魅":"audio/ec3158d2c7.mp3","妙":"audio/0bc7225cd7.mp3","みょう":"audio/3c2bf95cb3.mp3","眠":"audio/fc00d451d9.mp3","ねむる":"audio/d7c1438bd7.mp3","矛":"audio/5af50b06ce.mp3","ほこ":"audio/fd378e36fa.mp3","婿":"audio/e091323273.mp3","むこ":"audio/f53c602f51.mp3","銘":"audio/9ac126cf20.mp3","滅":"audio/5c15cd9e5f.mp3","ほろびる":"audio/5fbf126b1b.mp3","免":"audio/dd5aee4749.mp3","まぬがれる":"audio/b91f78a318.mp3","妄":"audio/bbd942a7c0.mp3","みだり":"audio/a51bbf2381.mp3","猛":"audio/e4ed6b6fc1.mp3","たけしい":"audio/e8c8727ced.mp3","網":"audio/9c14c5ef09.mp3","あみ":"audio/bbc33bf387.mp3","黙":"audio/3515f30eca.mp3","だまる":"audio/4a91c5a1f7.mp3","紋":"audio/5e41827342.mp3","冶":"audio/ee03c739eb.mp3","弥":"audio/7a2aa0535d.mp3","いや":"audio/d6631aafc9.mp3","厄":"audio/61d2ab6445.mp3","躍":"audio/eae76785f3.mp3","おどる":"audio/b1622b5812.mp3","柳":"audio/224a09b839.mp3","やなぎ":"audio/294b5497c7.mp3","愉":"audio/8975358980.mp3","たのしい":"audio/8091874484.mp3","諭":"audio/921dc2dc73.mp3","さとす":"audio/a2e68d0830.mp3","癒":"audio/678847c4ff.mp3","いやす":"audio/188edda579.mp3","唯":"audio/a3c07eb9f4.mp3","ただ":"audio/70df754a1d.mp3","幽":"audio/2e8fba40af.mp3","かすか":"audio/5c20ae6b43.mp3","悠":"audio/3f16443c77.mp3","はるか":"audio/433a3678ad.mp3","憂":"audio/9d3ba245a3.mp3","うれえる":"audio/7b97de33eb.mp3","猶":"audio/164418ea27.mp3","なお":"audio/64b368844a.mp3","裕":"audio/dc661d5467.mp3","湧":"audio/e664a3fbc9.mp3","わく":"audio/1a7b4a18bc.mp3","抑":"audio/cafa72f85b.mp3","おさえる":"audio/16055de302.mp3","翼":"audio/ede6c8ccd4.mp3","つばさ":"audio/952d72b51c.mp3","拉":"audio/4e195a21aa.mp3","雷":"audio/65ad96dabe.mp3","かみなり":"audio/97c4b80eb2.mp3","頼":"audio/be8110d0e2.mp3","たよる":"audio/76128513c4.mp3","絡":"audio/ecd7a4297f.mp3","からまる":"audio/d98a72d855.mp3","濫":"audio/2e36e1d8df.mp3","吏":"audio/dbef701eb9.mp3","履":"audio/c4f3a6b6c2.mp3","痢":"audio/acc7a83b33.mp3","離":"audio/c791c83aab.mp3","はなれる":"audio/3e53ab4be1.mp3","慮":"audio/6108898935.mp3","おもんばかる":"audio/f6333aa87f.mp3","寮":"audio/d75f9463c6.mp3","隣":"audio/ad27e79c56.mp3","となり":"audio/52455cfdab.mp3","瑠":"audio/96faabb18a.mp3","累":"audio/af467b208f.mp3","かさなる":"audio/8cfce8fa39.mp3","塁":"audio/f0f60418f6.mp3","励":"audio/239a4f9e6f.mp3","はげむ":"audio/88049166bb.mp3","隷":"audio/04002f1cc3.mp3","霊":"audio/bc4cced93d.mp3","齢":"audio/3f0263016f.mp3","麗":"audio/da4372e816.mp3","暦":"audio/42f0b52cc6.mp3","こよみ":"audio/5b1925c12b.mp3","劣":"audio/e806a8d93b.mp3","おとる":"audio/e91b46794b.mp3","裂":"audio/0b29c854cb.mp3","さける":"audio/6c560b0ebc.mp3","廉":"audio/9982173a98.mp3","恋":"audio/f3cf795248.mp3","漏":"audio/2e6f9ad20b.mp3","もれる":"audio/6170de1b94.mp3","弄":"audio/d47c7fb935.mp3","もてあそぶ":"audio/8e8810646e.mp3","楼":"audio/302a1f4343.mp3","たかどの":"audio/98ac6bf5d1.mp3","賂":"audio/1602077284.mp3","まいない":"audio/1fcdd6ee5d.mp3","浪":"audio/e15e41f2d5.mp3","廊":"audio/76459538d6.mp3","狼":"audio/a5ad7b0043.mp3","おおかみ":"audio/92e3ed53a9.mp3","惑":"audio/758ef30ac5.mp3","まどう":"audio/9a1f32e7d4.mp3","枠":"audio/e2a6f011d2.mp3","湾":"audio/10551121f6.mp3","わん":"audio/ab4787f6df.mp3","腕":"audio/221d894222.mp3","うで":"audio/ca3e0261a4.mp3","おはようございます":"audio/e12eb2fcd5.mp3","こんにちは":"audio/c0e89a293b.mp3","こんばんは":"audio/73c9cdc2c8.mp3","ありがとうございます":"audio/94f49c978d.mp3","すみません":"audio/27eeedab97.mp3","すみません！":"audio/c24c44108e.mp3","なな":"audio/1eb7933c95.mp3","トイレ":"audio/e12c23aa02.mp3","ホテル":"audio/9d01e3e138.mp3","レストラン":"audio/a5cb9a9482.mp3","コンビニ":"audio/82bfc76940.mp3","まっすぐ":"audio/101beac739.mp3","トイレはどこですか？":"audio/ed9f95596a.mp3","えきはどこですか？":"audio/dfe798011c.mp3","ホテルはどこですか？":"audio/5c964665b0.mp3","ビール":"audio/992b0ef56d.mp3","これ":"audio/782acde178.mp3","ひとつ":"audio/62d4359ab4.mp3","ふたつ":"audio/f951e30504.mp3","おいしい":"audio/e577ae2f49.mp3","メニュー":"audio/9013ced74d.mp3","おすすめ":"audio/a0415844ff.mp3","これをください。":"audio/90b22b33f6.mp3","みずをふたつください。":"audio/9de3a62d27.mp3","みずをください。":"audio/6bf2dc2bb8.mp3","おいしいですね！":"audio/65ef75027d.mp3","いくら":"audio/6a687c8e82.mp3","ください":"audio/274052ba30.mp3","けっこうです":"audio/7404ec72a9.mp3","カード":"audio/c8bf9a25c2.mp3","げんきん":"audio/f1c8de417e.mp3","これはいくらですか？":"audio/990e1b4e55.mp3","カードでいいですか？":"audio/829ffe96e3.mp3","きっぷ":"audio/a69e520db0.mp3","のりば":"audio/f753ae4369.mp3","でんしゃ":"audio/487009fe4f.mp3","バス":"audio/19800da5f6.mp3","タクシー":"audio/245cb61e67.mp3","まで":"audio/ff113c1509.mp3","しんじゅくまでおねがいします。":"audio/1e3a07a6ab.mp3","とうきょうまでおねがいします。":"audio/edabfaee05.mp3","つぎはどこですか？":"audio/985f512ade.mp3","おねがいします":"audio/56945bbb09.mp3","こんにちは！":"audio/87e7e23c32.mp3","なまえ":"audio/d8a5aa934c.mp3","きました":"audio/5c1c565aad.mp3","はじめまして":"audio/9527cdc3ed.mp3","よろしく":"audio/933ff7eca9.mp3","はじめまして。":"audio/80d7828993.mp3","わたしはスミスです。":"audio/7f6a1da9ee.mp3","よろしくおねがいします。":"audio/82b138b85f.mp3","よろしくおねがいします":"audio/bd0d3df4bb.mp3","はじめまして。よろしくおねがいします。":"audio/d2d2de4059.mp3","きらい":"audio/01ee744827.mp3","だいすき":"audio/ac0aa59c70.mp3","たべもの":"audio/96f1a3f78d.mp3","おんがく":"audio/d949470af6.mp3","りょこう":"audio/5386f9562a.mp3","スポーツ":"audio/0aa0aad997.mp3","すしがだいすきです。":"audio/13f879196a.mp3","りょこうがすきです。":"audio/57ea80ddcc.mp3","おんがくがすきですか？":"audio/5b59e88318.mp3","チェックイン":"audio/090137e75b.mp3","よやく":"audio/6c3512df97.mp3","へや":"audio/b2910bd6de.mp3","かぎ":"audio/9d2db8e42c.mp3","あさごはん":"audio/bad9092ebf.mp3","なんじ":"audio/997957d9f5.mp3","チェックアウト":"audio/f38fc75bf5.mp3","よやくしました。":"audio/a4154ca6e9.mp3","あさごはんはなんじですか？":"audio/def29bd630.mp3","へやのかぎをおねがいします。":"audio/284f72ceae.mp3","ふん":"audio/6bcf2abd0f.mp3","ごぜん":"audio/d317aa108c.mp3","ごご":"audio/75903bb252.mp3","いまなんじですか？":"audio/cc5241fbc5.mp3","ごぜんはちじです。":"audio/9e4a9a878d.mp3","さんじはんです。":"audio/ca9c3e8b2d.mp3","おおきい":"audio/4045371a1d.mp3","ちいさい":"audio/8978458f1d.mp3","おおきいホテルですね。":"audio/2ab0a1660e.mp3","つめたいみずをください。":"audio/1141df095f.mp3","たのしいですね！":"audio/6ac5282a86.mp3","わかりません":"audio/2445b6a1a7.mp3","えいご":"audio/fde3933add.mp3","もういちど":"audio/374c173cb2.mp3","ゆっくり":"audio/10f6571e43.mp3","たすけて":"audio/9ceb2ddf4a.mp3","はなせます":"audio/89fe1d04a2.mp3","わかりません。":"audio/0f80d92e19.mp3","えいごがはなせますか？":"audio/ef0628a9b1.mp3","もういちどゆっくりおねがいします。":"audio/bbf40c0f01.mp3","たべたい":"audio/7da390095c.mp3","いきたい":"audio/e644e41f83.mp3","みたい":"audio/4122b5b376.mp3","かいたい":"audio/4d6ec94ef5.mp3","あした":"audio/bfdf65982e.mp3","らいねん":"audio/e98be8ee5c.mp3","すしをたべたいです。":"audio/7805532d3b.mp3","きょうとにいきたいです。":"audio/a3810256b9.mp3","おみやげをかいたいです。":"audio/a54d890a54.mp3","たべたいです":"audio/05793fa589.mp3","いきたいです":"audio/828ca12e60.mp3","ゆうめい":"audio/2688a83b86.mp3","にんき":"audio/4f7f1ba6f9.mp3","ちかく":"audio/c84dd30be0.mp3","ぜひ":"audio/6696449e6d.mp3","あります":"audio/496766a885.mp3","おすすめはなんですか？":"audio/84924d8517.mp3","ちかくにレストランはありますか？":"audio/42c00e9dc7.mp3","ぜひいってみます！":"audio/39b2e1152a.mp3","うれしい":"audio/2b4eaac7b1.mp3","つかれた":"audio/2353db5d71.mp3","すごい":"audio/1cbfa1bfd1.mp3","きれい":"audio/eae8268e17.mp3","やばい":"audio/38e8916355.mp3","すごいですね！":"audio/8a2bc2cfec.mp3","きれいですね！":"audio/3cd64fda82.mp3","ました":"audio/c49d21fbe7.mp3","きのう":"audio/c150f60e9b.mp3","せんしゅう":"audio/f7e58704e9.mp3","もう":"audio/d10ff26951.mp3","まだ":"audio/f687bb8eb5.mp3","いきました":"audio/ef9674acb8.mp3","きのうすしをたべました。":"audio/286f237be8.mp3","きょうとにいきました！":"audio/bc871d5f9e.mp3","まだたべていません。":"audio/ab30e44593.mp3","たべました":"audio/bdd3ed9436.mp3","おつり":"audio/0698408dc3.mp3","レシート":"audio/0e80128ee2.mp3","ひゃくえんです。":"audio/4754097321.mp3","せんえんです。":"audio/f553cbf53a.mp3","おつりをください。":"audio/2d0a1209d4.mp3","いただきます":"audio/32542eb70a.mp3","ごちそうさま":"audio/1b74a248e8.mp3","おじゃまします":"audio/2ea6c91b7e.mp3","おつかれさま":"audio/5505485aab.mp3","どうぞ":"audio/cf30ffebe8.mp3","いただきます。":"audio/ac1c3fc96c.mp3","ごちそうさまでした。":"audio/3c4dbc8bb5.mp3","おつかれさまです。":"audio/033e94175e.mp3","ごちそうさまでした":"audio/c3a9c5a17b.mp3","じょうず":"audio/fbeddd9861.mp3","かっこいい":"audio/175b7f18fa.mp3","かわいい":"audio/11dfd6f514.mp3","すてき":"audio/9c8896a2a4.mp3","センス":"audio/bc1fc66e5e.mp3","にほんご":"audio/50f4a53ea2.mp3","にほんごがじょうずですね！":"audio/d65d876298.mp3","すてきなおみせですね。":"audio/e918caae78.mp3","かわいいですね！":"audio/5993f25e0e.mp3","そうですね":"audio/fbc761d670.mp3","なるほど":"audio/2e1550a3f1.mp3","ほんとうですか":"audio/463893d3b5.mp3","もちろん":"audio/9ab04e798b.mp3","たぶん":"audio/c1afbaa05c.mp3","ちょっと":"audio/8a3a932677.mp3","そうですね。":"audio/49b485b7f3.mp3","ほんとうですか？":"audio/6fc885823d.mp3","なるほど！":"audio/d11600f9c6.mp3","そうですね。なるほど！":"audio/51eb2cb576.mp3","びょういん":"audio/31db9d143e.mp3","いたいです":"audio/b2adc2be58.mp3","おなか":"audio/0d30d13a02.mp3","アレルギー":"audio/29a5b2a122.mp3","たすけてください！":"audio/23e089b2be.mp3","おなかがいたいです。":"audio/a6408ecb63.mp3","アレルギーがあります。":"audio/f6a913f5fe.mp3","しゃしん":"audio/254e189d9e.mp3","にゅうじょう":"audio/46010c28d8.mp3","チケット":"audio/3eb0248954.mp3","ガイド":"audio/b93138b7b8.mp3","しゃしんをとってもいいですか？":"audio/2e4d1eba1d.mp3","これはなんですか？":"audio/6a7dabbb9b.mp3","とてもきれいですね！":"audio/9d59ec3500.mp3","からい":"audio/f1eb5bf2cf.mp3","あまい":"audio/d665625df5.mp3","おかわり":"audio/873c172110.mp3","おかんじょう":"audio/1b2ba09473.mp3","ベジタリアン":"audio/35e5964190.mp3","はいっています":"audio/8283fbcc5a.mp3","からくないものはありますか？":"audio/4051383760.mp3","おかわりをください！":"audio/3f38dd6085.mp3","おかんじょうおねがいします。":"audio/1cf2d6f409.mp3","こんにちは！よやくしました。":"audio/49437d4220.mp3","これをください。おいしいですね！":"audio/fe411473aa.mp3","こんにちは！おねがいします。ありがとうございます！":"audio/51bc8e3022.mp3","こうよう":"audio/5c93d9ba2b.mp3","おまつり":"audio/c74eff9db3.mp3","やたい":"audio/a4761ff1ff.mp3","おみやげ":"audio/f0d5e5ddbf.mp3","おんせん":"audio/ea13e3a403.mp3","ゆかた":"audio/b800f2429e.mp3","こうようがとてもきれいですね！":"audio/3ddece1a1c.mp3","おまつりはどこですか？":"audio/13b0d070a2.mp3","おんせんにはいりたいです！":"audio/47205bbf67.mp3","はじめまして。わたしはスミスです。":"audio/d5184f9587.mp3","これをください。おいしかったです！":"audio/7715b40b2f.mp3","ありがとうございました！":"audio/be40f4f97b.mp3","またきます！":"audio/5d83db658a.mp3"};
+
+const ttsAudio = document.createElement('audio');
+ttsAudio.setAttribute('playsinline', '');
+ttsAudio.setAttribute('preload', 'none');
+// NO crossorigin attribute — omitting it allows cross-origin audio without CORS headers
+ttsAudio.style.display = 'none';
+document.body.appendChild(ttsAudio);
+
+let _audioCtx    = null;
+let _ttsWatchdog = null;
+
+function _unlockAudioContext() {
+  if (!_audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try { _audioCtx = new AC(); } catch(e) { return; }
+  }
+  if (_audioCtx.state === 'suspended') {
+    _audioCtx.resume().catch(() => {});
+  }
+}
+
+function showTTSBadge(label, colour) {
+  const badge = document.getElementById('tts-badge');
+  if (!badge) return;
+  badge.textContent = label;
+  badge.style.color  = colour;
+  badge.classList.remove('hidden');
+}
+
+// Normalise text for manifest lookup — strip punctuation/spaces to match keys
+function _normaliseText(t) {
+  return t.replace(/[！？。、\s]/g, '').trim();
+}
+
+function speakJP(text, rate, onEnd) {
+  rate = (typeof rate === 'number') ? rate : 0.75;
+  _unlockAudioContext();
+
+  clearTimeout(_ttsWatchdog);
+  ttsAudio.pause();
+  ttsAudio.onended = null;
+  ttsAudio.onerror = null;
+  if (window.speechSynthesis) speechSynthesis.cancel();
+
+  // ── 1. Try local file from manifest ──────────────────────────────────────
+  // Look up by exact text first, then by normalised text
+  let localFile = AUDIO_MANIFEST[text] || null;
+  if (!localFile) {
+    const norm = _normaliseText(text);
+    for (const [k, v] of Object.entries(AUDIO_MANIFEST)) {
+      if (_normaliseText(k) === norm) { localFile = v; break; }
+    }
+  }
+
+  if (localFile) {
+    _playAudioFile(localFile, text, rate, onEnd, true);
+    return;
+  }
+
+  // ── 2. No local file — fall back to Google TTS ────────────────────────────
+  _playGoogleTTS(text, rate, onEnd);
+}
+
+function _playAudioFile(src, text, rate, onEnd, isLocal) {
+  let succeeded = false;
+
+  ttsAudio.onended = () => {
+    clearTimeout(_ttsWatchdog);
+    succeeded = true;
+    if (isLocal) showTTSBadge('🔊 Local audio ✓', 'var(--green)');
+    if (onEnd) onEnd();
+  };
+  ttsAudio.onerror = () => {
+    clearTimeout(_ttsWatchdog);
+    if (!succeeded) {
+      // Local file missing/corrupt — try Google TTS instead
+      if (isLocal) _playGoogleTTS(text, rate, onEnd);
+      else _speakNativeFallback(text, rate, onEnd);
+    }
+  };
+
+  ttsAudio.src = src;
+  ttsAudio.load();
+  ttsAudio.play()
+    .then(() => {
+      const ms = Math.max(5000, text.length * 300);
+      _ttsWatchdog = setTimeout(() => {
+        if (!succeeded) {
+          ttsAudio.pause();
+          if (isLocal) _playGoogleTTS(text, rate, onEnd);
+          else _speakNativeFallback(text, rate, onEnd);
+        }
+      }, ms);
+    })
+    .catch(() => {
+      if (isLocal) _playGoogleTTS(text, rate, onEnd);
+      else _speakNativeFallback(text, rate, onEnd);
+    });
+}
+
+function _playGoogleTTS(text, rate, onEnd) {
+  const speed = Math.max(0.24, Math.min(1.0, rate)).toFixed(2);
+  const urls = [
+    'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ja&ttsspeed=' + speed + '&q=' + encodeURIComponent(text),
+    'https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=ja&ttsspeed=' + speed + '&q=' + encodeURIComponent(text),
+  ];
+  let idx = 0;
+  function tryNext() {
+    if (idx >= urls.length) { _speakNativeFallback(text, rate, onEnd); return; }
+    showTTSBadge('🔊 Google TTS', 'var(--blue)');
+    _playAudioFile(urls[idx++], text, rate, onEnd, false);
+  }
+  // Override onerror before calling _playAudioFile so tryNext chains correctly
+  tryNext();
+}
+
+function _speakNativeFallback(text, rate, onEnd) {
+  showTTSBadge('🔊 Device TTS', '#e8a838');
+  if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
+  speechSynthesis.cancel();
+  setTimeout(() => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP'; u.rate = rate || 0.75; u.volume = 1.0;
+    const jv = speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith('ja'));
+    if (jv) u.voice = jv;
+    u.onend = u.onerror = () => { if (onEnd) onEnd(); };
+    speechSynthesis.speak(u);
+  }, 80);
+}
+
+function stopAllAudio() {
+  clearTimeout(_ttsWatchdog);
+  ttsAudio.pause();
+  ttsAudio.src = '';
+  ttsAudio.onended = null;
+  ttsAudio.onerror = null;
+  if (window.speechSynthesis) speechSynthesis.cancel();
+}
+
+// Syllable splitter
+function splitSyllables(romaji) {
+  const syls = [];
+  const chunks = romaji.toLowerCase().split(/\s+/);
+  for (const chunk of chunks) {
+    // match consonant(s) + vowel, or standalone vowel, or 'n' at end
+    const parts = chunk.match(/[^aeiou]*[aeiou]|n(?=[^aeiou]|$)|[^aeiou]+$/gi) || [chunk];
+    syls.push(...parts.map(s => s.toLowerCase()));
+  }
+  return syls.filter(Boolean);
+}
+
+// ── Render helpers ────────────────────────────────────────────────────────────
+function getDayData(day) { return PLAN.find(d => d.day === day); }
+function getCurrentWeek() { return getDayData(currentDay)?.week || 1; }
+function isDayComplete(day) {
+  const d = getDayData(day);
+  return d && d.tasks.every((_,ti) => completed[`${day}-${ti}`]);
+}
+
+// ── VOCAB TASK ────────────────────────────────────────────────────────────────
+function buildVocabTask(task, dayIdx, taskIdx) {
+  const words = extractVocab(task.content);
+  if (!words.length) return buildPlainTask(task);
+
+  const id = `vocab-${dayIdx}-${taskIdx}`;
+  let html = `<p class="vocab-intro">
+    Type each word in Japanese and press <strong>Submit</strong> (or Enter). 
+    Write it correctly <strong>3 times</strong> to master it.
+  </p>`;
+
+  words.forEach((w, i) => {
+    const wid = `${id}-${i}`;
+    html += `
+    <div class="vocab-card" id="${wid}">
+      <div class="vocab-top">
+        <div class="vocab-jp">
+          <ruby>${escHtml(w.japanese)}<rt>${escHtml(w.romaji)}</rt></ruby>
+          <span class="vocab-meaning">— ${escHtml(w.meaning)}</span>
+        </div>
+        <div class="vocab-controls">
+          <button class="speak-btn" style="color:var(--gold)"
+            onclick="_unlockAudioContext();speakJP('${escHtml(w.japanese)}')">🔊 Hear</button>
+          <div class="dot" id="${wid}-d0"></div>
+          <div class="dot" id="${wid}-d1"></div>
+          <div class="dot" id="${wid}-d2"></div>
+        </div>
+      </div>
+      <div id="${wid}-inputwrap">
+        <div style="display:flex;gap:8px;align-items:stretch">
+          <input class="vocab-input" id="${wid}-input" type="text"
+            placeholder="Type ${escHtml(w.japanese)} here…"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            onkeydown="if(event.key==='Enter'&&!event.isComposing)submitVocab('${wid}','${escHtml(w.japanese)}',${i},${dayIdx},${taskIdx},${words.length})"
+            style="flex:1" />
+          <button id="${wid}-submit"
+            onclick="submitVocab('${wid}','${escHtml(w.japanese)}',${i},${dayIdx},${taskIdx},${words.length})"
+            style="padding:0 14px;border-radius:8px;border:2px solid var(--gold);background:var(--gold);color:#fff;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0">
+            Submit
+          </button>
+        </div>
+        <div class="vocab-feedback hidden" id="${wid}-fb"></div>
+      </div>
+      <div class="vocab-mastered hidden" id="${wid}-mastered">✓ Mastered!</div>
+    </div>`;
+  });
+
+  html += `<div class="complete-banner hidden" id="${id}-banner"
+    style="background:linear-gradient(135deg,var(--green),#3a8a3a)">🎉 All vocabulary mastered!</div>`;
+  return html;
+}
+
+const vocabCounts = {};
+
+function submitVocab(wid, target, wordIdx, dayIdx, taskIdx, totalWords) {
+  const input  = document.getElementById(`${wid}-input`);
+  const fbEl   = document.getElementById(`${wid}-fb`);
+  const submitBtn = document.getElementById(`${wid}-submit`);
+  if (!input || !fbEl) return;
+
+  // Never evaluate while the IME is still composing (mid-conversion)
+  if (input.dataset.composing === 'true') return;
+
+  const raw    = input.value;
+  const typed  = raw.trim().replace(/[！？。、\s]/g, '');
+  const answer = target.replace(/[！？。、\s]/g, '');
+
+  if (!typed) {
+    showVocabFeedback(fbEl, 'empty', '← Type the Japanese word first');
+    input.focus();
+    return;
+  }
+
+  if (!vocabCounts[wid]) vocabCounts[wid] = 0;
+
+  // ── Exact match ────────────────────────────────────────────────────────
+  if (typed === answer) {
+    vocabCounts[wid] = Math.min(3, vocabCounts[wid] + 1);
+    const c = vocabCounts[wid];
+    for (let i = 0; i < 3; i++) {
+      const d = document.getElementById(`${wid}-d${i}`);
+      if (d) d.className = 'dot' + (c > i ? ' filled' : '');
+    }
+    const remaining = 3 - c;
+    showVocabFeedback(fbEl, 'correct',
+      c >= 3 ? '✅ Perfect! Word mastered!' : `✅ Correct! ${remaining} more time${remaining > 1 ? 's' : ''} to go`);
+
+    setTimeout(() => {
+      input.value = '';
+      fbEl.classList.add('hidden');
+      input.placeholder = c >= 3 ? '✓ Done!' : `Write again (${3 - c}× remaining)…`;
+
+      if (c >= 3) {
+        document.getElementById(`${wid}-inputwrap`)?.classList.add('hidden');
+        document.getElementById(`${wid}-mastered`)?.classList.remove('hidden');
+        document.getElementById(wid)?.classList.add('done');
+        const idBase = wid.split('-').slice(0, 3).join('-');
+        const allDone = Array.from({ length: totalWords }, (_, i2) =>
+          (vocabCounts[`${idBase}-${i2}`] || 0) >= 3
+        ).every(Boolean);
+        if (allDone) {
+          document.getElementById(`${idBase}-banner`)?.classList.remove('hidden');
+          markTaskComplete(dayIdx, taskIdx);
+        }
+      } else {
+        input.focus();
+      }
+    }, 900);
+
+  // ── Close — right characters, wrong order or minor error ───────────────
+  } else {
+    const hits = [...answer].filter(ch => typed.includes(ch)).length;
+    const pct  = answer.length > 0 ? hits / answer.length : 0;
+
+    if (pct >= 0.5) {
+      showVocabFeedback(fbEl, 'close',
+        `🟡 Close! The answer is <strong>${escHtml(answer)}</strong> (${escHtml(target)}) — try again`);
+    } else {
+      showVocabFeedback(fbEl, 'wrong',
+        `❌ Not quite. The answer is <strong>${escHtml(answer)}</strong> — look at the reading above and try again`);
+    }
+    // Select all so user can immediately retype without backspacing
+    setTimeout(() => { input.select(); input.focus(); }, 100);
+  }
+}
+
+function showVocabFeedback(fbEl, type, msg) {
+  const styles = {
+    correct: 'background:#efffef;color:#2d6a2d;border:1px solid #5cb85c55',
+    close:   'background:#fff8ec;color:#7a4f00;border:1px solid #e8a83855',
+    wrong:   'background:#fff0f0;color:#8b2020;border:1px solid #e05c5c55',
+    empty:   'background:#f5f5f5;color:#888;border:1px solid #ddd',
+  };
+  fbEl.style.cssText = `margin-top:7px;padding:8px 11px;border-radius:7px;font-size:13px;line-height:1.5;${styles[type] || ''}`;
+  fbEl.innerHTML = msg;
+  fbEl.classList.remove('hidden');
+}
+
+// ── SPEAKING TASK ─────────────────────────────────────────────────────────────
+function buildSpeakingTask(task, dayIdx, taskIdx) {
+  const phrases = extractPhrases(task.content);
+  if (!phrases.length) return buildPlainTask(task);
+
+  const id = `speak-${dayIdx}-${taskIdx}`;
+  let html = `
+  <div class="speaking-info">
+    💡 <strong>How it works:</strong> Press 🔊 to hear the phrase, practise saying it out loud, then press 🎤 and speak clearly into your microphone. The app will check if your pronunciation is intelligible!
+  </div>`;
+
+  // Check SR availability
+  const hasSR = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  if (!hasSR) {
+    html += `<div class="perm-warning">⚠️ Speech recognition not available in this browser. Try Chrome on Android or desktop Chrome. You can still listen and practise by ear.</div>`;
+  }
+
+  // Phrase pills
+  html += `<div class="phrase-pills" id="${id}-pills">`;
+  phrases.forEach((p,i) => {
+    html += `<button class="phrase-pill ${i===0?'active':''}" id="${id}-pill-${i}" onclick="selectPhrase('${id}',${i},${phrases.length})" style="${i===0?'background:'+WEEK_COLORS[getCurrentWeek()]+';color:#fff':''}">
+      ${i+1}
+    </button>`;
+  });
+  html += `</div>`;
+
+  // Phrase boxes (one shown at a time)
+  phrases.forEach((p,i) => {
+    html += `
+    <div class="phrase-box ${i>0?'hidden':''}" id="${id}-phrase-${i}">
+      <div class="phrase-step">Step 1 — Read this phrase aloud:</div>
+      <div class="phrase-jp"><ruby>${escHtml(p.japanese)}<rt>${escHtml(p.romaji)}</rt></ruby></div>
+      <button class="phrase-guide-btn" onclick="toggleGuide('${id}-guide-${i}')">👁 Syllable guide</button>
+      <div class="syll-guide hidden" id="${id}-guide-${i}">
+        <div class="syll-guide-label">Read each block left → right:</div>
+        <div class="syll-wrap" id="${id}-syls-${i}">${buildSylls(p.romaji)}</div>
+        <div class="syll-full">Full: <strong>${escHtml(p.romaji)}</strong></div>
+      </div>
+      <button class="speak-btn" style="color:${WEEK_COLORS[getCurrentWeek()]};border-color:${WEEK_COLORS[getCurrentWeek()]}44;margin-bottom:10px"
+        onclick="speakJP('${escHtml(p.japanese)}',0.75)">🔊 Hear it first</button>
+      <div class="mic-section">
+        <div class="mic-step">Step 2 — Press 🎤 and speak:</div>
+        <button class="mic-btn" id="${id}-mic-${i}"
+          style="background:${WEEK_COLORS[getCurrentWeek()]}"
+          onclick="startMic('${id}',${i},'${escHtml(p.japanese)}','${escHtml(p.romaji)}',${dayIdx},${taskIdx},${phrases.length})">🎤</button>
+        <div class="mic-status" id="${id}-status-${i}">Tap mic to speak</div>
+        <div class="mic-transcript hidden" id="${id}-heard-${i}"></div>
+        <div class="mic-feedback hidden" id="${id}-fb-${i}"></div>
+      </div>
+    </div>`;
+  });
+
+  html += `<div class="complete-banner hidden" id="${id}-banner" style="background:linear-gradient(135deg,${WEEK_COLORS[getCurrentWeek()]},${WEEK_COLORS[getCurrentWeek()]}99)">🎤 All phrases passed — speaking complete!</div>`;
+  html += `<div class="content-text" style="margin-top:10px;border-top:1px solid #eee;padding-top:8px;font-size:12.5px;color:#777;line-height:2.8">${renderContent(task.content)}</div>`;
+  return html;
+}
+
+function buildSylls(romaji) {
+  return splitSyllables(romaji).map((s,i) =>
+    `<span class="syll" id="s${i}">${escHtml(s)}</span>`
+  ).join('');
+}
+
+function toggleGuide(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const hidden = el.classList.toggle('hidden');
+  if (!hidden) animateSylls(id.replace('-guide-','').split('-').pop(), id);
+}
+
+function animateSylls(phraseI, guideId) {
+  // find syll spans inside the guide
+  const guide = document.getElementById(guideId);
+  if (!guide) return;
+  const syls = guide.querySelectorAll('.syll');
+  let idx = 0;
+  const iv = setInterval(() => {
+    syls.forEach(s => s.classList.remove('active'));
+    if (idx < syls.length) { syls[idx].classList.add('active'); idx++; }
+    else clearInterval(iv);
+  }, 330);
+}
+
+// ── Microphone / Speech Recognition ──────────────────────────────────────────
+//
+// ON XIAOMI / HYPEROS — "permission denied" even though Chrome site settings
+// shows "allowed" means one of the TWO deeper permission layers is blocking:
+//
+//   Layer 1 — Android app permission (separate from Chrome's own site setting):
+//     Android Settings → Apps → Chrome → Permissions → Microphone → Allow
+//
+//   Layer 2 — HyperOS global hardware toggle (overrides everything):
+//     Swipe down notification panel → look for mic 🎤 icon → tap to enable
+//     (HyperOS 2 has a hardware-level kill switch separate from any app setting)
+//
+// Chrome's site settings (the 🔒 lock icon) is Layer 0 — you've already done
+// that. Layers 1 and 2 are OS-level and cannot be changed from a webpage.
+//
+// TEXT FALLBACK: if mic fails for any reason, the user can type what they said
+// in romaji and Claude grades it. This always works regardless of permissions.
+
+let recGlobal = null;
+let recState  = 'idle'; // 'idle' | 'requesting' | 'recording' | 'processing'
+
+function startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
+  const btn      = document.getElementById(`${id}-mic-${phraseIdx}`);
+  const statusEl = document.getElementById(`${id}-status-${phraseIdx}`);
+  const heardEl  = document.getElementById(`${id}-heard-${phraseIdx}`);
+  const fbEl     = document.getElementById(`${id}-fb-${phraseIdx}`);
+
+  if (recState === 'recording' && recGlobal) { recGlobal.stop(); return; }
+  if (recState !== 'idle') return;
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+    statusEl.textContent = '⚠️ Speech recognition needs Chrome — use text fallback below';
+    return;
+  }
+
+  recState = 'requesting';
+  setMicBtn(btn, 'requesting');
+  statusEl.textContent = 'Requesting microphone access…';
+  fbEl.className = 'mic-feedback hidden';
+  heardEl.classList.add('hidden');
+
+  navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    .then(stream => {
+      // Release hardware before SpeechRecognition opens it (avoids conflict)
+      stream.getTracks().forEach(t => t.stop());
+      setTimeout(() => {
+        _beginRecognition(SR, id, phraseIdx, japanese, romaji,
+                          dayIdx, taskIdx, totalPhrases, btn, statusEl, heardEl, fbEl);
+      }, 200);
+    })
+    .catch(err => {
+      recState = 'idle';
+      setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+      _showMicError(err, statusEl, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+    });
+}
+
+function _showMicError(err, statusEl, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
+  if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+    statusEl.innerHTML =
+      '<strong>⚠️ Speech Services by Google is missing or disabled.</strong><br><br>' +
+      'Chrome on Android does not do speech recognition itself — it hands off to ' +
+      'a system app called <strong>Speech Services by Google</strong>. ' +
+      'On Xiaomi/HyperOS this app is often missing or replaced by a Xiaomi speech engine ' +
+      'that Chrome cannot use. This is why "Recording" appears briefly then fails.<br><br>' +
+      '<b>Fix:</b><br>' +
+      '<b>1.</b> Open the <b>Play Store</b> and search <b>"Speech Services by Google"</b><br>' +
+      '<b>2.</b> Install or update it<br>' +
+      '<b>3.</b> Go to <b>Settings → Apps → Speech Services by Google → Permissions → Microphone → Allow</b><br>' +
+      '<b>4.</b> Fully close Chrome and reopen this page<br><br>' +
+      '<em>Chrome cannot do speech recognition without this app — it is a system-level requirement.</em><br><br>' +
+      '✏️ <b>Use the text fallback below in the meantime</b> — it always works without a mic.';
+  } else if (err.name === 'NotReadableError') {
+    statusEl.textContent = '⚠️ Mic is busy — another app is using it. Close other apps and try again.';
+  } else {
+    statusEl.textContent = `⚠️ Mic error: ${err.name}. Use the text fallback below.`;
+  }
+  _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+}
+
+// Show text-entry fallback so the feature always works mic or no mic
+function _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
+  const fallbackId = `${id}-textfallback-${phraseIdx}`;
+  if (document.getElementById(fallbackId)) return; // already shown
+  const container = document.getElementById(`${id}-mic-${phraseIdx}`)?.parentElement;
+  if (!container) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = fallbackId;
+  wrap.style.cssText = 'margin-top:12px;padding:10px 12px;background:#f5effe;border-radius:8px;border:1px solid #9b6fd444';
+  wrap.innerHTML =
+    '<div style="font-size:11px;color:#9b6fd4;font-weight:700;margin-bottom:6px">✏️ Text fallback — say it aloud, then type what you said:</div>' +
+    `<input id="${fallbackId}-input" type="text" placeholder='Type what you said (e.g. "${romaji}")…'` +
+    ' style="width:100%;padding:8px 10px;font-size:14px;border:2px solid #d4b8f0;border-radius:7px;outline:none;box-sizing:border-box;font-family:inherit;background:#fdf6e3">' +
+    `<button onclick="checkTextFallback('${fallbackId}','${escHtml(japanese)}','${escHtml(romaji)}',${phraseIdx},'${id}',${dayIdx},${taskIdx},${totalPhrases})"` +
+    ' style="width:100%;margin-top:7px;padding:9px;border-radius:7px;border:none;background:#9b6fd4;color:#fff;font-weight:700;font-size:13px;cursor:pointer">✓ Check pronunciation</button>' +
+    `<div id="${fallbackId}-result" style="margin-top:7px;font-size:12px;display:none"></div>`;
+  container.appendChild(wrap);
+}
+
+function checkTextFallback(fallbackId, japanese, romaji, phraseIdx, id, dayIdx, taskIdx, totalPhrases) {
+  const input  = document.getElementById(`${fallbackId}-input`);
+  const result = document.getElementById(`${fallbackId}-result`);
+  if (!input || !result) return;
+  const typed = input.value.trim().toLowerCase().replace(/[^\w\u3040-\u9faf]/g, '');
+  const target = romaji.toLowerCase().replace(/[^\w]/g, '');
+  let hits = 0;
+  for (const ch of target) if (typed.includes(ch)) hits++;
+  const pass = target.length > 0 && hits / target.length >= 0.5;
+
+  result.style.display = 'block';
+  if (pass) {
+    result.style.color = 'var(--green)';
+    result.textContent = '✅ Good effort! Marked as passed.';
+    finishMic(id, phraseIdx, true, dayIdx, taskIdx, totalPhrases, japanese, romaji);
+  } else {
+    result.style.color = '#e05c5c';
+    result.textContent = `❌ Doesn't quite match "${romaji}" — say it aloud and try again.`;
+  }
+}
+
+function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
+                            dayIdx, taskIdx, totalPhrases, btn, statusEl, heardEl, fbEl) {
+  const rec = new SR();
+  recGlobal = rec;
+  rec.lang = 'ja-JP'; rec.continuous = false; rec.interimResults = false; rec.maxAlternatives = 5;
+
+  recState = 'recording';
+  setMicBtn(btn, 'recording');
+  statusEl.innerHTML = '<span style="color:#e05c5c;font-weight:700">🔴 Recording — press again to stop</span>';
+
+  rec.onresult = e => {
+    recState = 'processing';
+    const alts = Array.from(e.results[0]).map(r => r.transcript.trim());
+    heardEl.textContent = `Heard: "${alts[0] || '—'}"`;
+    heardEl.classList.remove('hidden');
+    statusEl.textContent = 'Checking…';
+    const target = japanese.replace(/[！？。、\s]/g, '');
+    const pass = alts.some(a => {
+      const clean = a.replace(/[！？。、\s]/g, '');
+      let hits = 0;
+      for (const ch of target) if (clean.includes(ch)) hits++;
+      return target.length > 0 && hits / target.length >= 0.5;
+    });
+    setTimeout(() => finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese, romaji), 300);
+  };
+
+  rec.onerror = e => {
+    recState = 'idle'; recGlobal = null;
+    setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+    if (e.error === 'not-allowed') {
+      _showMicError({ name: 'NotAllowedError' }, statusEl, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+    } else if (e.error === 'no-speech') {
+      statusEl.textContent = 'No speech heard — press 🎤 and speak clearly';
+    } else if (e.error === 'network') {
+      statusEl.textContent = '⚠️ Network error — check connection and try again';
+    } else {
+      statusEl.textContent = `⚠️ ${e.error} — press 🎤 or use text fallback`;
+      _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+    }
+  };
+
+  rec.onend = () => {
+    if (recState === 'processing') return;
+    recState = 'idle'; recGlobal = null;
+    if (btn && btn.classList.contains('listening')) {
+      setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+      statusEl.textContent = 'Stopped — press 🎤 to try again';
+    }
+  };
+
+  try { rec.start(); }
+  catch(e) {
+    recState = 'idle'; recGlobal = null;
+    setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+    statusEl.textContent = 'Could not start mic — use text fallback below';
+    _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+  }
+}
+
+// btn state: 'idle' | 'requesting' | 'recording'
+function setMicBtn(btn, state, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
+  if (!btn) return;
+  const weekCol = WEEK_COLORS[getCurrentWeek()];
+  if (state === 'idle') {
+    btn.className = 'mic-btn';
+    btn.innerHTML = '🎤';
+    btn.style.background = weekCol;
+    btn.style.boxShadow  = `0 4px 14px rgba(0,0,0,.18)`;
+    // Restore onclick in case it was overwritten
+    btn.onclick = () => startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+  } else if (state === 'requesting') {
+    btn.className = 'mic-btn';
+    btn.innerHTML = '⏳';
+    btn.style.background = '#aaa';
+  } else if (state === 'recording') {
+    btn.className = 'mic-btn listening';
+    btn.innerHTML = '⏹<br><span style="font-size:10px;font-weight:700;letter-spacing:0">STOP</span>';
+    btn.style.background = '#e05c5c';
+    btn.style.boxShadow  = '0 0 0 6px rgba(224,92,92,.3)';
+  }
+}
+
+// Keep resetMicBtn as alias so finishMic can still call it
+function resetMicBtn(btn, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
+  setMicBtn(btn, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+}
+
+function finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese, romaji) {
+  const btnId = `${id}-mic-${phraseIdx}`;
+  const btn = document.getElementById(btnId);
+  const statusEl = document.getElementById(`${id}-status-${phraseIdx}`);
+  const fbEl     = document.getElementById(`${id}-fb-${phraseIdx}`);
+  recState  = 'idle';
+  recGlobal = null;
+
+  if (pass) {
+    btn.className = 'mic-btn';
+    btn.innerHTML = '✓';
+    btn.style.background = 'var(--green)';
+    statusEl.innerHTML = '<span style="color:var(--green);font-weight:700">✓ Great pronunciation!</span>';
+    fbEl.textContent = 'Well done! Moving to next phrase…';
+    fbEl.className = 'mic-feedback pass';
+
+    const pill = document.getElementById(`${id}-pill-${phraseIdx}`);
+    if (pill) { pill.classList.add('passed'); pill.textContent = '✓'; }
+
+    const allPassed = Array.from({length:totalPhrases},(_,i)=>
+      document.getElementById(`${id}-pill-${i}`)?.classList.contains('passed')
+    ).every(Boolean);
+
+    if (allPassed) {
+      document.getElementById(`${id}-banner`)?.classList.remove('hidden');
+      markTaskComplete(dayIdx, taskIdx);
+    } else {
+      setTimeout(() => {
+        let next = phraseIdx + 1;
+        while (next < totalPhrases && document.getElementById(`${id}-pill-${next}`)?.classList.contains('passed')) next++;
+        if (next < totalPhrases) selectPhrase(id, next, totalPhrases);
+      }, 1600);
+    }
+  } else {
+    resetMicBtn(btn, id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
+    statusEl.textContent = "Couldn't quite catch it — press 🎤 and try again!";
+    fbEl.textContent = `Tip: speak clearly — ${romaji}`;
+    fbEl.className = 'mic-feedback fail';
+  }
+}
+
+function selectPhrase(id, idx, total) {
+  for (let i=0;i<total;i++) {
+    document.getElementById(`${id}-phrase-${i}`)?.classList.toggle('hidden', i!==idx);
+    const pill = document.getElementById(`${id}-pill-${i}`);
+    if (pill && !pill.classList.contains('passed')) {
+      pill.style.background = i===idx ? WEEK_COLORS[getCurrentWeek()] : '#e8dcc8';
+      pill.style.color = i===idx ? '#fff' : '#5a3e28';
+    }
+  }
+}
+
+// ── LISTENING TASK ────────────────────────────────────────────────────────────
+const listenCounts = {};
+const listenTotals = {};
+let playingId = null;
+
+function buildListeningTask(task, dayIdx, taskIdx) {
+  const phrases = extractPhrases(task.content);
+  if (!phrases.length) return buildPlainTask(task);
+
+  const REQUIRED = 3;
+  const id = `listen-${dayIdx}-${taskIdx}`;
+  listenTotals[id] = 0;
+  phrases.forEach((_,i) => listenCounts[`${id}-${i}`] = 0);
+
+  let html = `
+  <p style="font-size:13px;color:#777;margin:8px 0 12px;line-height:1.6">
+    Press 🔊 on each phrase to hear it spoken in Japanese. Listen and repeat out loud. Complete <strong>${REQUIRED} listens</strong> to finish this section.
+  </p>
+  <div class="listen-progress-wrap">
+    <div class="listen-count-row">
+      <span>Listens: <strong id="${id}-total">0</strong> / ${REQUIRED}</span>
+      <span id="${id}-done-badge" class="hidden text-green" style="font-weight:700">✓ Complete!</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="${id}-bar" style="width:0%;background:var(--blue)"></div></div>
+    <div class="listen-dots" id="${id}-dots">
+      ${Array.from({length:REQUIRED},(_,i)=>`<div class="listen-dot" id="${id}-dot-${i}"></div>`).join('')}
+    </div>
+    <button class="play-all-btn" id="${id}-playall" onclick="playAllPhrases('${id}',${JSON.stringify(phrases.map(p=>p.japanese))},${dayIdx},${taskIdx},${REQUIRED})">
+      ▶ Play All Phrases
+    </button>
+  </div>`;
+
+  phrases.forEach((p,i) => {
+    html += `
+    <div class="listen-phrase-row" id="${id}-row-${i}">
+      <button class="play-btn" id="${id}-btn-${i}" style="background:var(--blue)22;color:var(--blue)"
+        onclick="playSinglePhrase('${id}',${i},'${escHtml(p.japanese)}',${dayIdx},${taskIdx},${REQUIRED})">▶</button>
+      <div style="flex:1">
+        <div class="listen-phrase-jp"><ruby>${escHtml(p.japanese)}<rt>${escHtml(p.romaji)}</rt></ruby></div>
+      </div>
+      <div class="listen-count-badge hidden" id="${id}-cnt-${i}" style="color:var(--blue)">0×</div>
+    </div>`;
+  });
+
+  html += `<div class="content-text" style="margin-top:10px;border-top:1px solid #eee;padding-top:8px;font-size:12.5px;color:#777;line-height:2.8">${renderContent(task.content)}</div>`;
+  html += `<div class="complete-banner hidden" id="${id}-banner" style="background:linear-gradient(135deg,var(--blue),#2980b9);margin-top:10px">👂 Listening section complete!</div>`;
+  return html;
+}
+
+function updateListenProgress(id, total, required, dayIdx, taskIdx) {
+  listenTotals[id] = total;
+  document.getElementById(`${id}-total`).textContent = total;
+  const pct = Math.min(100, total/required*100);
+  const bar = document.getElementById(`${id}-bar`);
+  if (bar) bar.style.width = pct + '%';
+  for (let i=0;i<required;i++) {
+    const dot = document.getElementById(`${id}-dot-${i}`);
+    if (dot) { dot.classList.toggle('filled', total > i); dot.textContent = total > i ? '✓' : ''; }
+  }
+  if (total >= required) {
+    document.getElementById(`${id}-done-badge`)?.classList.remove('hidden');
+    document.getElementById(`${id}-banner`)?.classList.remove('hidden');
+    markTaskComplete(dayIdx, taskIdx);
+  }
+}
+
+function playSinglePhrase(id, idx, japanese, dayIdx, taskIdx, required) {
+  if (playingId) return;
+  playingId = id;
+  const btn = document.getElementById(`${id}-btn-${idx}`);
+  if (btn) { btn.classList.add('playing'); btn.textContent = '🔊'; btn.disabled = true; }
+
+  listenCounts[`${id}-${idx}`] = (listenCounts[`${id}-${idx}`] || 0) + 1;
+  const cnt = listenCounts[`${id}-${idx}`];
+  const cntEl = document.getElementById(`${id}-cnt-${idx}`);
+  if (cntEl) { cntEl.textContent = cnt + '×'; cntEl.classList.remove('hidden'); }
+  document.getElementById(`${id}-row-${idx}`)?.classList.add('played');
+
+  const total = Object.entries(listenCounts)
+    .filter(([k]) => k.startsWith(id+'-'))
+    .reduce((a,[,v]) => a+v, 0);
+
+  const allBtns = document.querySelectorAll(`[id^="${id}-btn-"]`);
+  allBtns.forEach(b => { b.disabled = true; });
+  const playAllBtn = document.getElementById(`${id}-playall`);
+  if (playAllBtn) playAllBtn.disabled = true;
+
+  speakJP(japanese, 0.75, () => {
+    playingId = null;
+    if (btn) { btn.classList.remove('playing'); btn.textContent = '▶'; btn.disabled = false; }
+    allBtns.forEach(b => { b.disabled = false; });
+    if (playAllBtn) playAllBtn.disabled = false;
+    updateListenProgress(id, total, required, dayIdx, taskIdx);
+  });
+}
+
+function playAllPhrases(id, phrases, dayIdx, taskIdx, required) {
+  if (playingId) return;
+  const playAllBtn = document.getElementById(`${id}-playall`);
+  if (playAllBtn) { playAllBtn.disabled = true; playAllBtn.textContent = '⏸ Playing…'; }
+  let i = 0;
+  const next = () => {
+    if (i >= phrases.length) {
+      playingId = null;
+      if (playAllBtn) { playAllBtn.disabled = false; playAllBtn.textContent = '▶ Play All Phrases'; }
+      const total = Object.entries(listenCounts).filter(([k])=>k.startsWith(id+'-')).reduce((a,[,v])=>a+v,0);
+      updateListenProgress(id, total, required, dayIdx, taskIdx);
+      return;
+    }
+    playingId = id;
+    const btn = document.getElementById(`${id}-btn-${i}`);
+    if (btn) { btn.classList.add('playing'); btn.textContent = '🔊'; }
+
+    listenCounts[`${id}-${i}`] = (listenCounts[`${id}-${i}`]||0)+1;
+    const cnt = listenCounts[`${id}-${i}`];
+    const cntEl = document.getElementById(`${id}-cnt-${i}`);
+    if (cntEl) { cntEl.textContent = cnt+'×'; cntEl.classList.remove('hidden'); }
+    document.getElementById(`${id}-row-${i}`)?.classList.add('played');
+
+    const ci = i;
+    speakJP(phrases[ci], 0.75, () => {
+      if (btn) { btn.classList.remove('playing'); btn.textContent = '▶'; }
+      i++; setTimeout(next, 450);
+    });
+  };
+  next();
+}
+
+// ── PLAIN TASK (grammar / review / fallback) ──────────────────────────────────
+function buildPlainTask(task) {
+  return `<div class="content-text">${renderContent(task.content)}</div>`;
+}
+
+// ── Mark task complete ────────────────────────────────────────────────────────
+function markTaskComplete(dayIdx, taskIdx) {
+  completed[`${dayIdx}-${taskIdx}`] = true;
+  saveState();
+  // Refresh the task card
+  const card = document.getElementById(`task-${dayIdx}-${taskIdx}`);
+  if (card) {
+    card.classList.add('done');
+    const badge = card.querySelector('.task-done-badge');
+    if (badge) badge.classList.remove('hidden');
+  }
+  renderProgressFooter();
+  renderDayGrid();
+}
+
+function manualToggle(dayIdx, taskIdx) {
+  const key = `${dayIdx}-${taskIdx}`;
+  if (completed[key]) delete completed[key]; else completed[key] = true;
+  saveState();
+  renderAll();
+}
+
+// ── View state ────────────────────────────────────────────────────────────────
+// 'lessons' = normal day view, 'kana' = kana reference chart
+let currentView = 'lessons';
+let currentKanaScript = 'hiragana'; // 'hiragana' | 'katakana'
+let currentKanaSection = 'main';    // 'main' | 'voiced' | 'handakuten' | 'compounds'
+let playingKanaCell = null;
+
+// ── Kana data ─────────────────────────────────────────────────────────────────
+// Each row is [a, i, u, e, o] — null means that cell doesn't exist
+const KANA = {
+  hiragana: {
+    main: [
+      { label:'Vowels',   row:['あ/a','い/i','う/u','え/e','お/o'] },
+      { label:'K',        row:['か/ka','き/ki','く/ku','け/ke','こ/ko'] },
+      { label:'S',        row:['さ/sa','し/shi','す/su','せ/se','そ/so'] },
+      { label:'T',        row:['た/ta','ち/chi','つ/tsu','て/te','と/to'] },
+      { label:'N',        row:['な/na','に/ni','ぬ/nu','ね/ne','の/no'] },
+      { label:'H',        row:['は/ha','ひ/hi','ふ/fu','へ/he','ほ/ho'] },
+      { label:'M',        row:['ま/ma','み/mi','む/mu','め/me','も/mo'] },
+      { label:'Y',        row:['や/ya',null,'ゆ/yu',null,'よ/yo'] },
+      { label:'R',        row:['ら/ra','り/ri','る/ru','れ/re','ろ/ro'] },
+      { label:'W / N',    row:['わ/wa',null,null,null,'を/wo'] },
+      { label:'',         row:['ん/n', null, null, null, null] },
+    ],
+    voiced: [
+      { label:'G',        row:['が/ga','ぎ/gi','ぐ/gu','げ/ge','ご/go'] },
+      { label:'Z',        row:['ざ/za','じ/ji','ず/zu','ぜ/ze','ぞ/zo'] },
+      { label:'D',        row:['だ/da','ぢ/di','づ/du','で/de','ど/do'] },
+      { label:'B',        row:['ば/ba','び/bi','ぶ/bu','べ/be','ぼ/bo'] },
+    ],
+    handakuten: [
+      { label:'P',        row:['ぱ/pa','ぴ/pi','ぷ/pu','ぺ/pe','ぽ/po'] },
+    ],
+    compounds: [
+      { label:'KY',       row:['きゃ/kya','きゅ/kyu','きょ/kyo'] },
+      { label:'SH',       row:['しゃ/sha','しゅ/shu','しょ/sho'] },
+      { label:'CH',       row:['ちゃ/cha','ちゅ/chu','ちょ/cho'] },
+      { label:'NY',       row:['にゃ/nya','にゅ/nyu','にょ/nyo'] },
+      { label:'HY',       row:['ひゃ/hya','ひゅ/hyu','ひょ/hyo'] },
+      { label:'MY',       row:['みゃ/mya','みゅ/myu','みょ/myo'] },
+      { label:'RY',       row:['りゃ/rya','りゅ/ryu','りょ/ryo'] },
+      { label:'GY',       row:['ぎゃ/gya','ぎゅ/gyu','ぎょ/gyo'] },
+      { label:'J',        row:['じゃ/ja', 'じゅ/ju', 'じょ/jo']  },
+      { label:'BY',       row:['びゃ/bya','びゅ/byu','びょ/byo'] },
+      { label:'PY',       row:['ぴゃ/pya','ぴゅ/pyu','ぴょ/pyo'] },
+    ],
+  },
+  katakana: {
+    main: [
+      { label:'Vowels',   row:['ア/a','イ/i','ウ/u','エ/e','オ/o'] },
+      { label:'K',        row:['カ/ka','キ/ki','ク/ku','ケ/ke','コ/ko'] },
+      { label:'S',        row:['サ/sa','シ/shi','ス/su','セ/se','ソ/so'] },
+      { label:'T',        row:['タ/ta','チ/chi','ツ/tsu','テ/te','ト/to'] },
+      { label:'N',        row:['ナ/na','ニ/ni','ヌ/nu','ネ/ne','ノ/no'] },
+      { label:'H',        row:['ハ/ha','ヒ/hi','フ/fu','ヘ/he','ホ/ho'] },
+      { label:'M',        row:['マ/ma','ミ/mi','ム/mu','メ/me','モ/mo'] },
+      { label:'Y',        row:['ヤ/ya',null,'ユ/yu',null,'ヨ/yo'] },
+      { label:'R',        row:['ラ/ra','リ/ri','ル/ru','レ/re','ロ/ro'] },
+      { label:'W / N',    row:['ワ/wa',null,null,null,'ヲ/wo'] },
+      { label:'',         row:['ン/n', null, null, null, null] },
+    ],
+    voiced: [
+      { label:'G',        row:['ガ/ga','ギ/gi','グ/gu','ゲ/ge','ゴ/go'] },
+      { label:'Z',        row:['ザ/za','ジ/ji','ズ/zu','ゼ/ze','ゾ/zo'] },
+      { label:'D',        row:['ダ/da','ヂ/di','ヅ/du','デ/de','ド/do'] },
+      { label:'B',        row:['バ/ba','ビ/bi','ブ/bu','ベ/be','ボ/bo'] },
+    ],
+    handakuten: [
+      { label:'P',        row:['パ/pa','ピ/pi','プ/pu','ペ/pe','ポ/po'] },
+    ],
+    compounds: [
+      { label:'KY',       row:['キャ/kya','キュ/kyu','キョ/kyo'] },
+      { label:'SH',       row:['シャ/sha','シュ/shu','ショ/sho'] },
+      { label:'CH',       row:['チャ/cha','チュ/chu','チョ/cho'] },
+      { label:'NY',       row:['ニャ/nya','ニュ/nyu','ニョ/nyo'] },
+      { label:'HY',       row:['ヒャ/hya','ヒュ/hyu','ヒョ/hyo'] },
+      { label:'MY',       row:['ミャ/mya','ミュ/myu','ミョ/myo'] },
+      { label:'RY',       row:['リャ/rya','リュ/ryu','リョ/ryo'] },
+      { label:'GY',       row:['ギャ/gya','ギュ/gyu','ギョ/gyo'] },
+      { label:'J',        row:['ジャ/ja', 'ジュ/ju', 'ジョ/jo']  },
+      { label:'BY',       row:['ビャ/bya','ビュ/byu','ビョ/byo'] },
+      { label:'PY',       row:['ピャ/pya','ピュ/pyu','ピョ/pyo'] },
+      // Katakana-only loanword sounds
+      { label:'F',        row:['ファ/fa','フィ/fi','フェ/fe','フォ/fo', null] },
+      { label:'V',        row:['ヴァ/va','ヴィ/vi','ヴ/vu','ヴェ/ve','ヴォ/vo'] },
+      { label:'T/D',      row:['ティ/ti','トゥ/tu','ディ/di','デュ/du', null] },
+      { label:'W',        row:['ウィ/wi',null,'ウェ/we','ウォ/wo', null] },
+    ],
+  },
+};
+
+const KANA_SECTION_LABELS = {
+  main:       'Main (Gojūon)',
+  voiced:     'Voiced (Dakuten ゛)',
+  handakuten: 'Semi-voiced (Handakuten ゜)',
+  compounds:  'Compound Sounds (Yōon)',
+};
+
+// ── Kana chart renderer ───────────────────────────────────────────────────────
+function renderKanaChart() {
+  const el = document.getElementById('kanaView');
+  if (!el) return;
+
+  const sections = Object.keys(KANA_SECTION_LABELS);
+  const script   = currentKanaScript;
+  const section  = currentKanaSection;
+  const rows     = KANA[script][section] || [];
+  const isCompound = section === 'compounds';
+  const cols = isCompound ? 3 : 5;
+  const colHeaders = isCompound
+    ? ['ya', 'yu', 'yo']
+    : ['a', 'i', 'u', 'e', 'o'];
+
+  // Column headers row
+  const colHeaderHtml = `
+    <div class="kana-grid${isCompound?' compounds':''}" style="margin-bottom:4px">
+      ${colHeaders.map(h =>
+        `<div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:3px 0">${h}</div>`
+      ).join('')}
+    </div>`;
+
+  // Build each row of the grid
+  const gridHtml = rows.map(rowData => {
+    const cells = rowData.row.map((cell, ci) => {
+      if (!cell) return `<div class="kana-cell empty"></div>`;
+      const [char, romaji] = cell.split('/');
+      const cellId = `kana-${escHtml(char)}`;
+      return `
+        <div class="kana-cell" id="${cellId}">
+          <span class="kana-char">${escHtml(char)}</span>
+          <span class="kana-romaji">${escHtml(romaji)}</span>
+          <button class="kana-hear"
+            onclick="_unlockAudioContext();playKana('${escHtml(char)}','${cellId}')">
+            🔊
+          </button>
+        </div>`;
+    }).join('');
+
+    // Row label on left — use a full-width label row for non-empty labels
+    const labelHtml = rowData.label
+      ? `<div style="font-size:10px;font-weight:700;color:var(--muted);
+                     padding:6px 0 3px;letter-spacing:.05em">${escHtml(rowData.label)}</div>`
+      : '';
+
+    return `
+      ${labelHtml}
+      <div class="kana-grid${isCompound?' compounds':''}">${cells}</div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="kana-header">
+      <h2>かな表 · Kana Chart</h2>
+      <p>Tap 🔊 on any character to hear its pronunciation</p>
+    </div>
+
+    <!-- Script subtabs: Hiragana / Katakana -->
+    <div class="kana-subtabs">
+      <button class="kana-subtab ${script==='hiragana'?'active':''}"
+        onclick="setKanaScript('hiragana')">ひらがな Hiragana</button>
+      <button class="kana-subtab ${script==='katakana'?'active':''}"
+        onclick="setKanaScript('katakana')">カタカナ Katakana</button>
+    </div>
+
+    <!-- Section subtabs -->
+    <div class="kana-subtabs">
+      ${sections.map(s => `
+        <button class="kana-subtab ${section===s?'active':''}"
+          onclick="setKanaSection('${s}')"
+          style="${section===s?'background:var(--ink);border-color:var(--ink)':''}">
+          ${escHtml(KANA_SECTION_LABELS[s])}
+        </button>`).join('')}
+    </div>
+
+    <div class="kana-section">
+      ${colHeaderHtml}
+      ${gridHtml}
+    </div>`;
+}
+
+function playKana(char, cellId) {
+  // Reset previous playing cell
+  if (playingKanaCell && playingKanaCell !== cellId) {
+    document.getElementById(playingKanaCell)?.classList.remove('playing');
+  }
+  const cell = document.getElementById(cellId);
+  if (cell) cell.classList.add('playing');
+  playingKanaCell = cellId;
+
+  speakJP(char, 0.8, () => {
+    document.getElementById(cellId)?.classList.remove('playing');
+    if (playingKanaCell === cellId) playingKanaCell = null;
+  });
+}
+
+function setKanaScript(script) {
+  currentKanaScript = script;
+  // Reset section to main when switching scripts
+  currentKanaSection = 'main';
+  renderKanaChart();
+}
+
+function setKanaSection(section) {
+  currentKanaSection = section;
+  renderKanaChart();
+}
+
+function goKanaView() {
+  currentView = 'kana';
+  renderWeekTabs();
+  // Hide lesson elements, show kana view
+  document.getElementById('dayGrid').classList.add('hidden');
+  document.getElementById('dayHeader').classList.add('hidden');
+  document.getElementById('taskList').classList.add('hidden');
+  document.getElementById('progressFooter').classList.add('hidden');
+  document.getElementById('dayNav').classList.add('hidden');
+  document.getElementById('kanaView').classList.remove('hidden');
+  renderKanaChart();
+  window.scrollTo(0, 0);
+}
+
+function goLessonsView() {
+  currentView = 'lessons';
+  document.getElementById('dayGrid').classList.remove('hidden');
+  document.getElementById('dayHeader').classList.remove('hidden');
+  document.getElementById('taskList').classList.remove('hidden');
+  document.getElementById('progressFooter').classList.remove('hidden');
+  document.getElementById('dayNav').classList.remove('hidden');
+  document.getElementById('kanaView').classList.add('hidden');
+}
+
+// ── Rendering ─────────────────────────────────────────────────────────────────
+function renderWeekTabs() {
+  const week = getCurrentWeek();
+  const el = document.getElementById('weekTabs');
+  el.innerHTML = [1,2,3,4].map(w => `
+    <button class="week-tab ${week===w?'active':''}"
+      style="${week===w?`background:${WEEK_COLORS[w]};color:#fff;border-bottom-color:${WEEK_COLORS[w]}`:''}"
+      onclick="goWeek(${w})">
+      Week ${w}<span>${WEEK_LABELS[w]}</span>
+    </button>`).join('');
+}
+
+function goWeek(w) {
+  currentDay = (w-1)*7+1;
+  openTaskIdx = null;
+  saveState();
+  renderAll();
+  window.scrollTo(0,0);
+}
+
+function renderDayGrid() {
+  const week = getCurrentWeek();
+  const el = document.getElementById('dayGrid');
+  const days = PLAN.filter(d => d.week === week);
+  el.innerHTML = days.map(d => {
+    const isTest = d.day % 7 === 0;
+    const isSel  = d.day === currentDay;
+    const done   = isDayComplete(d.day);
+    const col    = WEEK_COLORS[week];
+    let bg='#fff', border='var(--border)', color='var(--ink)';
+    if (isSel)  { bg=col; border=col; color='#fff'; }
+    else if (done)  { bg='#efffef'; border='var(--green)'; }
+    else if (isTest){ bg='#f5effe'; border='var(--purple)'; color='var(--purple)'; }
+    return `<button class="day-btn${done?' done':''}${isTest?' test':''}${isSel?' active':''}"
+      style="background:${bg};border-color:${border};color:${color}"
+      onclick="goDay(${d.day})">
+      ${d.day}
+      ${isTest?'<span class="label">TEST</span>':''}
+      ${done?'<span class="check">✓</span>':''}
+    </button>`;
+  }).join('');
+}
+
+function goDay(d) {
+  currentDay = d; openTaskIdx = null;
+  saveState(); renderAll(); window.scrollTo(0,80);
+}
+
+function renderDayHeader() {
+  const d = getDayData(currentDay);
+  if (!d) return;
+  const week = d.week;
+  const col = currentDay % 7 === 0 ? 'linear-gradient(135deg,#9b6fd4,#7b52b8)'
+                                    : `linear-gradient(135deg,${WEEK_COLORS[week]},${WEEK_COLORS[week]}cc)`;
+  const totalMins = d.tasks.reduce((s,t)=>s+t.mins,0);
+  const isCP = currentDay % 7 === 0;
+  document.getElementById('dayHeader').innerHTML = `
+    <div>
+      <div class="meta">DAY ${d.day} · ${WEEK_LABELS[week]}${isCP?' · 🏆 CHECKPOINT':''}</div>
+      <div class="theme">${escHtml(d.theme)}</div>
+    </div>
+    <div class="timer">⏱ ${totalMins} min</div>`;
+  document.getElementById('dayHeader').style.background = col;
+}
+
+function renderTaskList() {
+  const d = getDayData(currentDay);
+  if (!d) return;
+  const week = d.week;
+  const el = document.getElementById('taskList');
+  el.innerHTML = d.tasks.map((task, ti) => {
+    const cfg = TYPE_CFG[task.type];
+    const done = !!completed[`${currentDay}-${ti}`];
+    const isOpen = openTaskIdx === ti;
+    const isManual = task.type === 'grammar' || task.type === 'review';
+
+    let bodyHtml = '';
+    if (isOpen) {
+      if (task.type === 'vocab')     bodyHtml = buildVocabTask(task, currentDay, ti);
+      else if (task.type === 'speaking')  bodyHtml = buildSpeakingTask(task, currentDay, ti);
+      else if (task.type === 'listening') bodyHtml = buildListeningTask(task, currentDay, ti);
+      else bodyHtml = buildPlainTask(task);
+    }
+
+    const manualBtn = isManual ? `
+      <button class="task-manual-btn ${done?'checked':''}" style="color:${cfg.color}"
+        onclick="event.stopPropagation();manualToggle(${currentDay},${ti})">
+        <span>${done?'✓':'○'}</span>
+      </button>` : '';
+
+    return `
+    <div class="task-card${done?' done':''}" id="task-${currentDay}-${ti}"
+      style="background:${done?'#f5fff5':cfg.bg};border-color:${done?'var(--green)':cfg.color}33;
+             box-shadow:${isOpen?`0 2px 12px ${cfg.color}22`:'none'}">
+      <div class="task-head" onclick="toggleTask(${ti})">
+        <span class="task-icon">${cfg.icon}</span>
+        <span class="task-label" style="color:${cfg.color}">${cfg.label}</span>
+        <span class="task-mins">${task.mins} min</span>
+        ${done?`<span class="task-done-badge">✓ Done</span>`:''}
+        ${manualBtn}
+        <span class="task-chevron">${isOpen?'▲':'▼'}</span>
+      </div>
+      <div class="task-body${isOpen?' open':''}" id="tbody-${currentDay}-${ti}">
+        ${bodyHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleTask(ti) {
+  if (openTaskIdx === ti) { openTaskIdx = null; }
+  else { openTaskIdx = ti; }
+  renderTaskList();
+  // Scroll task into view
+  setTimeout(() => {
+    const el = document.getElementById(`task-${currentDay}-${ti}`);
+    if (el) el.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }, 50);
+}
+
+function renderProgressFooter() {
+  const d = getDayData(currentDay);
+  if (!d) return;
+  const done  = d.tasks.filter((_,ti) => completed[`${currentDay}-${ti}`]).length;
+  const total = d.tasks.length;
+  const pct   = (done/total)*100;
+  const col   = WEEK_COLORS[d.week];
+  document.getElementById('progressLabel').textContent = `Today: ${done} / ${total} tasks complete`;
+  const fill = document.getElementById('progressFill');
+  fill.style.width = pct + '%';
+  fill.style.background = `linear-gradient(90deg,${col},${col}bb)`;
+}
+
+function renderDayNav() {
+  const d = getDayData(currentDay);
+  if (!d) return;
+  const col = WEEK_COLORS[d.week];
+  let html = '';
+  if (currentDay > 1) html += `<button class="nav-btn prev" onclick="goDay(${currentDay-1})">← Day ${currentDay-1}</button>`;
+  if (currentDay < 30) html += `<button class="nav-btn next" style="background:${col};border-color:${col}" onclick="goDay(${currentDay+1})">Day ${currentDay+1} →</button>`;
+  document.getElementById('dayNav').innerHTML = html;
+}
+
+function renderAll() {
+  renderWeekTabs();
+  renderDayGrid();
+  renderDayHeader();
+  renderTaskList();
+  renderProgressFooter();
+  renderDayNav();
+}
+
+// ── Export / Import progress ──────────────────────────────────────────────────
+function exportProgress() {
+  const data = {
+    completed,
+    currentDay,
+    exportedAt: new Date().toISOString(),
+    version: 1
+  };
+  const json = JSON.stringify(data);
+  const blob = new Blob([json], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'japanese-coach-progress.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function importProgress() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json,application/json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.version === 1 && data.completed) {
+          completed = data.completed;
+          if (data.currentDay) currentDay = data.currentDay;
+          saveState();
+          openTaskIdx = null;
+          renderAll();
+          alert('✓ Progress imported successfully!');
+        } else {
+          alert('⚠️ Unrecognised file format.');
+        }
+      } catch(err) {
+        alert('⚠️ Could not read file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  document.body.appendChild(input); input.click(); document.body.removeChild(input);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadState();
+renderAll();
+
+if (window.speechSynthesis) {
+  speechSynthesis.getVoices();
+  speechSynthesis.addEventListener('voiceschanged', () => {});
+}
+
+// IME composition guard — mark inputs as 'composing' during Japanese conversion
+// so submitVocab ignores Enter pressed mid-composition (e.g. selecting a kanji)
+document.addEventListener('compositionstart', e => {
+  if (e.target && e.target.classList.contains('vocab-input')) {
+    e.target.dataset.composing = 'true';
+  }
+});
+document.addEventListener('compositionend', e => {
+  if (e.target && e.target.classList.contains('vocab-input')) {
+    e.target.dataset.composing = 'false';
+  }
+});
+</script>
+</body>
+</html>
