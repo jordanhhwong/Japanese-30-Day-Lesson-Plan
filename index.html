@@ -118,7 +118,196 @@
   }
   .kana-hear:active { background: var(--gold); color: #fff; }
 
-  /* ── Day grid ── */
+  /* ── Kanji chart ── */
+  .kanji-view { padding: 0 12px 24px; }
+  .kanji-header {
+    margin: 10px 0 12px;
+    background: linear-gradient(135deg, #2c3e7a, #1a2456);
+    border-radius: 12px; padding: 13px 16px; color: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  }
+  .kanji-header h2 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+  .kanji-header p  { font-size: 11px; opacity: .8; }
+  .kanji-grade-tabs {
+    display: flex; gap: 5px; margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .kanji-grade-tab {
+    padding: 6px 11px; border-radius: 16px; border: 2px solid var(--border);
+    background: #fff; color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 11px; font-weight: 700;
+    cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .kanji-grade-tab.active {
+    background: #2c3e7a; border-color: #2c3e7a; color: #fff;
+  }
+  .kanji-search-wrap {
+    position: relative; margin-bottom: 12px;
+  }
+  .kanji-search {
+    width: 100%; padding: 9px 36px 9px 12px;
+    border: 2px solid var(--border); border-radius: 9px;
+    font-size: 15px; font-family: 'Noto Sans JP', sans-serif;
+    outline: none; background: #fff; color: var(--ink);
+    transition: border-color .15s;
+  }
+  .kanji-search:focus { border-color: #2c3e7a; }
+  .kanji-search-clear {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; font-size: 16px; cursor: pointer;
+    color: #aaa; line-height: 1;
+  }
+  .kanji-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px;
+  }
+  .kanji-cell {
+    background: #fff; border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 8px 5px 7px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    transition: all .15s; cursor: default;
+  }
+  .kanji-cell.playing {
+    background: #eef3ff; border-color: #2c3e7a;
+    box-shadow: 0 0 0 3px #2c3e7a22;
+  }
+  .kanji-char {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 28px; line-height: 1.1; color: var(--ink);
+  }
+  .kanji-reading {
+    font-size: 9px; color: var(--red); font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif;
+    line-height: 1.3; max-width: 100%; word-break: break-all;
+  }
+  .kanji-meaning {
+    font-size: 9px; color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    line-height: 1.3; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    width: 100%; padding: 0 2px;
+  }
+  .kanji-hear {
+    background: none; border: 1px solid #2c3e7a55; border-radius: 5px;
+    color: #2c3e7a; font-size: 10px; padding: 2px 5px; cursor: pointer;
+    margin-top: 2px; transition: all .15s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .kanji-hear:active { background: #2c3e7a; color: #fff; }
+  .kanji-count {
+    font-size: 11px; color: var(--muted); margin-bottom: 8px;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .kanji-no-results {
+    text-align: center; padding: 30px 20px;
+    color: var(--muted); font-size: 14px;
+  }
+
+  /* ── Phrases view ── */
+  .phrases-view { padding: 0 12px 24px; }
+  .phrases-header {
+    margin: 10px 0 12px;
+    background: linear-gradient(135deg, #2a7a4a, #1a5230);
+    border-radius: 12px; padding: 13px 16px; color: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  }
+  .phrases-header h2 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+  .phrases-header p  { font-size: 11px; opacity: .8; }
+  .phrases-day-tabs {
+    display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .phrases-day-tab {
+    padding: 5px 10px; border-radius: 14px; border: 2px solid var(--border);
+    background: #fff; color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 11px; font-weight: 700;
+    cursor: pointer; transition: all .2s;
+  }
+  .phrases-day-tab.active { background: #2a7a4a; border-color: #2a7a4a; color: #fff; }
+  .phrases-search-wrap { position: relative; margin-bottom: 12px; }
+  .phrases-search {
+    width: 100%; padding: 9px 36px 9px 12px;
+    border: 2px solid var(--border); border-radius: 9px;
+    font-size: 14px; font-family: 'Noto Sans JP', sans-serif;
+    outline: none; background: #fff; color: var(--ink);
+    transition: border-color .15s;
+  }
+  .phrases-search:focus { border-color: #2a7a4a; }
+  .phrases-search-clear {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; font-size: 16px; cursor: pointer;
+    color: #aaa; line-height: 1;
+  }
+  .phrases-count { font-size: 11px; color: var(--muted); margin-bottom: 8px; font-family: 'Noto Sans JP', sans-serif; }
+  .phrases-day-group { margin-bottom: 16px; }
+  .phrases-day-label {
+    font-size: 11px; font-weight: 700; color: #2a7a4a;
+    text-transform: uppercase; letter-spacing: .07em;
+    padding: 4px 0 6px; border-bottom: 1px solid #c8e8d4;
+    margin-bottom: 8px;
+  }
+  .phrase-row {
+    background: #fff; border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 7px;
+    display: flex; align-items: flex-start; gap: 10px;
+    transition: all .15s;
+  }
+  .phrase-row.playing {
+    background: #edfaf3; border-color: #2a7a4a;
+    box-shadow: 0 0 0 3px #2a7a4a22;
+  }
+  .phrase-row-text { flex: 1; }
+  .phrase-row-jp {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 18px; line-height: 2.4; color: var(--ink);
+  }
+  .phrase-row-romaji { font-size: 11px; color: var(--red); font-weight: 700; margin-top: 1px; }
+  .phrase-row-meaning { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .phrase-row-type {
+    font-size: 9px; font-weight: 700; padding: 2px 6px;
+    border-radius: 8px; flex-shrink: 0; align-self: flex-start; margin-top: 3px;
+  }
+  .phrase-hear-btn {
+    background: none; border: 1px solid #2a7a4a55; border-radius: 6px;
+    color: #2a7a4a; font-size: 14px; padding: 4px 8px; cursor: pointer;
+    flex-shrink: 0; align-self: flex-start; margin-top: 2px; transition: all .15s;
+  }
+  .phrase-hear-btn:active { background: #2a7a4a; color: #fff; }
+  .phrases-no-results { text-align: center; padding: 30px; color: var(--muted); font-size: 14px; }
+
+  /* ── Progress coverage states (shared across kana / kanji / phrases) ── */
+  /* covered-once = appears in 1–2 completed tasks: bold dark outline       */
+  /* covered-full = appears in 3+ completed tasks:  green outline           */
+  .covered-once {
+    border-color: #666 !important;
+    border-width: 2.5px !important;
+    background: #f8f8f4 !important;
+  }
+  .covered-full {
+    border-color: var(--green) !important;
+    border-width: 2.5px !important;
+    background: #efffef !important;
+  }
+  /* small pip shown in bottom-right of covered cells */
+  .kana-cell.covered-once::after,
+  .kana-cell.covered-full::after,
+  .kanji-cell.covered-once::after,
+  .kanji-cell.covered-full::after {
+    content: '';
+    display: block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #999;
+    position: absolute; bottom: 4px; right: 4px;
+  }
+  .kana-cell { position: relative; }
+  .kanji-cell { position: relative; }
+  .kana-cell.covered-full::after,
+  .kanji-cell.covered-full::after { background: var(--green); }
+
+  /* phrase rows use left-border accent instead of pip */
+  .phrase-row.covered-once { border-left: 4px solid #888 !important; }
+  .phrase-row.covered-full { border-left: 4px solid var(--green) !important; }
+
+  /* Day grid ── */
   .day-grid {
     display: grid; grid-template-columns: repeat(7, 1fr);
     gap: 5px; padding: 10px 12px; background: #fdf3de;
@@ -402,6 +591,12 @@
 
 <!-- Kana chart view (hidden by default) -->
 <div class="kana-view hidden" id="kanaView"></div>
+
+<!-- Kanji chart view (hidden by default) -->
+<div class="kanji-view hidden" id="kanjiView"></div>
+
+<!-- Phrases reference view (hidden by default) -->
+<div class="phrases-view hidden" id="phrasesView"></div>
 
 </div><!-- /app -->
 
@@ -1700,13 +1895,14 @@ function setKanaSection(section) {
 function goKanaView() {
   currentView = 'kana';
   renderWeekTabs();
-  // Hide lesson elements, show kana view
   document.getElementById('dayGrid').classList.add('hidden');
   document.getElementById('dayHeader').classList.add('hidden');
   document.getElementById('taskList').classList.add('hidden');
   document.getElementById('progressFooter').classList.add('hidden');
   document.getElementById('dayNav').classList.add('hidden');
   document.getElementById('kanaView').classList.remove('hidden');
+  document.getElementById('kanjiView').classList.add('hidden');
+  document.getElementById('phrasesView').classList.add('hidden');
   renderKanaChart();
   window.scrollTo(0, 0);
 }
@@ -1719,21 +1915,586 @@ function goLessonsView() {
   document.getElementById('progressFooter').classList.remove('hidden');
   document.getElementById('dayNav').classList.remove('hidden');
   document.getElementById('kanaView').classList.add('hidden');
+  document.getElementById('kanjiView').classList.add('hidden');
+  document.getElementById('phrasesView').classList.add('hidden');
+}
+
+// ── Joyo Kanji data ───────────────────────────────────────────────────────────
+// Format: [kanji, reading, english meaning]
+const JOYO_DATA = {
+  1: [
+    ["一","いち","one"],["右","みぎ","right"],["雨","あめ","rain"],["円","えん","yen/circle"],["王","おう","king"],
+    ["音","おと","sound"],["下","した","below"],["火","ひ","fire"],["花","はな","flower"],["貝","かい","shell"],
+    ["学","がく","study"],["気","き","spirit"],["九","きゅう","nine"],["休","きゅう","rest"],["玉","たま","ball/jewel"],
+    ["金","きん","gold/money"],["空","そら","sky"],["月","つき","moon/month"],["犬","いぬ","dog"],["見","みる","see"],
+    ["五","ご","five"],["口","くち","mouth"],["校","こう","school"],["左","ひだり","left"],["三","さん","three"],
+    ["山","やま","mountain"],["子","こ","child"],["四","し","four"],["糸","いと","thread"],["字","じ","character"],
+    ["耳","みみ","ear"],["七","しち","seven"],["車","くるま","car"],["手","て","hand"],["十","じゅう","ten"],
+    ["出","でる","exit"],["女","おんな","woman"],["小","しょう","small"],["上","うえ","above"],["森","もり","forest"],
+    ["人","ひと","person"],["水","みず","water"],["正","ただしい","correct"],["生","せい","life"],["青","あお","blue"],
+    ["夕","ゆう","evening"],["石","いし","stone"],["赤","あか","red"],["千","せん","thousand"],["川","かわ","river"],
+    ["先","せん","ahead"],["早","はやい","early"],["草","くさ","grass"],["足","あし","foot/leg"],["村","むら","village"],
+    ["大","だい","big"],["男","おとこ","man"],["竹","たけ","bamboo"],["中","なか","middle"],["虫","むし","insect"],
+    ["町","まち","town"],["天","てん","heaven"],["田","た","rice field"],["土","つち","earth/soil"],["二","に","two"],
+    ["日","にち","sun/day"],["入","はいる","enter"],["年","ねん","year"],["白","しろ","white"],["八","はち","eight"],
+    ["百","ひゃく","hundred"],["文","ぶん","writing"],["木","き","tree"],["本","ほん","book/origin"],["名","な","name"],
+    ["目","め","eye"],["立","たつ","stand"],["力","ちから","power"],["林","はやし","woods"],["六","ろく","six"],
+  ],
+  2: [
+    ["引","いん","pull"],["羽","は","feather"],["雲","くも","cloud"],["遠","えん","far"],["何","なに","what"],
+    ["科","か","subject"],["夏","なつ","summer"],["家","いえ","house"],["歌","うた","song"],["画","が","picture"],
+    ["回","かい","turn"],["会","かい","meet"],["海","うみ","sea"],["絵","え","painting"],["外","そと","outside"],
+    ["角","かど","corner"],["活","かつ","lively"],["間","あいだ","between"],["丸","まる","circle"],["岩","いわ","rock"],
+    ["顔","かお","face"],["帰","かえる","return"],["記","き","record"],["弓","ゆみ","bow"],["牛","うし","cow"],
+    ["魚","さかな","fish"],["京","きょう","capital"],["強","つよい","strong"],["教","おしえる","teach"],["近","ちかい","near"],
+    ["兄","あに","older brother"],["形","かたち","shape"],["計","はかる","measure"],["元","もと","origin"],["言","いう","say"],
+    ["原","はら","field"],["戸","と","door"],["古","ふるい","old"],["午","ご","noon"],["後","あと","after"],
+    ["語","ご","language"],["工","こう","craft"],["公","こう","public"],["広","ひろい","wide"],["交","こう","mix"],
+    ["光","ひかり","light"],["考","かんがえる","think"],["行","いく","go"],["高","たかい","high"],["黄","き","yellow"],
+    ["合","あう","fit"],["谷","たに","valley"],["国","くに","country"],["黒","くろ","black"],["今","いま","now"],
+    ["才","さい","talent"],["細","ほそい","thin"],["作","つくる","make"],["算","さん","calculate"],["止","とまる","stop"],
+    ["市","し","city"],["矢","や","arrow"],["姉","あね","older sister"],["思","おもう","think"],["紙","かみ","paper"],
+    ["寺","てら","temple"],["自","みずから","self"],["時","じ","time"],["室","しつ","room"],["社","しゃ","company"],
+    ["弱","よわい","weak"],["首","くび","neck"],["秋","あき","autumn"],["週","しゅう","week"],["春","はる","spring"],
+    ["書","かく","write"],["少","すくない","few"],["場","ば","place"],["色","いろ","colour"],["食","たべる","eat"],
+    ["心","こころ","heart"],["新","あたらしい","new"],["親","おや","parent"],["図","ず","diagram"],["数","かず","number"],
+    ["西","にし","west"],["声","こえ","voice"],["星","ほし","star"],["晴","はれる","clear"],["切","きる","cut"],
+    ["雪","ゆき","snow"],["船","ふね","boat"],["線","せん","line"],["前","まえ","front"],["組","くみ","group"],
+    ["走","はしる","run"],["多","おおい","many"],["太","ふとい","fat"],["体","からだ","body"],["台","だい","stand"],
+    ["地","ち","ground"],["池","いけ","pond"],["知","しる","know"],["茶","ちゃ","tea"],["昼","ひる","noon"],
+    ["長","ながい","long"],["鳥","とり","bird"],["朝","あさ","morning"],["直","なおす","fix"],["通","とおる","pass"],
+    ["弟","おとうと","younger brother"],["店","みせ","shop"],["点","てん","point"],["電","でん","electricity"],["刀","かたな","sword"],
+    ["冬","ふゆ","winter"],["当","あたる","hit"],["東","ひがし","east"],["答","こたえ","answer"],["頭","あたま","head"],
+    ["同","おなじ","same"],["道","みち","road"],["読","よむ","read"],["内","うち","inside"],["南","みなみ","south"],
+    ["肉","にく","meat"],["馬","うま","horse"],["売","うる","sell"],["買","かう","buy"],["麦","むぎ","wheat"],
+    ["半","はん","half"],["番","ばん","number/turn"],["父","ちち","father"],["風","かぜ","wind"],["分","ぶん","part"],
+    ["聞","きく","listen"],["米","こめ","rice"],["歩","あるく","walk"],["母","はは","mother"],["方","ほう","direction"],
+    ["北","きた","north"],["毎","まい","every"],["妹","いもうと","younger sister"],["万","まん","ten thousand"],["明","あかるい","bright"],
+    ["鳴","なく","cry/chirp"],["毛","け","hair/fur"],["門","もん","gate"],["夜","よる","night"],["野","の","field"],
+    ["友","とも","friend"],["用","もちいる","use"],["曜","よう","weekday"],["来","くる","come"],["里","り","village"],
+    ["理","り","reason"],["話","はなす","speak"],
+  ],
+  3: [
+    ["悪","わるい","bad"],["安","やすい","cheap/safe"],["暗","くらい","dark"],["医","い","medicine"],["委","い","committee"],
+    ["意","い","meaning"],["育","そだてる","raise"],["員","いん","member"],["院","いん","institution"],["飲","のむ","drink"],
+    ["運","うん","luck/carry"],["泳","およぐ","swim"],["駅","えき","station"],["央","おう","centre"],["横","よこ","side"],
+    ["屋","や","shop/roof"],["温","あたたかい","warm"],["化","か","change"],["荷","に","luggage"],["界","かい","world"],
+    ["開","ひらく","open"],["階","かい","floor/level"],["寒","さむい","cold"],["感","かん","feeling"],["漢","かん","Chinese"],
+    ["館","かん","building"],["岸","きし","shore"],["起","おきる","wake up"],["期","き","period"],["客","きゃく","guest"],
+    ["究","きゅう","research"],["急","きゅう","urgent"],["級","きゅう","class/grade"],["球","きゅう","ball"],["去","さる","leave"],
+    ["橋","はし","bridge"],["業","ぎょう","work"],["曲","きょく","music/bend"],["局","きょく","bureau"],["銀","ぎん","silver"],
+    ["区","く","ward"],["苦","くるしい","painful"],["具","ぐ","tool"],["君","きみ","you"],["係","かかり","in charge"],
+    ["軽","かるい","light"],["血","ち","blood"],["決","きめる","decide"],["研","けん","research"],["県","けん","prefecture"],
+    ["庫","こ","storehouse"],["湖","みずうみ","lake"],["向","むく","face toward"],["幸","しあわせ","happiness"],["港","みなと","harbour"],
+    ["号","ごう","number/name"],["根","ね","root"],["祭","まつり","festival"],["皿","さら","plate"],["仕","し","serve"],
+    ["死","しぬ","die"],["使","つかう","use"],["始","はじめる","begin"],["指","ゆび","finger"],["歯","は","tooth"],
+    ["詩","し","poem"],["次","つぎ","next"],["事","こと","matter"],["持","もつ","hold"],["式","しき","ceremony"],
+    ["実","じつ","reality"],["写","しゃ","copy/photo"],["者","もの","person"],["主","ぬし","master"],["守","まもる","protect"],
+    ["取","とる","take"],["酒","さけ","alcohol"],["受","うける","receive"],["州","しゅう","state/province"],["拾","ひろう","pick up"],
+    ["終","おわる","end"],["習","ならう","learn"],["集","あつめる","collect"],["住","すむ","live"],["重","おもい","heavy"],
+    ["宿","やど","inn"],["所","ところ","place"],["暑","あつい","hot"],["助","たすける","help"],["消","きえる","disappear"],
+    ["商","しょう","commerce"],["章","しょう","chapter"],["勝","かつ","win"],["乗","のる","ride"],["植","うえる","plant"],
+    ["申","もうす","say humbly"],["身","み","body"],["神","かみ","god"],["深","ふかい","deep"],["進","すすむ","advance"],
+    ["世","よ","world"],["整","ととのえる","arrange"],["昔","むかし","long ago"],["全","ぜん","all"],["相","あい","mutual"],
+    ["送","おくる","send"],["想","そう","thought"],["息","いき","breath"],["速","はやい","fast"],["族","ぞく","tribe/family"],
+    ["他","た","other"],["打","うつ","hit"],["対","たい","versus"],["待","まつ","wait"],["代","だい","generation"],
+    ["第","だい","ordinal"],["題","だい","topic"],["短","みじかい","short"],["談","だん","talk"],["着","きる","wear"],
+    ["注","ちゅう","pour/note"],["丁","てい","street block"],["帳","ちょう","notebook"],["調","しらべる","investigate"],["追","おう","chase"],
+    ["定","さだめる","determine"],["庭","にわ","garden"],["鉄","てつ","iron"],["転","ころがる","roll/turn"],["都","と","capital"],
+    ["投","なげる","throw"],["豆","まめ","bean"],["島","しま","island"],["湯","ゆ","hot water"],["登","のぼる","climb"],
+    ["等","ひとしい","equal"],["動","うごく","move"],["農","のう","farming"],["波","なみ","wave"],["配","くばる","distribute"],
+    ["倍","ばい","double"],["箱","はこ","box"],["発","はつ","departure"],["反","はん","opposite"],["坂","さか","slope"],
+    ["板","いた","board"],["悲","かなしい","sad"],["美","うつくしい","beautiful"],["鼻","はな","nose"],["氷","こおり","ice"],
+    ["表","あらわす","surface"],["秒","びょう","second"],["病","やむ","illness"],["品","しな","goods"],["負","まける","lose"],
+    ["部","ぶ","section"],["服","ふく","clothes"],["物","もの","thing"],["平","たいら","flat"],["返","かえす","return"],
+    ["勉","べん","study hard"],["放","はなす","release"],["味","あじ","taste"],["命","いのち","life"],["面","めん","face"],
+    ["問","とう","question"],["役","やく","role"],["薬","くすり","medicine"],["由","ゆ","reason"],["油","あぶら","oil"],
+    ["有","ある","exist"],["遊","あそぶ","play"],["予","よ","in advance"],["洋","よう","western"],["葉","は","leaf"],
+    ["落","おちる","fall"],["流","ながれる","flow"],["旅","たび","travel"],["両","りょう","both"],["緑","みどり","green"],
+    ["礼","れい","etiquette"],["列","れつ","row"],["練","れん","practice"],["路","みち","road"],["和","わ","harmony"],
+  ],
+  4: [
+    ["愛","あい","love"],["案","あん","plan"],["以","い","by means of"],["位","い","rank"],["囲","かこむ","surround"],
+    ["印","しるし","stamp"],["英","えい","England/excellent"],["栄","さかえる","prosper"],["塩","しお","salt"],["億","おく","hundred million"],
+    ["加","くわえる","add"],["果","はたす","result"],["貨","か","goods"],["課","か","section/lesson"],["改","あらためる","reform"],
+    ["械","かい","machine"],["各","かく","each"],["覚","おぼえる","remember"],["完","かん","complete"],["官","かん","government"],
+    ["管","くだ","pipe/manage"],["関","かん","relate"],["観","かん","observe"],["願","ねがう","wish"],["希","き","hope"],
+    ["季","き","season"],["旗","はた","flag"],["器","うつわ","vessel"],["機","き","machine/chance"],["議","ぎ","discuss"],
+    ["求","もとめる","seek"],["泣","なく","cry"],["救","すくう","rescue"],["給","きゅう","supply"],["挙","あげる","raise"],
+    ["漁","りょう","fishing"],["共","とも","together"],["協","きょう","cooperate"],["鏡","かがみ","mirror"],["競","きそう","compete"],
+    ["極","きわめる","extreme"],["訓","くん","Japanese reading"],["軍","ぐん","army"],["型","かた","mould/type"],["景","けい","scenery"],
+    ["芸","げい","art"],["欠","かける","lack"],["結","むすぶ","tie"],["建","たてる","build"],["健","けん","healthy"],
+    ["験","けん","test"],["固","かたい","hard"],["功","こう","achievement"],["好","すき","like"],["候","こう","weather"],
+    ["航","こう","navigate"],["康","こう","health"],["告","つげる","announce"],["差","さ","difference"],["最","もっとも","most"],
+    ["材","ざい","material"],["昨","さく","yesterday/last"],["察","さつ","observe"],["参","さん","visit/attend"],["散","ちる","scatter"],
+    ["産","うむ","produce"],["残","のこる","remain"],["士","し","samurai/man"],["史","し","history"],["司","し","govern"],
+    ["試","こころみる","try"],["児","じ","child"],["治","なおる","cure"],["辞","じ","resign"],["失","うしなう","lose"],
+    ["借","かりる","borrow"],["種","たね","seed/type"],["周","まわり","circumference"],["祝","いわう","celebrate"],["順","じゅん","order"],
+    ["初","はじめ","first time"],["松","まつ","pine tree"],["笑","わらう","laugh"],["焼","やける","burn"],["象","ぞう","elephant"],
+    ["照","てらす","illuminate"],["城","しろ","castle"],["信","しん","trust"],["成","なる","become"],["省","しょう","ministry"],
+    ["清","きよい","clear"],["静","しずか","quiet"],["席","せき","seat"],["積","つむ","accumulate"],["節","ふし","joint/season"],
+    ["説","せつ","theory"],["浅","あさい","shallow"],["戦","たたかう","fight"],["選","えらぶ","choose"],["然","ぜん","nature"],
+    ["争","あらそう","compete"],["倉","くら","storehouse"],["束","たば","bundle"],["続","つづく","continue"],["卒","そつ","graduate"],
+    ["孫","まご","grandchild"],["帯","おびる","carry/belt"],["隊","たい","unit/group"],["達","たつ","reach"],["単","たん","single"],
+    ["置","おく","place"],["仲","なか","relationship"],["貯","たくわえる","save"],["兆","ちょう","trillion"],["低","ひくい","low"],
+    ["底","そこ","bottom"],["的","てき","target/-ish"],["典","てん","ceremony"],["伝","つたえる","convey"],["努","つとめる","strive"],
+    ["灯","ひ","lamp"],["堂","どう","hall"],["働","はたらく","work"],["特","とく","special"],["得","える","gain"],
+    ["熱","ねつ","heat"],["念","ねん","thought"],["敗","まける","defeat"],["梅","うめ","plum"],["博","はく","wide/exposition"],
+    ["飯","めし","cooked rice"],["飛","とぶ","fly"],["費","ついやす","spend"],["必","かならず","certainly"],["票","ひょう","ballot"],
+    ["標","しるべ","marker"],["不","ふ","un-/not"],["夫","おっと","husband"],["付","つける","attach"],["府","ふ","prefecture"],
+    ["副","ふく","vice-"],["粉","こな","powder"],["兵","へい","soldier"],["別","べつ","separate"],["変","かわる","change"],
+    ["便","べん","convenient"],["包","つつむ","wrap"],["法","ほう","law"],["望","のぞむ","hope"],["末","すえ","end"],
+    ["満","みたす","fill"],["未","み","not yet"],["民","たみ","people"],["無","む","nothing"],["約","やく","promise"],
+    ["勇","いさましい","brave"],["要","かなめ","need"],["養","やしなう","nurture"],["浴","あびる","bathe"],["利","り","profit"],
+    ["陸","りく","land"],["良","よい","good"],["料","りょう","fee/ingredient"],["量","りょう","quantity"],["輪","わ","ring/wheel"],
+    ["類","るい","type/kind"],["令","れい","order"],["冷","つめたい","cold"],["例","れい","example"],["歴","れき","history"],
+    ["連","つらなる","connect"],["老","おい","old age"],["労","ろう","labour"],["録","ろく","record"],
+  ],
+  5: [
+    ["圧","あつ","pressure"],["移","うつる","move"],["因","いん","cause"],["永","えい","eternal"],["営","えい","manage"],
+    ["衛","えい","guard"],["易","い","easy/change"],["益","えき","benefit"],["液","えき","liquid"],["演","えん","perform"],
+    ["応","おう","respond"],["往","おう","go/come"],["桜","さくら","cherry blossom"],["恩","おん","grace"],["仮","かり","temporary"],
+    ["価","か","price"],["河","かわ","river"],["過","すぎる","pass/exceed"],["解","とく","solve"],["格","かく","status"],
+    ["確","たしかめる","confirm"],["額","がく","amount"],["幹","みき","trunk"],["慣","なれる","get used to"],["眼","まなこ","eye"],
+    ["基","き","basis"],["寄","よる","approach"],["規","き","standard"],["技","わざ","skill"],["義","ぎ","justice"],
+    ["逆","さかさ","reverse"],["久","ひさしい","long time"],["旧","きゅう","old/former"],["居","いる","be/stay"],["許","ゆるす","permit"],
+    ["境","さかい","boundary"],["均","きん","equal"],["禁","きん","prohibit"],["句","く","phrase"],["経","けい","pass through"],
+    ["件","けん","matter"],["険","けわしい","steep/risky"],["検","しらべる","inspect"],["限","かぎる","limit"],["現","あらわれる","appear"],
+    ["減","へる","decrease"],["故","ゆえ","reason/late"],["個","こ","individual"],["護","まもる","protect"],["効","きく","effect"],
+    ["厚","あつい","thick/kind"],["耕","たがやす","cultivate"],["構","かまえる","structure"],["興","おこる","excitement"],["講","こう","lecture"],
+    ["混","まじる","mix"],["査","さ","investigate"],["再","ふたたび","again"],["災","わざわい","disaster"],["妻","つま","wife"],
+    ["採","とる","pick/adopt"],["際","きわ","edge/occasion"],["在","ある","exist"],["財","たから","wealth"],["罪","つみ","crime"],
+    ["雑","ざつ","miscellaneous"],["酸","さん","acid"],["賛","さん","approve"],["支","ささえる","support"],["志","こころざし","aspiration"],
+    ["枝","えだ","branch"],["師","し","teacher/master"],["資","し","resources"],["示","しめす","show"],["似","にる","resemble"],
+    ["識","しき","knowledge"],["質","しつ","quality"],["謝","あやまる","apologise"],["授","さずける","grant"],["修","おさめる","cultivate"],
+    ["述","のべる","state"],["術","じゅつ","art/technique"],["準","じゅん","standard"],["序","じょ","preface"],["承","うける","accept"],
+    ["招","まねく","invite"],["証","しょう","proof"],["賞","しょう","prize"],["条","じょう","clause"],["状","じょう","condition"],
+    ["常","つね","normal"],["情","じょう","emotion"],["織","おる","weave"],["職","しょく","occupation"],["制","せい","system"],
+    ["性","せい","nature/sex"],["政","せい","politics"],["勢","いきおい","force"],["精","せい","energy"],["製","せい","manufacture"],
+    ["税","ぜい","tax"],["責","せめる","responsibility"],["績","せき","achievement"],["接","つぐ","connect"],["設","もうける","establish"],
+    ["絶","たえる","cease"],["祖","そ","ancestor"],["素","もと","element"],["総","そう","general"],["像","ぞう","image"],
+    ["増","ふえる","increase"],["則","のり","rule"],["測","はかる","measure"],["属","ぞく","belong"],["率","りつ","rate"],
+    ["損","そこなう","damage"],["退","しりぞく","retreat"],["貸","かす","lend"],["態","たい","attitude"],["団","だん","group"],
+    ["断","たつ","cut off"],["築","きずく","build"],["張","はる","stretch"],["提","さげる","propose"],["程","ほど","degree"],
+    ["敵","かたき","enemy"],["統","すべる","govern"],["銅","どう","copper"],["導","みちびく","guide"],["独","ひとり","alone"],
+    ["任","まかせる","entrust"],["燃","もえる","burn"],["能","のう","ability"],["破","やぶる","break"],["判","わかる","judge"],
+    ["版","はん","edition"],["比","くらべる","compare"],["肥","こえる","fertile"],["非","ひ","non-/wrong"],["備","そなえる","prepare"],
+    ["評","ひょう","evaluate"],["貧","まずしい","poor"],["布","ぬの","cloth"],["富","とむ","wealthy"],["武","ぶ","military"],
+    ["復","もどる","recover"],["複","ふく","multiple"],["編","あむ","knit/compile"],["保","たもつ","maintain"],["墓","はか","grave"],
+    ["報","むくいる","report/reward"],["豊","ゆたか","abundant"],["防","ふせぐ","prevent"],["貿","ぼう","trade"],["暴","あばれる","violent"],
+    ["務","つとめる","duty"],["夢","ゆめ","dream"],["迷","まよう","be lost"],["綿","わた","cotton"],["輸","ゆ","transport"],
+    ["余","あまる","surplus"],["容","いれる","contain"],["略","りゃく","abbreviate"],["留","とまる","stay"],["領","りょう","territory"],
+  ],
+  6: [
+    ["異","い","different"],["遺","い","bequeath"],["域","いき","region"],["宇","う","universe"],["映","うつす","reflect"],
+    ["延","のびる","extend"],["沿","そう","along"],["我","われ","I/ego"],["灰","はい","ash"],["拡","ひろげる","expand"],
+    ["革","かわ","leather/reform"],["閣","かく","cabinet"],["割","わる","divide"],["干","かわかす","dry"],["看","みる","watch over"],
+    ["簡","かん","simple"],["危","あぶない","dangerous"],["机","つくえ","desk"],["貴","とうとい","precious"],["疑","うたがう","doubt"],
+    ["吸","すう","inhale"],["供","そなえる","offer"],["胸","むね","chest"],["郷","ごう","hometown"],["勤","つとめる","work hard"],
+    ["筋","すじ","muscle/plot"],["系","けい","system"],["敬","うやまう","respect"],["警","けいかい","warn"],["劇","げき","drama"],
+    ["激","はげしい","intense"],["穴","あな","hole"],["憲","けん","constitution"],["権","けん","right/authority"],["絹","きぬ","silk"],
+    ["厳","きびしい","strict"],["源","みなもと","source"],["呼","よぶ","call"],["誤","まちがい","mistake"],["孝","こう","filial piety"],
+    ["皇","こう","emperor"],["紅","くれない","crimson"],["降","おりる","descend"],["鋼","はがね","steel"],["刻","きざむ","engrave"],
+    ["骨","ほね","bone"],["困","こまる","troubled"],["砂","すな","sand"],["座","すわる","sit"],["済","すむ","finish/settle"],
+    ["裁","さばく","judge"],["策","さく","plan"],["蚕","かいこ","silkworm"],["至","いたる","reach"],["私","わたし","I/private"],
+    ["姿","すがた","figure"],["視","みる","look at"],["射","いる","shoot"],["捨","すてる","discard"],["若","わかい","young"],
+    ["収","おさめる","income"],["宗","しゅう","religion"],["就","つく","take up"],["衆","しゅう","masses"],["従","したがう","follow"],
+    ["縦","たて","vertical"],["縮","ちぢむ","shrink"],["熟","じゅく","ripen"],["純","じゅん","pure"],["処","ところ","place"],
+    ["署","しょ","office"],["除","のぞく","remove"],["将","しょう","general"],["傷","きず","wound"],["障","さまたげる","obstruct"],
+    ["蒸","むす","steam"],["針","はり","needle"],["仁","じん","benevolence"],["垂","たれる","hang down"],["推","おす","push"],
+    ["盛","もる","serve/prosper"],["聖","せい","holy"],["誠","まこと","sincerity"],["舌","した","tongue"],["宣","のべる","proclaim"],
+    ["専","もっぱら","exclusive"],["泉","いずみ","spring/fountain"],["染","そめる","dye"],["善","よい","good/virtue"],
+    ["奏","かなでる","play music"],["窓","まど","window"],["創","つくる","create"],["装","よそおう","dress"],["操","あやつる","operate"],
+    ["蔵","くら","storehouse"],["臓","ぞう","organ"],["尊","とうとい","revere"],["宅","たく","home"],["担","になう","carry"],
+    ["探","さがす","search"],["誕","うまれる","be born"],["値","ね","price/value"],["宙","ちゅう","midair"],["忠","ちゅう","loyalty"],
+    ["著","いちじるしい","remarkable"],["庁","ちょう","government office"],["頂","いただく","top/receive"],["潮","しお","tide"],
+    ["賃","ちん","rent/wage"],["痛","いたい","painful"],["展","のばす","unfold"],["討","うつ","attack"],["党","とう","party"],
+    ["糖","とう","sugar"],["届","とどける","deliver"],["難","むずかしい","difficult"],["乳","ちち","milk/breast"],
+    ["認","みとめる","recognise"],["納","おさめる","pay/supply"],["脳","のう","brain"],["派","は","faction"],["拝","おがむ","worship"],
+    ["背","せ","back/height"],["肺","はい","lung"],["俳","はい","haiku actor"],["晩","ばん","evening"],["否","いな","no/deny"],
+    ["批","ひ","criticise"],["秘","ひみつ","secret"],["腹","はら","stomach"],["奮","ふるう","rouse"],["閉","とじる","close"],
+    ["片","かた","one side"],["補","おぎなう","supplement"],["暮","くれる","get dark"],["宝","たから","treasure"],
+    ["訪","おとずれる","visit"],["亡","なくなる","die/deceased"],["忘","わすれる","forget"],["棒","ぼう","stick"],["枚","まい","flat objects"],
+    ["幕","まく","curtain"],["密","みつ","secret/dense"],["盟","めい","alliance"],["模","も","model"],["訳","わけ","reason/translate"],
+    ["優","やさしい","gentle/superior"],["幼","おさない","infant"],["欲","よく","desire"],["翌","よく","following"],
+    ["卵","たまご","egg"],["裏","うら","back/reverse"],["律","りつ","law"],["臨","のぞむ","face/attend"],["朗","ほがらか","cheerful"],["論","ろん","argument"],
+  ],
+};
+
+const JOYO_GRADE_LABELS = {
+  1:'Grade 1', 2:'Grade 2', 3:'Grade 3',
+  4:'Grade 4', 5:'Grade 5', 6:'Grade 6',
+};
+
+// ── Kanji chart state ─────────────────────────────────────────────────────────
+let currentKanjiGrade = 1;
+let kanjiSearchQuery  = '';
+let playingKanjiCell  = null;
+
+// ── Kanji chart renderer ──────────────────────────────────────────────────────
+function renderKanjiChart() {
+  const el = document.getElementById('kanjiView');
+  if (!el) return;
+
+  // Grade tabs
+  const gradeTabs = Object.keys(JOYO_GRADE_LABELS).map(g => `
+    <button class="kanji-grade-tab ${currentKanjiGrade==g?'active':''}"
+      onclick="setKanjiGrade(${g})">
+      ${JOYO_GRADE_LABELS[g]}
+      <span style="font-size:9px;font-weight:400;opacity:.75;display:block">
+        ${JOYO_DATA[g].length} kanji
+      </span>
+    </button>`).join('');
+
+  // Filter by search query or show current grade
+  let data;
+  if (kanjiSearchQuery.trim()) {
+    const q = kanjiSearchQuery.trim().toLowerCase();
+    data = [];
+    for (const grade of Object.values(JOYO_DATA)) {
+      for (const entry of grade) {
+        if (entry[0].includes(q) || entry[1].includes(q) || entry[2].toLowerCase().includes(q)) {
+          data.push(entry);
+        }
+      }
+    }
+  } else {
+    data = JOYO_DATA[currentKanjiGrade] || [];
+  }
+
+  // Build grid cells
+  const cells = data.map(([kanji, reading, meaning]) => {
+    const cellId = `kj-${escHtml(kanji)}`;
+    return `
+      <div class="kanji-cell" id="${cellId}">
+        <span class="kanji-char">${escHtml(kanji)}</span>
+        <span class="kanji-reading">${escHtml(reading)}</span>
+        <span class="kanji-meaning">${escHtml(meaning)}</span>
+        <button class="kanji-hear"
+          onclick="_unlockAudioContext();playKanji('${escHtml(kanji)}','${escHtml(reading)}','${cellId}')">
+          🔊
+        </button>
+      </div>`;
+  }).join('');
+
+  const noResults = data.length === 0
+    ? `<div class="kanji-no-results">No kanji found for "${escHtml(kanjiSearchQuery)}"</div>`
+    : '';
+
+  el.innerHTML = `
+    <div class="kanji-header">
+      <h2>常用漢字 · Joyo Kanji</h2>
+      <p>${Object.values(JOYO_DATA).reduce((a,g)=>a+g.length,0)} essential kanji · tap 🔊 to hear · tap any grade to browse</p>
+    </div>
+
+    <div class="kanji-grade-tabs">${gradeTabs}</div>
+
+    <div class="kanji-search-wrap">
+      <input class="kanji-search" id="kanjiSearchInput" type="search"
+        placeholder="Search kanji, reading or meaning…"
+        value="${escHtml(kanjiSearchQuery)}"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+        oninput="onKanjiSearch(this.value)" />
+      ${kanjiSearchQuery ? `<button class="kanji-search-clear" onclick="clearKanjiSearch()">✕</button>` : ''}
+    </div>
+
+    <div class="kanji-count">
+      ${kanjiSearchQuery
+        ? `${data.length} result${data.length!==1?'s':''} across all grades`
+        : `${data.length} kanji — ${JOYO_GRADE_LABELS[currentKanjiGrade]}`}
+    </div>
+
+    ${noResults}
+    <div class="kanji-grid">${cells}</div>`;
+}
+
+function playKanji(kanji, reading, cellId) {
+  if (playingKanjiCell && playingKanjiCell !== cellId) {
+    document.getElementById(playingKanjiCell)?.classList.remove('playing');
+  }
+  document.getElementById(cellId)?.classList.add('playing');
+  playingKanjiCell = cellId;
+  // Speak the kanji character directly — Google TTS pronounces it correctly
+  speakJP(kanji, 0.8, () => {
+    document.getElementById(cellId)?.classList.remove('playing');
+    if (playingKanjiCell === cellId) playingKanjiCell = null;
+  });
+}
+
+function setKanjiGrade(grade) {
+  currentKanjiGrade = grade;
+  kanjiSearchQuery  = '';
+  renderKanjiChart();
+}
+
+function onKanjiSearch(val) {
+  kanjiSearchQuery = val;
+  renderKanjiChart();
+  // Restore focus and cursor position after re-render
+  const inp = document.getElementById('kanjiSearchInput');
+  if (inp) { inp.focus(); inp.setSelectionRange(val.length, val.length); }
+}
+
+function clearKanjiSearch() {
+  kanjiSearchQuery = '';
+  renderKanjiChart();
+  document.getElementById('kanjiSearchInput')?.focus();
+}
+
+function goKanjiView() {
+  currentView = 'kanji';
+  renderWeekTabs();
+  document.getElementById('dayGrid').classList.add('hidden');
+  document.getElementById('dayHeader').classList.add('hidden');
+  document.getElementById('taskList').classList.add('hidden');
+  document.getElementById('progressFooter').classList.add('hidden');
+  document.getElementById('dayNav').classList.add('hidden');
+  document.getElementById('kanaView').classList.add('hidden');
+  document.getElementById('kanjiView').classList.remove('hidden');
+  document.getElementById('phrasesView').classList.add('hidden');
+  renderKanjiChart();
+  window.scrollTo(0, 0);
+}
+
+// ── Phrases tab ───────────────────────────────────────────────────────────────
+let phrasesFilterDay   = 'all';  // 'all' or day number as string
+let phrasesSearchQuery = '';
+let playingPhraseRow   = null;
+
+const TYPE_BADGE_STYLE = {
+  vocab:    'background:#fff8ec;color:#b07a10',
+  speaking: 'background:#fff0f0;color:#b03030',
+  listening:'background:#eef6fd;color:#2060a0',
+  grammar:  'background:#efffef;color:#2a6a2a',
+  review:   'background:#f5effe;color:#6030a0',
+};
+
+// Extract all unique Japanese phrases from the plan with metadata
+function buildPhraseList() {
+  const results = [];
+  const seen    = new Set();
+
+  for (const day of PLAN) {
+    for (const task of day.tasks) {
+      const lines = task.content.split('\n');
+      for (const line of lines) {
+        // Match bullet vocab lines:  • japanese (romaji) — meaning
+        const vocab = line.match(/^•\s*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\uFF66-\uFF9F！？ー～〜・]+)\s*\(([^)]+)\)\s*(?:—|-)\s*(.+)/);
+        if (vocab) {
+          const jp = vocab[1].trim(), ro = vocab[2].trim(), en = vocab[3].trim();
+          const key = jp;
+          if (!seen.has(key)) {
+            seen.add(key);
+            results.push({ jp, romaji: ro, meaning: en, day: day.day, theme: day.theme, type: task.type });
+          }
+          continue;
+        }
+        // Match phrase lines:  • full sentence (romaji) — meaning
+        const phrase = line.match(/^•\s*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\uFF66-\uFF9F！？、。「」『』【】ー～〜・\s]{2,})\s*\(([^)]+)\)\s*(?:—|-)\s*(.+)/);
+        if (phrase) {
+          const jp = phrase[1].trim(), ro = phrase[2].trim(), en = phrase[3].trim();
+          const key = jp;
+          if (!seen.has(key) && jp.length > 1) {
+            seen.add(key);
+            results.push({ jp, romaji: ro, meaning: en, day: day.day, theme: day.theme, type: task.type });
+          }
+        }
+      }
+    }
+  }
+  return results;
+}
+
+// Build once on first access, cache it
+let _phraseCache = null;
+function getPhraseList() {
+  if (!_phraseCache) _phraseCache = buildPhraseList();
+  return _phraseCache;
+}
+
+function renderPhrasesView() {
+  const el = document.getElementById('phrasesView');
+  if (!el) return;
+
+  const all    = getPhraseList();
+  const days   = [...new Set(all.map(p => p.day))].sort((a,b) => a-b);
+
+  // Filter
+  let filtered = all;
+  if (phrasesFilterDay !== 'all') {
+    filtered = filtered.filter(p => p.day === Number(phrasesFilterDay));
+  }
+  if (phrasesSearchQuery.trim()) {
+    const q = phrasesSearchQuery.trim().toLowerCase();
+    filtered = filtered.filter(p =>
+      p.jp.includes(q) ||
+      p.romaji.toLowerCase().includes(q) ||
+      p.meaning.toLowerCase().includes(q)
+    );
+  }
+
+  // Day filter pills
+  const dayPills = `
+    <button class="phrases-day-tab ${phrasesFilterDay==='all'?'active':''}"
+      onclick="setPhrasesDay('all')">All days</button>` +
+    days.map(d => `
+      <button class="phrases-day-tab ${phrasesFilterDay==d?'active':''}"
+        onclick="setPhrasesDay(${d})">Day ${d}</button>`).join('');
+
+  // Group by day when showing all, flat when filtered by day or search
+  let bodyHtml = '';
+  if (phrasesSearchQuery.trim() || phrasesFilterDay !== 'all') {
+    // Flat list
+    if (filtered.length === 0) {
+      bodyHtml = `<div class="phrases-no-results">No phrases found for "${escHtml(phrasesSearchQuery || 'Day '+phrasesFilterDay)}"</div>`;
+    } else {
+      bodyHtml = filtered.map(p => phraseRowHtml(p)).join('');
+    }
+  } else {
+    // Grouped by day
+    const byDay = {};
+    for (const p of filtered) {
+      if (!byDay[p.day]) byDay[p.day] = [];
+      byDay[p.day].push(p);
+    }
+    bodyHtml = Object.entries(byDay).map(([day, phrases]) => {
+      const theme = phrases[0].theme;
+      return `
+        <div class="phrases-day-group">
+          <div class="phrases-day-label">Day ${day} — ${escHtml(theme)}</div>
+          ${phrases.map(p => phraseRowHtml(p)).join('')}
+        </div>`;
+    }).join('');
+  }
+
+  el.innerHTML = `
+    <div class="phrases-header">
+      <h2>フレーズ集 · Phrase List</h2>
+      <p>${all.length} phrases across 30 days · tap 🔊 to hear · search or filter by day</p>
+    </div>
+
+    <div class="phrases-search-wrap">
+      <input class="phrases-search" id="phrasesSearchInput" type="search"
+        placeholder="Search Japanese, romaji or English…"
+        value="${escHtml(phrasesSearchQuery)}"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+        oninput="onPhrasesSearch(this.value)" />
+      ${phrasesSearchQuery ? `<button class="phrases-search-clear" onclick="clearPhrasesSearch()">✕</button>` : ''}
+    </div>
+
+    <div class="phrases-day-tabs">${dayPills}</div>
+
+    <div class="phrases-count">
+      ${phrasesSearchQuery
+        ? `${filtered.length} result${filtered.length!==1?'s':''} matching "${escHtml(phrasesSearchQuery)}"`
+        : phrasesFilterDay !== 'all'
+          ? `${filtered.length} phrase${filtered.length!==1?'s':''} from Day ${phrasesFilterDay}`
+          : `${filtered.length} phrases total`}
+    </div>
+
+    ${bodyHtml}`;
+}
+
+function phraseRowHtml(p) {
+  const rowId  = `pr-${escHtml(p.jp)}-${p.day}`;
+  const badge  = TYPE_BADGE_STYLE[p.type] || '';
+  const label  = (p.type.charAt(0).toUpperCase() + p.type.slice(1));
+  return `
+    <div class="phrase-row" id="${rowId}">
+      <div class="phrase-row-text">
+        <div class="phrase-row-jp">${escHtml(p.jp)}</div>
+        <div class="phrase-row-romaji">${escHtml(p.romaji)}</div>
+        <div class="phrase-row-meaning">${escHtml(p.meaning)}</div>
+      </div>
+      <span class="phrase-row-type" style="${badge}">${label}</span>
+      <button class="phrase-hear-btn"
+        onclick="_unlockAudioContext();playPhrase('${escHtml(p.jp)}','${rowId}')">
+        🔊
+      </button>
+    </div>`;
+}
+
+function playPhrase(jp, rowId) {
+  if (playingPhraseRow && playingPhraseRow !== rowId) {
+    document.getElementById(playingPhraseRow)?.classList.remove('playing');
+  }
+  document.getElementById(rowId)?.classList.add('playing');
+  playingPhraseRow = rowId;
+  speakJP(jp, 0.75, () => {
+    document.getElementById(rowId)?.classList.remove('playing');
+    if (playingPhraseRow === rowId) playingPhraseRow = null;
+  });
+}
+
+function setPhrasesDay(day) {
+  phrasesFilterDay = String(day);
+  phrasesSearchQuery = '';
+  renderPhrasesView();
+}
+
+function onPhrasesSearch(val) {
+  phrasesSearchQuery = val;
+  phrasesFilterDay   = 'all';
+  renderPhrasesView();
+  const inp = document.getElementById('phrasesSearchInput');
+  if (inp) { inp.focus(); inp.setSelectionRange(val.length, val.length); }
+}
+
+function clearPhrasesSearch() {
+  phrasesSearchQuery = '';
+  renderPhrasesView();
+  document.getElementById('phrasesSearchInput')?.focus();
+}
+
+function goPhrasesView() {
+  currentView = 'phrases';
+  renderWeekTabs();
+  ['dayGrid','dayHeader','taskList','progressFooter','dayNav'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
+  document.getElementById('kanaView').classList.add('hidden');
+  document.getElementById('kanjiView').classList.add('hidden');
+  document.getElementById('phrasesView').classList.remove('hidden');
+  renderPhrasesView();
+  window.scrollTo(0, 0);
 }
 
 // ── Rendering ─────────────────────────────────────────────────────────────────
 function renderWeekTabs() {
   const week = getCurrentWeek();
   const el = document.getElementById('weekTabs');
-  el.innerHTML = [1,2,3,4].map(w => `
-    <button class="week-tab ${week===w?'active':''}"
-      style="${week===w?`background:${WEEK_COLORS[w]};color:#fff;border-bottom-color:${WEEK_COLORS[w]}`:''}"
+  const lessonTabs = [1,2,3,4].map(w => `
+    <button class="week-tab ${currentView==='lessons' && week===w ? 'active' : ''}"
+      style="${currentView==='lessons' && week===w ? `background:${WEEK_COLORS[w]};color:#fff;border-bottom-color:${WEEK_COLORS[w]}` : ''}"
       onclick="goWeek(${w})">
       Week ${w}<span>${WEEK_LABELS[w]}</span>
     </button>`).join('');
+
+  const kanaTab = `
+    <button class="week-tab ${currentView==='kana' ? 'active' : ''}"
+      style="${currentView==='kana' ? 'background:#c0392b;color:#fff;border-bottom-color:#c0392b' : ''}"
+      onclick="goKanaView()">
+      かな<span>Kana</span>
+    </button>`;
+
+  const kanjiTab = `
+    <button class="week-tab ${currentView==='kanji' ? 'active' : ''}"
+      style="${currentView==='kanji' ? 'background:#2c3e7a;color:#fff;border-bottom-color:#2c3e7a' : ''}"
+      onclick="goKanjiView()">
+      漢字<span>Kanji</span>
+    </button>`;
+
+  const phrasesTab = `
+    <button class="week-tab ${currentView==='phrases' ? 'active' : ''}"
+      style="${currentView==='phrases' ? 'background:#2a7a4a;color:#fff;border-bottom-color:#2a7a4a' : ''}"
+      onclick="goPhrasesView()">
+      一覧<span>Phrases</span>
+    </button>`;
+
+  el.innerHTML = lessonTabs + kanaTab + kanjiTab + phrasesTab;
 }
 
 function goWeek(w) {
+  goLessonsView();
   currentDay = (w-1)*7+1;
   openTaskIdx = null;
   saveState();
@@ -1866,11 +2627,32 @@ function renderDayNav() {
 
 function renderAll() {
   renderWeekTabs();
-  renderDayGrid();
-  renderDayHeader();
-  renderTaskList();
-  renderProgressFooter();
-  renderDayNav();
+  const lessonEls = ['dayGrid','dayHeader','taskList','progressFooter','dayNav'];
+  const allViews  = ['kanaView','kanjiView','phrasesView'];
+  if (currentView === 'kana') {
+    lessonEls.forEach(id => document.getElementById(id).classList.add('hidden'));
+    allViews.forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById('kanaView').classList.remove('hidden');
+    renderKanaChart();
+  } else if (currentView === 'kanji') {
+    lessonEls.forEach(id => document.getElementById(id).classList.add('hidden'));
+    allViews.forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById('kanjiView').classList.remove('hidden');
+    renderKanjiChart();
+  } else if (currentView === 'phrases') {
+    lessonEls.forEach(id => document.getElementById(id).classList.add('hidden'));
+    allViews.forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById('phrasesView').classList.remove('hidden');
+    renderPhrasesView();
+  } else {
+    lessonEls.forEach(id => document.getElementById(id).classList.remove('hidden'));
+    allViews.forEach(id => document.getElementById(id).classList.add('hidden'));
+    renderDayGrid();
+    renderDayHeader();
+    renderTaskList();
+    renderProgressFooter();
+    renderDayNav();
+  }
 }
 
 // ── Export / Import progress ──────────────────────────────────────────────────
