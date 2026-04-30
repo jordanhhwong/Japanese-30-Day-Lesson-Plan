@@ -45,18 +45,105 @@
     margin-bottom: 3px;
   }
   .app-header p { color: rgba(255,255,255,0.75); font-size: 11px; }
+
+  /* ── Romaji toggle — body class hides all rt elements instantly ── */
+  body.hide-romaji rt { visibility: hidden; }
+
+  /* ── Header control pills ── */
+  .header-pill {
+    font-size: 10px; background: rgba(255,255,255,0.15); color: #fff;
+    border: 1px solid rgba(255,255,255,0.3); padding: 3px 10px;
+    border-radius: 10px; cursor: pointer; transition: background .15s;
+    white-space: nowrap;
+  }
+  .header-pill:active { background: rgba(255,255,255,0.3); }
+  .header-pill.active { background: rgba(255,255,255,0.35); border-color: rgba(255,255,255,0.7); }
+
+  /* ── Streak badge ── */
+  #streak-badge {
+    font-size: 10px; background: rgba(255,255,255,0.15);
+    padding: 2px 8px; border-radius: 10px; color: #fff;
+    font-weight: 700; white-space: nowrap;
+  }
+
+  /* ── Day completion celebration overlay ── */
+  .celebration-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    animation: fadeInOverlay .3s ease;
+  }
+  @keyframes fadeInOverlay { from { opacity: 0 } to { opacity: 1 } }
+  .celebration-card {
+    background: #fff; border-radius: 20px;
+    padding: 30px 24px; text-align: center;
+    max-width: 340px; width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    animation: popIn .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes popIn { from { transform: scale(.7); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+  .celebration-emoji { font-size: 56px; display: block; margin-bottom: 12px; }
+  .celebration-title { font-size: 22px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+  .celebration-sub   { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 20px; }
+  .celebration-stars { font-size: 28px; letter-spacing: 4px; margin-bottom: 16px; display: block; }
+  .celebration-btn {
+    display: block; width: 100%; padding: 13px;
+    border-radius: 10px; border: none; font-size: 15px;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+    color: #fff; transition: opacity .15s;
+  }
+  .celebration-btn:active { opacity: .85; }
+  .celebration-btn-secondary {
+    display: block; width: 100%; padding: 10px;
+    background: none; border: none; font-size: 12px;
+    color: var(--muted); cursor: pointer; margin-top: 8px;
+    font-family: inherit;
+  }
+
+  /* ── Overall progress bar ── */
+  .overall-progress-wrap {
+    margin: 10px 16px 0;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    overflow: hidden;
+    height: 10px;
+  }
+  .overall-progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+    min-width: 0;
+  }
+  .overall-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 4px 16px 0;
+    font-size: 10px;
+    color: rgba(255,255,255,0.8);
+  }
   .flag { font-size: 30px; display: block; margin-bottom: 4px; }
 
   /* ── Week tabs ── */
-  .week-tabs { display: flex; border-bottom: 2px solid var(--border); background: var(--warm); }
+  .week-tabs {
+    display: flex;
+    flex-wrap: wrap;          /* tabs wrap to second row on very narrow screens */
+    border-bottom: 2px solid var(--border);
+    background: var(--warm);
+  }
   .week-tab {
-    flex: 1; padding: 10px 4px; border: none; cursor: pointer;
+    flex: 1 1 calc(100% / 4); /* target 4 per row; 6 tabs → 4+2 wrap naturally */
+    min-width: 0;
+    padding: 7px 2px;
+    border: none; cursor: pointer;
     background: var(--warm); color: var(--muted);
-    font-family: 'Noto Sans JP', sans-serif; font-size: 11px; font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 10px; font-weight: 700;
     border-bottom: 3px solid transparent; transition: all .2s; line-height: 1.3;
   }
   .week-tab.active { color: #fff; border-bottom-color: currentColor; }
-  .week-tab span { font-weight: 400; font-size: 9px; opacity: .85; display: block; }
+  .week-tab span { font-weight: 400; font-size: 8.5px; opacity: .85; display: block; }
 
   /* ── Kana chart ── */
   .kana-view { padding: 0 12px 24px; }
@@ -561,10 +648,23 @@
   <span class="flag">🇯🇵</span>
   <h1>30-Day Japanese Holiday Coach</h1>
   <p>Beginner → Holiday-ready · Real audio · Mic pronunciation · Progress saved</p>
+
+  <!-- Overall progress bar -->
+  <div class="overall-progress-label">
+    <span id="overall-progress-text">0 / 0 tasks complete</span>
+    <span id="overall-progress-pct" style="font-weight:700">0%</span>
+  </div>
+  <div class="overall-progress-wrap">
+    <div class="overall-progress-fill" id="overall-progress-fill" style="width:0%"></div>
+  </div>
+
   <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center">
+    <span id="streak-badge">🔥 0 day streak</span>
     <span id="tts-badge" class="hidden" style="font-size:10px;background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:10px"></span>
-    <button onclick="exportProgress()" style="font-size:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:3px 10px;border-radius:10px;cursor:pointer">💾 Export progress</button>
-    <button onclick="importProgress()" style="font-size:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:3px 10px;border-radius:10px;cursor:pointer">📂 Import progress</button>
+    <button id="romaji-toggle" class="header-pill" onclick="toggleRomaji()" title="Show/hide romaji readings">あ Romaji: ON</button>
+    <button id="speed-toggle" class="header-pill" onclick="cycleSpeed()" title="Audio playback speed">🔊 Speed: Normal</button>
+    <button onclick="exportProgress()" class="header-pill">💾 Export</button>
+    <button onclick="importProgress()" class="header-pill">📂 Import</button>
   </div>
 </header>
 
@@ -823,10 +923,246 @@ function saveState() {
   localStorage.setItem('jp30_completed', JSON.stringify(completed));
   localStorage.setItem('jp30_day', String(currentDay));
 }
+
+function renderOverallProgress() {
+  const totalTasks = PLAN.reduce((sum, day) => sum + day.tasks.length, 0);
+  const doneTasks  = Object.keys(completed).filter(k => completed[k]).length;
+  const pct        = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+  const fill  = document.getElementById('overall-progress-fill');
+  const text  = document.getElementById('overall-progress-text');
+  const pctEl = document.getElementById('overall-progress-pct');
+
+  if (fill)  fill.style.width  = pct + '%';
+  if (text)  text.textContent  = `${doneTasks} / ${totalTasks} tasks complete`;
+  if (pctEl) pctEl.textContent = pct + '%';
+}
 function loadState() {
   try { completed = JSON.parse(localStorage.getItem('jp30_completed') || '{}'); } catch(e){}
   const d = parseInt(localStorage.getItem('jp30_day') || '1');
   if (d >= 1 && d <= 30) currentDay = d;
+  // Load persisted settings
+  const savedSpeed  = localStorage.getItem('jp30_speed');
+  const savedRomaji = localStorage.getItem('jp30_romaji');
+  if (savedSpeed)  currentSpeed = parseFloat(savedSpeed);
+  if (savedRomaji === 'hidden') {
+    romajiVisible = false;
+    document.body.classList.add('hide-romaji');
+  }
+}
+
+// ── Streak counter ────────────────────────────────────────────────────────────
+// Checks whether the user has studied today, records the date, and calculates
+// the current consecutive-day streak. Stored as:
+//   jp30_lastStudied = ISO date string "YYYY-MM-DD"
+//   jp30_streak      = integer
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function recordStudyToday() {
+  const today     = todayStr();
+  const last      = localStorage.getItem('jp30_lastStudied') || '';
+  const streak    = parseInt(localStorage.getItem('jp30_streak') || '0');
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+  if (last === today) return; // already recorded today
+
+  let newStreak;
+  if (last === yesterday) {
+    newStreak = streak + 1;    // consecutive day — extend streak
+  } else if (last === '') {
+    newStreak = 1;             // first ever study session
+  } else {
+    newStreak = 1;             // gap in streak — reset to 1 (studying today)
+  }
+
+  localStorage.setItem('jp30_lastStudied', today);
+  localStorage.setItem('jp30_streak',      String(newStreak));
+  renderStreak();
+}
+
+function renderStreak() {
+  const streak = parseInt(localStorage.getItem('jp30_streak') || '0');
+  const last   = localStorage.getItem('jp30_lastStudied') || '';
+  const today  = todayStr();
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  // Streak is "alive" if studied today or yesterday (grace period for late-night sessions)
+  const alive = (last === today || last === yesterday);
+  const el = document.getElementById('streak-badge');
+  if (!el) return;
+  if (streak === 0) {
+    el.textContent = '🔥 Start your streak!';
+    el.style.opacity = '0.7';
+  } else if (!alive) {
+    el.textContent = `💔 Streak broken (was ${streak})`;
+    el.style.opacity = '0.6';
+  } else {
+    el.textContent = `🔥 ${streak} day streak`;
+    el.style.opacity = '1';
+  }
+}
+
+// ── Audio speed toggle ────────────────────────────────────────────────────────
+// Cycles through three speeds: Slow (0.5) → Normal (0.75) → Fast (1.0)
+// speakJP already accepts a rate parameter — we just override the default.
+
+const SPEEDS = [
+  { label: '🐢 Speed: Slow',   rate: 0.5  },
+  { label: '🔊 Speed: Normal', rate: 0.75 },
+  { label: '🐇 Speed: Fast',   rate: 1.0  },
+];
+let currentSpeedIdx = 1; // default Normal
+let currentSpeed    = 0.75;
+
+function cycleSpeed() {
+  currentSpeedIdx = (currentSpeedIdx + 1) % SPEEDS.length;
+  currentSpeed    = SPEEDS[currentSpeedIdx].rate;
+  localStorage.setItem('jp30_speed', String(currentSpeed));
+  const btn = document.getElementById('speed-toggle');
+  if (btn) {
+    btn.textContent = SPEEDS[currentSpeedIdx].label;
+    btn.classList.toggle('active', currentSpeedIdx !== 1);
+  }
+}
+
+function initSpeedToggle() {
+  const saved = parseFloat(localStorage.getItem('jp30_speed') || '0.75');
+  const idx   = SPEEDS.findIndex(s => s.rate === saved);
+  currentSpeedIdx = idx >= 0 ? idx : 1;
+  currentSpeed    = SPEEDS[currentSpeedIdx].rate;
+  const btn = document.getElementById('speed-toggle');
+  if (btn) {
+    btn.textContent = SPEEDS[currentSpeedIdx].label;
+    btn.classList.toggle('active', currentSpeedIdx !== 1);
+  }
+}
+
+// ── Romaji toggle ─────────────────────────────────────────────────────────────
+// A single CSS class on <body> hides all <rt> elements instantly via:
+//   body.hide-romaji rt { visibility: hidden; }
+// This means the ruby layout is preserved (no reflow) — gaps stay the same
+// size so content doesn't jump. That's intentional: it lets you look at the
+// space where the reading would be and try to recall it, then tap to reveal.
+
+let romajiVisible = true;
+
+function toggleRomaji() {
+  romajiVisible = !romajiVisible;
+  document.body.classList.toggle('hide-romaji', !romajiVisible);
+  localStorage.setItem('jp30_romaji', romajiVisible ? 'visible' : 'hidden');
+  const btn = document.getElementById('romaji-toggle');
+  if (btn) {
+    btn.textContent = `あ Romaji: ${romajiVisible ? 'ON' : 'OFF'}`;
+    btn.classList.toggle('active', !romajiVisible);
+  }
+}
+
+function initRomajiToggle() {
+  const saved = localStorage.getItem('jp30_romaji');
+  romajiVisible = saved !== 'hidden';
+  document.body.classList.toggle('hide-romaji', !romajiVisible);
+  const btn = document.getElementById('romaji-toggle');
+  if (btn) {
+    btn.textContent = `あ Romaji: ${romajiVisible ? 'ON' : 'OFF'}`;
+    btn.classList.toggle('active', !romajiVisible);
+  }
+}
+
+// ── Day completion celebration ────────────────────────────────────────────────
+// Shown when the last incomplete task on the current day is completed.
+// Checks after every markTaskComplete / manualToggle call.
+// Won't show again for a day that's already been celebrated (tracked in
+// localStorage so it only fires once per day, not on every page load).
+
+function checkDayCelebration(dayIdx) {
+  const dayData = getDayData(dayIdx);
+  if (!dayData) return;
+
+  // All tasks on this day complete?
+  const allDone = dayData.tasks.every((_, ti) => completed[`${dayIdx}-${ti}`]);
+  if (!allDone) return;
+
+  // Already celebrated this day?
+  const celebKey = `jp30_celeb_${dayIdx}`;
+  if (localStorage.getItem(celebKey)) return;
+  localStorage.setItem(celebKey, '1');
+
+  showCelebration(dayIdx, dayData);
+}
+
+function showCelebration(dayIdx, dayData) {
+  // Record study activity for streak
+  recordStudyToday();
+
+  const isAllDone  = dayIdx === 30;
+  const isCheckpoint = dayIdx % 7 === 0;
+  const week       = dayData.week;
+  const weekColor  = WEEK_COLORS[week];
+
+  // Pick emoji and message based on context
+  let emoji, title, sub;
+  if (isAllDone) {
+    emoji = '🎌'; title = 'Course Complete!';
+    sub   = 'You\'ve completed all 30 days. You are ready for Japan! Enjoy every moment. またね！';
+  } else if (isCheckpoint) {
+    emoji = '🏆'; title = `Week ${week} Complete!`;
+    sub   = `Fantastic work — you've finished Week ${week} and passed the checkpoint. Keep going!`;
+  } else {
+    const msgs = [
+      'Great work today — every lesson brings Japan closer!',
+      'Another day done. Your Japanese is growing stronger.',
+      'Excellent! Consistency is the key to fluency.',
+      'Day complete! You\'re building a real habit.',
+      'Keep it up — you\'re making great progress!',
+    ];
+    emoji = '🌟'; title = `Day ${dayIdx} Complete!`;
+    sub   = msgs[dayIdx % msgs.length];
+  }
+
+  // Streak info
+  const streak  = parseInt(localStorage.getItem('jp30_streak') || '0');
+  const streakMsg = streak >= 2 ? `🔥 ${streak} day streak!` : '🌱 First day complete!';
+
+  // Stars based on streak
+  const stars = streak >= 7 ? '⭐⭐⭐' : streak >= 3 ? '⭐⭐' : '⭐';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'celebration-overlay';
+  overlay.id = 'celebration-overlay';
+  overlay.innerHTML = `
+    <div class="celebration-card">
+      <span class="celebration-emoji">${emoji}</span>
+      <span class="celebration-stars">${stars}</span>
+      <div class="celebration-title">${escHtml(title)}</div>
+      <div class="celebration-sub">${escHtml(sub)}</div>
+      <div style="font-size:13px;font-weight:700;color:${weekColor};margin-bottom:18px">${escHtml(streakMsg)}</div>
+      ${dayIdx < 30 ? `
+      <button class="celebration-btn" style="background:${weekColor}"
+        onclick="closeCelebration();goDay(${dayIdx + 1})">
+        Day ${dayIdx + 1} →
+      </button>` : `
+      <button class="celebration-btn" style="background:var(--green)"
+        onclick="closeCelebration()">
+        🎌 Complete!
+      </button>`}
+      <button class="celebration-btn-secondary" onclick="closeCelebration()">
+        Stay on Day ${dayIdx}
+      </button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  // Tap backdrop to dismiss
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeCelebration();
+  });
+}
+
+function closeCelebration() {
+  const el = document.getElementById('celebration-overlay');
+  if (el) el.remove();
 }
 
 // ── Furigana renderer ────────────────────────────────────────────────────────
@@ -1070,7 +1406,7 @@ function buildVocabTask(task, dayIdx, taskIdx) {
         </div>
         <div class="vocab-controls">
           <button class="speak-btn" style="color:var(--gold)"
-            onclick="_unlockAudioContext();speakJP('${escHtml(w.japanese)}')">🔊 Hear</button>
+            onclick="_unlockAudioContext();speakJP('${escHtml(w.japanese)}',currentSpeed)">🔊 Hear</button>
           <div class="dot" id="${wid}-d0"></div>
           <div class="dot" id="${wid}-d1"></div>
           <div class="dot" id="${wid}-d2"></div>
@@ -1225,7 +1561,7 @@ function buildSpeakingTask(task, dayIdx, taskIdx) {
         <div class="syll-full">Full: <strong>${escHtml(p.romaji)}</strong></div>
       </div>
       <button class="speak-btn" style="color:${WEEK_COLORS[getCurrentWeek()]};border-color:${WEEK_COLORS[getCurrentWeek()]}44;margin-bottom:10px"
-        onclick="speakJP('${escHtml(p.japanese)}',0.75)">🔊 Hear it first</button>
+        onclick="speakJP('${escHtml(p.japanese)}',currentSpeed)">🔊 Hear it first</button>
       <div class="mic-section">
         <div class="mic-step">Step 2 — Press 🎤 and speak:</div>
         <button class="mic-btn" id="${id}-mic-${i}"
@@ -1542,8 +1878,15 @@ function buildListeningTask(task, dayIdx, taskIdx) {
 
   const REQUIRED = 3;
   const id = `listen-${dayIdx}-${taskIdx}`;
-  listenTotals[id] = 0;
-  phrases.forEach((_,i) => listenCounts[`${id}-${i}`] = 0);
+  // Preserve counts from previous render — only initialise keys that don't exist yet
+  phrases.forEach((_,i) => {
+    const k = `${id}-${i}`;
+    if (listenCounts[k] === undefined) listenCounts[k] = 0;
+  });
+  // Recalculate total from existing counts rather than resetting to 0
+  listenTotals[id] = Object.entries(listenCounts)
+    .filter(([k]) => k.startsWith(id+'-'))
+    .reduce((a,[,v]) => a+v, 0);
 
   let html = `
   <p style="font-size:13px;color:#777;margin:8px 0 12px;line-height:1.6">
@@ -1618,7 +1961,7 @@ function playSinglePhrase(id, idx, japanese, dayIdx, taskIdx, required) {
   const playAllBtn = document.getElementById(`${id}-playall`);
   if (playAllBtn) playAllBtn.disabled = true;
 
-  speakJP(japanese, 0.75, () => {
+  speakJP(japanese, currentSpeed, () => {
     playingId = null;
     if (btn) { btn.classList.remove('playing'); btn.textContent = '▶'; btn.disabled = false; }
     allBtns.forEach(b => { b.disabled = false; });
@@ -1651,7 +1994,7 @@ function playAllPhrases(id, phrases, dayIdx, taskIdx, required) {
     document.getElementById(`${id}-row-${i}`)?.classList.add('played');
 
     const ci = i;
-    speakJP(phrases[ci], 0.75, () => {
+    speakJP(phrases[ci], currentSpeed, () => {
       if (btn) { btn.classList.remove('playing'); btn.textContent = '▶'; }
       i++; setTimeout(next, 450);
     });
@@ -1668,6 +2011,8 @@ function buildPlainTask(task) {
 function markTaskComplete(dayIdx, taskIdx) {
   completed[`${dayIdx}-${taskIdx}`] = true;
   saveState();
+  renderOverallProgress();
+  recordStudyToday();
   // Refresh the task card
   const card = document.getElementById(`task-${dayIdx}-${taskIdx}`);
   if (card) {
@@ -1677,13 +2022,18 @@ function markTaskComplete(dayIdx, taskIdx) {
   }
   renderProgressFooter();
   renderDayGrid();
+  // Check if the whole day is now complete
+  checkDayCelebration(dayIdx);
 }
 
 function manualToggle(dayIdx, taskIdx) {
   const key = `${dayIdx}-${taskIdx}`;
   if (completed[key]) delete completed[key]; else completed[key] = true;
   saveState();
+  renderOverallProgress();
+  recordStudyToday();
   renderAll();
+  if (completed[key]) checkDayCelebration(dayIdx);
 }
 
 // ── View state ────────────────────────────────────────────────────────────────
@@ -1692,6 +2042,81 @@ let currentView = 'lessons';
 let currentKanaScript = 'hiragana'; // 'hiragana' | 'katakana'
 let currentKanaSection = 'main';    // 'main' | 'voiced' | 'handakuten' | 'compounds'
 let playingKanaCell = null;
+
+// ── Coverage map ──────────────────────────────────────────────────────────────
+// Scans completed tasks and counts how many times each Japanese string
+// appears across those tasks. Used to colour kana / kanji / phrase cells.
+//
+// Returns: Map  japanese_text -> count_of_completed_tasks_containing_it
+//
+// "covered-once" = 1 or 2 completed tasks contain that text  → bold outline
+// "covered-full" = 3 or more                                 → green outline
+
+function buildCoverageMap() {
+  const counts = new Map();
+
+  // Helper: extract every Japanese token from a content string
+  function addTokens(content, n) {
+    // Single vocab words (bullet lines):  • japanese (romaji) — meaning
+    const vocabPat = /•\s*([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\uFF66-\uFF9F！？ー～〜・]+)\s*\(/g;
+    let m;
+    while ((m = vocabPat.exec(content)) !== null) {
+      const t = m[1].trim();
+      counts.set(t, (counts.get(t) || 0) + n);
+    }
+    // Full phrases (anything with Japanese chars followed by romaji in parens)
+    const phrasePat = /([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\uFF66-\uFF9F！？、。「」ー～〜・\s]{2,})\s*\(/g;
+    while ((m = phrasePat.exec(content)) !== null) {
+      const t = m[1].trim();
+      if (t.length > 1) counts.set(t, (counts.get(t) || 0) + n);
+    }
+    // Individual kanji characters mentioned anywhere
+    const kanjiPat = /[\u4E00-\u9FAF]/g;
+    while ((m = kanjiPat.exec(content)) !== null) {
+      const t = m[0];
+      counts.set(t, (counts.get(t) || 0) + n);
+    }
+    // Individual kana characters
+    const kanaPat = /[\u3040-\u309F\u30A0-\u30FF]/g;
+    while ((m = kanaPat.exec(content)) !== null) {
+      const t = m[0];
+      counts.set(t, (counts.get(t) || 0) + n);
+    }
+  }
+
+  for (const day of PLAN) {
+    for (let ti = 0; ti < day.tasks.length; ti++) {
+      if (completed[`${day.day}-${ti}`]) {
+        addTokens(day.tasks[ti].content, 1);
+      }
+    }
+  }
+
+  return counts;
+}
+
+// Returns CSS class string for a given text token
+function coverageClass(text, map) {
+  const n = map.get(text) || 0;
+  if (n >= 3) return 'covered-full';
+  if (n >= 1) return 'covered-once';
+  return '';
+}
+
+// Small legend shown in each reference tab header
+function coverageLegendHtml() {
+  return `
+    <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:5px;font-size:10px;opacity:.9">
+        <span style="width:14px;height:14px;border-radius:3px;border:2.5px solid #888;background:#f8f8f4;display:inline-block;flex-shrink:0"></span>
+        Seen in 1–2 completed lessons
+      </span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:10px;opacity:.9">
+        <span style="width:14px;height:14px;border-radius:3px;border:2.5px solid #5cb85c;background:#efffef;display:inline-block;flex-shrink:0"></span>
+        Seen in 3+ completed lessons
+      </span>
+    </div>`;
+}
 
 // ── Kana data ─────────────────────────────────────────────────────────────────
 // Each row is [a, i, u, e, o] — null means that cell doesn't exist
@@ -1808,13 +2233,15 @@ function renderKanaChart() {
     </div>`;
 
   // Build each row of the grid
+  const cov = buildCoverageMap();
   const gridHtml = rows.map(rowData => {
     const cells = rowData.row.map((cell, ci) => {
       if (!cell) return `<div class="kana-cell empty"></div>`;
       const [char, romaji] = cell.split('/');
-      const cellId = `kana-${escHtml(char)}`;
+      const cellId  = `kana-${escHtml(char)}`;
+      const covCls  = coverageClass(char, cov);
       return `
-        <div class="kana-cell" id="${cellId}">
+        <div class="kana-cell${covCls ? ' '+covCls : ''}" id="${cellId}">
           <span class="kana-char">${escHtml(char)}</span>
           <span class="kana-romaji">${escHtml(romaji)}</span>
           <button class="kana-hear"
@@ -1839,6 +2266,7 @@ function renderKanaChart() {
     <div class="kana-header">
       <h2>かな表 · Kana Chart</h2>
       <p>Tap 🔊 on any character to hear its pronunciation</p>
+      ${coverageLegendHtml()}
     </div>
 
     <!-- Script subtabs: Hiragana / Katakana -->
@@ -1874,7 +2302,7 @@ function playKana(char, cellId) {
   if (cell) cell.classList.add('playing');
   playingKanaCell = cellId;
 
-  speakJP(char, 0.8, () => {
+  speakJP(char, currentSpeed, () => {
     document.getElementById(cellId)?.classList.remove('playing');
     if (playingKanaCell === cellId) playingKanaCell = null;
   });
@@ -1893,6 +2321,9 @@ function setKanaSection(section) {
 }
 
 function goKanaView() {
+  stopAllAudio();
+  playingId        = null;
+  playingKanaCell  = null;
   currentView = 'kana';
   renderWeekTabs();
   document.getElementById('dayGrid').classList.add('hidden');
@@ -2163,10 +2594,12 @@ function renderKanjiChart() {
   }
 
   // Build grid cells
+  const cov = buildCoverageMap();
   const cells = data.map(([kanji, reading, meaning]) => {
     const cellId = `kj-${escHtml(kanji)}`;
+    const covCls = coverageClass(kanji, cov);
     return `
-      <div class="kanji-cell" id="${cellId}">
+      <div class="kanji-cell${covCls ? ' '+covCls : ''}" id="${cellId}">
         <span class="kanji-char">${escHtml(kanji)}</span>
         <span class="kanji-reading">${escHtml(reading)}</span>
         <span class="kanji-meaning">${escHtml(meaning)}</span>
@@ -2185,6 +2618,7 @@ function renderKanjiChart() {
     <div class="kanji-header">
       <h2>常用漢字 · Joyo Kanji</h2>
       <p>${Object.values(JOYO_DATA).reduce((a,g)=>a+g.length,0)} essential kanji · tap 🔊 to hear · tap any grade to browse</p>
+      ${coverageLegendHtml()}
     </div>
 
     <div class="kanji-grade-tabs">${gradeTabs}</div>
@@ -2215,7 +2649,7 @@ function playKanji(kanji, reading, cellId) {
   document.getElementById(cellId)?.classList.add('playing');
   playingKanjiCell = cellId;
   // Speak the kanji character directly — Google TTS pronounces it correctly
-  speakJP(kanji, 0.8, () => {
+  speakJP(kanji, currentSpeed, () => {
     document.getElementById(cellId)?.classList.remove('playing');
     if (playingKanjiCell === cellId) playingKanjiCell = null;
   });
@@ -2242,6 +2676,9 @@ function clearKanjiSearch() {
 }
 
 function goKanjiView() {
+  stopAllAudio();
+  playingId        = null;
+  playingKanjiCell = null;
   currentView = 'kanji';
   renderWeekTabs();
   document.getElementById('dayGrid').classList.add('hidden');
@@ -2333,6 +2770,8 @@ function renderPhrasesView() {
     );
   }
 
+  const cov = buildCoverageMap();
+
   // Day filter pills
   const dayPills = `
     <button class="phrases-day-tab ${phrasesFilterDay==='all'?'active':''}"
@@ -2348,7 +2787,7 @@ function renderPhrasesView() {
     if (filtered.length === 0) {
       bodyHtml = `<div class="phrases-no-results">No phrases found for "${escHtml(phrasesSearchQuery || 'Day '+phrasesFilterDay)}"</div>`;
     } else {
-      bodyHtml = filtered.map(p => phraseRowHtml(p)).join('');
+      bodyHtml = filtered.map(p => phraseRowHtml(p, cov)).join('');
     }
   } else {
     // Grouped by day
@@ -2362,7 +2801,7 @@ function renderPhrasesView() {
       return `
         <div class="phrases-day-group">
           <div class="phrases-day-label">Day ${day} — ${escHtml(theme)}</div>
-          ${phrases.map(p => phraseRowHtml(p)).join('')}
+          ${phrases.map(p => phraseRowHtml(p, cov)).join('')}
         </div>`;
     }).join('');
   }
@@ -2371,6 +2810,7 @@ function renderPhrasesView() {
     <div class="phrases-header">
       <h2>フレーズ集 · Phrase List</h2>
       <p>${all.length} phrases across 30 days · tap 🔊 to hear · search or filter by day</p>
+      ${coverageLegendHtml()}
     </div>
 
     <div class="phrases-search-wrap">
@@ -2395,12 +2835,13 @@ function renderPhrasesView() {
     ${bodyHtml}`;
 }
 
-function phraseRowHtml(p) {
+function phraseRowHtml(p, cov) {
   const rowId  = `pr-${escHtml(p.jp)}-${p.day}`;
   const badge  = TYPE_BADGE_STYLE[p.type] || '';
   const label  = (p.type.charAt(0).toUpperCase() + p.type.slice(1));
+  const covCls = coverageClass(p.jp, cov);
   return `
-    <div class="phrase-row" id="${rowId}">
+    <div class="phrase-row${covCls ? ' '+covCls : ''}" id="${rowId}">
       <div class="phrase-row-text">
         <div class="phrase-row-jp">${escHtml(p.jp)}</div>
         <div class="phrase-row-romaji">${escHtml(p.romaji)}</div>
@@ -2420,7 +2861,7 @@ function playPhrase(jp, rowId) {
   }
   document.getElementById(rowId)?.classList.add('playing');
   playingPhraseRow = rowId;
-  speakJP(jp, 0.75, () => {
+  speakJP(jp, currentSpeed, () => {
     document.getElementById(rowId)?.classList.remove('playing');
     if (playingPhraseRow === rowId) playingPhraseRow = null;
   });
@@ -2447,6 +2888,9 @@ function clearPhrasesSearch() {
 }
 
 function goPhrasesView() {
+  stopAllAudio();
+  playingId       = null;
+  playingPhraseRow= null;
   currentView = 'phrases';
   renderWeekTabs();
   ['dayGrid','dayHeader','taskList','progressFooter','dayNav'].forEach(id =>
@@ -2494,8 +2938,10 @@ function renderWeekTabs() {
 }
 
 function goWeek(w) {
+  stopAllAudio();
+  playingId   = null;
   goLessonsView();
-  currentDay = (w-1)*7+1;
+  currentDay  = (w-1)*7+1;
   openTaskIdx = null;
   saveState();
   renderAll();
@@ -2526,8 +2972,13 @@ function renderDayGrid() {
 }
 
 function goDay(d) {
-  currentDay = d; openTaskIdx = null;
-  saveState(); renderAll(); window.scrollTo(0,80);
+  stopAllAudio();
+  playingId   = null;
+  currentDay  = d;
+  openTaskIdx = null;
+  saveState();
+  renderAll();
+  window.scrollTo(0, 80);
 }
 
 function renderDayHeader() {
@@ -2592,10 +3043,18 @@ function renderTaskList() {
 }
 
 function toggleTask(ti) {
-  if (openTaskIdx === ti) { openTaskIdx = null; }
-  else { openTaskIdx = ti; }
+  // If closing a task, stop any audio that was playing inside it
+  if (openTaskIdx === ti) {
+    openTaskIdx = null;
+    stopAllAudio();
+    playingId = null;
+  } else {
+    // Stop audio from previously open task before opening new one
+    stopAllAudio();
+    playingId = null;
+    openTaskIdx = ti;
+  }
   renderTaskList();
-  // Scroll task into view
   setTimeout(() => {
     const el = document.getElementById(`task-${currentDay}-${ti}`);
     if (el) el.scrollIntoView({behavior:'smooth', block:'nearest'});
@@ -2688,6 +3147,7 @@ function importProgress() {
           saveState();
           openTaskIdx = null;
           renderAll();
+          renderOverallProgress();
           alert('✓ Progress imported successfully!');
         } else {
           alert('⚠️ Unrecognised file format.');
@@ -2704,11 +3164,35 @@ function importProgress() {
 // ── Boot ──────────────────────────────────────────────────────────────────────
 loadState();
 renderAll();
+renderOverallProgress();
+initSpeedToggle();
+initRomajiToggle();
+renderStreak();
 
 if (window.speechSynthesis) {
   speechSynthesis.getVoices();
   speechSynthesis.addEventListener('voiceschanged', () => {});
 }
+
+// ── Page visibility — clean up mic and audio when user switches apps/tabs ─────
+// On mobile, switching to another app triggers 'hidden'. Without this, the mic
+// stays open consuming battery, and audio state gets corrupted on return.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    // Stop all audio
+    stopAllAudio();
+    playingId        = null;
+    playingKanaCell  = null;
+    playingKanjiCell = null;
+    playingPhraseRow = null;
+    // Stop mic if recording
+    if (recState === 'recording' && recGlobal) {
+      recGlobal.stop();
+    }
+    recState  = 'idle';
+    recGlobal = null;
+  }
+});
 
 // IME composition guard — mark inputs as 'composing' during Japanese conversion
 // so submitVocab ignores Enter pressed mid-composition (e.g. selecting a kanji)
