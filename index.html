@@ -394,6 +394,81 @@
   .phrase-row.covered-once { border-left: 4px solid #888 !important; }
   .phrase-row.covered-full { border-left: 4px solid var(--green) !important; }
 
+  /* ── Dictionary view ── */
+  .dict-view { padding: 0 12px 24px; }
+  .dict-header {
+    margin: 10px 0 12px;
+    background: linear-gradient(135deg, #1a3a5c, #0d2438);
+    border-radius: 12px; padding: 13px 16px; color: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+  }
+  .dict-header h2 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+  .dict-header p  { font-size: 11px; opacity: .8; }
+  .dict-search-wrap { position: relative; margin-bottom: 12px; }
+  .dict-search {
+    width: 100%; padding: 10px 36px 10px 14px;
+    border: 2px solid var(--border); border-radius: 10px;
+    font-size: 15px; font-family: 'Noto Sans JP', sans-serif;
+    outline: none; background: #fff; color: var(--ink); transition: border-color .15s;
+  }
+  .dict-search:focus { border-color: #1a3a5c; }
+  .dict-search-clear {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; font-size: 16px; cursor: pointer; color: #aaa;
+  }
+  .dict-cats {
+    display: flex; gap: 7px; overflow-x: auto; padding-bottom: 8px;
+    margin-bottom: 12px; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .dict-cats::-webkit-scrollbar { display: none; }
+  .dict-cat-pill {
+    flex-shrink: 0; padding: 7px 13px; border-radius: 20px;
+    border: 2px solid var(--border); background: #fff; color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .dict-cat-pill.active { background: #1a3a5c; border-color: #1a3a5c; color: #fff; }
+  .dict-cat-pill.fav-pill.active { background: #e05c5c; border-color: #e05c5c; }
+  .dict-section-title {
+    font-size: 11px; font-weight: 700; color: #1a3a5c;
+    text-transform: uppercase; letter-spacing: .07em;
+    padding: 4px 0 7px; border-bottom: 1px solid #c8d8e8; margin-bottom: 8px;
+  }
+  .dict-card {
+    background: #fff; border: 1.5px solid var(--border);
+    border-radius: 12px; margin-bottom: 8px; overflow: hidden; transition: all .15s; cursor: pointer;
+  }
+  .dict-card.playing { border-color: #1a3a5c; box-shadow: 0 0 0 3px #1a3a5c22; }
+  .dict-card.covered-once { border-color: #888; border-width: 2px; background: #f8f8f4; }
+  .dict-card.covered-full  { border-color: var(--green); border-width: 2px; background: #efffef; }
+  .dict-card-main { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+  .dict-card-text { flex: 1; min-width: 0; }
+  .dict-card-jp { font-family: 'Noto Serif JP', serif; font-size: 20px; line-height: 2.4; color: var(--ink); }
+  .dict-card-romaji  { font-size: 11px; color: var(--red); font-weight: 700; margin-top: 1px; }
+  .dict-card-meaning { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .dict-card-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; align-items: center; }
+  .dict-hear-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: none;
+    background: #1a3a5c22; color: #1a3a5c; font-size: 16px; cursor: pointer;
+    transition: all .15s; display: flex; align-items: center; justify-content: center;
+  }
+  .dict-hear-btn.playing { background: #1a3a5c; color: #fff; }
+  .dict-fav-btn { background: none; border: none; font-size: 20px; cursor: pointer; line-height: 1; transition: transform .15s; padding: 2px; }
+  .dict-fav-btn:active { transform: scale(1.3); }
+  .dict-card-detail { display: none; padding: 0 14px 13px; border-top: 1px solid #eef0f4; }
+  .dict-card-detail.open { display: block; }
+  .dict-usage-note {
+    background: #f5f8fc; border-radius: 8px; padding: 9px 12px;
+    font-size: 12.5px; color: #3a5a7a; line-height: 1.6; margin-bottom: 8px;
+  }
+  .dict-usage-note::before { content: '💡 '; }
+  .dict-formality { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 8px; margin-right: 6px; background: #e8f0f8; color: #1a3a5c; }
+  .dict-day-ref   { font-size: 10px; color: #aaa; }
+  .dict-chevron   { color: #ccc; font-size: 11px; margin-top: 2px; }
+  .dict-count     { font-size: 11px; color: var(--muted); margin-bottom: 10px; font-family: 'Noto Sans JP', sans-serif; }
+  .dict-no-results { text-align: center; padding: 30px 20px; color: var(--muted); font-size: 14px; }
+  .dict-empty-fav  { text-align: center; padding: 30px 20px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+
   /* Day grid ── */
   .day-grid {
     display: grid; grid-template-columns: repeat(7, 1fr);
@@ -697,6 +772,9 @@
 
 <!-- Phrases reference view (hidden by default) -->
 <div class="phrases-view hidden" id="phrasesView"></div>
+
+<!-- Dictionary view (hidden by default) -->
+<div class="dict-view hidden" id="dictView"></div>
 
 </div><!-- /app -->
 
@@ -2326,14 +2404,11 @@ function goKanaView() {
   playingKanaCell  = null;
   currentView = 'kana';
   renderWeekTabs();
-  document.getElementById('dayGrid').classList.add('hidden');
-  document.getElementById('dayHeader').classList.add('hidden');
-  document.getElementById('taskList').classList.add('hidden');
-  document.getElementById('progressFooter').classList.add('hidden');
-  document.getElementById('dayNav').classList.add('hidden');
+  ['dayGrid','dayHeader','taskList','progressFooter','dayNav'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
+  ['kanjiView','phrasesView','dictView'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
   document.getElementById('kanaView').classList.remove('hidden');
-  document.getElementById('kanjiView').classList.add('hidden');
-  document.getElementById('phrasesView').classList.add('hidden');
   renderKanaChart();
   window.scrollTo(0, 0);
 }
@@ -2345,9 +2420,8 @@ function goLessonsView() {
   document.getElementById('taskList').classList.remove('hidden');
   document.getElementById('progressFooter').classList.remove('hidden');
   document.getElementById('dayNav').classList.remove('hidden');
-  document.getElementById('kanaView').classList.add('hidden');
-  document.getElementById('kanjiView').classList.add('hidden');
-  document.getElementById('phrasesView').classList.add('hidden');
+  ['kanaView','kanjiView','phrasesView','dictView'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
 }
 
 // ── Joyo Kanji data ───────────────────────────────────────────────────────────
@@ -2681,14 +2755,11 @@ function goKanjiView() {
   playingKanjiCell = null;
   currentView = 'kanji';
   renderWeekTabs();
-  document.getElementById('dayGrid').classList.add('hidden');
-  document.getElementById('dayHeader').classList.add('hidden');
-  document.getElementById('taskList').classList.add('hidden');
-  document.getElementById('progressFooter').classList.add('hidden');
-  document.getElementById('dayNav').classList.add('hidden');
-  document.getElementById('kanaView').classList.add('hidden');
+  ['dayGrid','dayHeader','taskList','progressFooter','dayNav'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
+  ['kanaView','phrasesView','dictView'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
   document.getElementById('kanjiView').classList.remove('hidden');
-  document.getElementById('phrasesView').classList.add('hidden');
   renderKanjiChart();
   window.scrollTo(0, 0);
 }
@@ -2895,10 +2966,395 @@ function goPhrasesView() {
   renderWeekTabs();
   ['dayGrid','dayHeader','taskList','progressFooter','dayNav'].forEach(id =>
     document.getElementById(id).classList.add('hidden'));
-  document.getElementById('kanaView').classList.add('hidden');
-  document.getElementById('kanjiView').classList.add('hidden');
+  ['kanaView','kanjiView','dictView'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
   document.getElementById('phrasesView').classList.remove('hidden');
   renderPhrasesView();
+  window.scrollTo(0, 0);
+}
+
+// ── Dictionary data ───────────────────────────────────────────────────────────
+// Curated situation-based phrase dictionary with usage notes.
+// Each entry: { jp, romaji, meaning, note, formality, day }
+// formality: 'polite' (default for all tourist phrases) | 'casual' | 'formal'
+
+const DICT_CATS = [
+  { id:'favs',      emoji:'♡',  label:'My Phrases' },
+  { id:'transport', emoji:'🚉', label:'Getting Around' },
+  { id:'food',      emoji:'🍜', label:'Food & Drink' },
+  { id:'hotel',     emoji:'🏨', label:'Accommodation' },
+  { id:'shopping',  emoji:'🛍️', label:'Shopping' },
+  { id:'greetings', emoji:'🤝', label:'Meeting People' },
+  { id:'emergency', emoji:'🆘', label:'Emergencies' },
+  { id:'sightseeing',emoji:'📸',label:'Sightseeing' },
+  { id:'comms',     emoji:'🗣️', label:'Communication' },
+  { id:'seasonal',  emoji:'🍂', label:'Seasonal / Holidays' },
+];
+
+const DICT_DATA = {
+  transport: [
+    { jp:'えきはどこですか？',           romaji:'Eki wa doko desu ka?',                   meaning:'Where is the station?',             note:'Ask any passerby. Point to your map if they start giving complex directions.',        day:3  },
+    { jp:'トイレはどこですか？',          romaji:'Toire wa doko desu ka?',                  meaning:'Where is the toilet?',              note:'Works in any public place, restaurant or shop. Universally understood.',                day:3  },
+    { jp:'ホテルはどこですか？',          romaji:'Hoteru wa doko desu ka?',                 meaning:'Where is the hotel?',               note:'Show your hotel name card alongside this — most hotels give you one at check-in.',      day:3  },
+    { jp:'コンビニはどこですか？',         romaji:'Konbini wa doko desu ka?',                meaning:'Where is the convenience store?',   note:'Convenience stores (7-Eleven, FamilyMart, Lawson) are everywhere and sell almost everything.',  day:3  },
+    { jp:'しんじゅくまでおねがいします。', romaji:'Shinjuku made onegaishimasu.',            meaning:'To Shinjuku please.',               note:'Say this to any taxi driver. Replace Shinjuku with your destination.',                 day:6  },
+    { jp:'とうきょうまでおねがいします。', romaji:'Toukyou made onegaishimasu.',             meaning:'To Tokyo please.',                  note:'Use the Japanese pronunciation of place names for better understanding.',              day:6  },
+    { jp:'つぎはどこですか？',            romaji:'Tsugi wa doko desu ka?',                  meaning:'What is the next stop?',            note:'Ask on buses or trains. Locals are very helpful with tourists.',                       day:6  },
+    { jp:'みぎ',                         romaji:'migi',                                    meaning:'Right',                             note:'Useful when following directions. Point in the direction to confirm.',                  day:3  },
+    { jp:'ひだり',                        romaji:'hidari',                                  meaning:'Left',                              note:'Useful when following directions.',                                                    day:3  },
+    { jp:'まっすぐ',                      romaji:'massugu',                                 meaning:'Straight ahead',                    note:'Often used with a forward-pointing gesture.',                                         day:3  },
+    { jp:'きっぷをください。',            romaji:'Kippu wo kudasai.',                       meaning:'A ticket please.',                  note:'Use at station windows. Show the destination on your phone if needed.',                day:6  },
+    { jp:'おねがいします。',              romaji:'Onegaishimasu.',                          meaning:'Please / I ask you.',               note:'The all-purpose polite request. Add to almost any noun to ask for it.',                day:6  },
+  ],
+  food: [
+    { jp:'これをください。',              romaji:'Kore wo kudasai.',                        meaning:'This please.',                      note:'Point at the menu, display case, or another table\'s dish. Works everywhere.',         day:4  },
+    { jp:'みずをください。',              romaji:'Mizu wo kudasai.',                        meaning:'Water please.',                     note:'Tap water is free and safe in Japan. Ask confidently.',                               day:4  },
+    { jp:'ビールをふたつください。',      romaji:'Biiru wo futatsu kudasai.',               meaning:'Two beers please.',                 note:'Replace ふたつ with ひとつ (one), みっつ (three) etc.',                              day:4  },
+    { jp:'おすすめはなんですか？',        romaji:'Osusume wa nan desu ka?',                 meaning:'What do you recommend?',            note:'Staff love this question. Point at the response on the menu to confirm.',             day:16 },
+    { jp:'おいしいですね！',              romaji:'Oishii desu ne!',                         meaning:'It\'s delicious!',                  note:'Say this to the chef or staff — you will make their day.',                            day:12 },
+    { jp:'おかわりをください！',          romaji:'Okawari wo kudasai!',                     meaning:'Another one please!',               note:'Common at ramen shops where noodle refills are often free.',                          day:26 },
+    { jp:'おかんじょうおねがいします。',  romaji:'Okanjou onegaishimasu.',                  meaning:'The bill please.',                  note:'Some restaurants have a machine at the door — look for that first.',                  day:26 },
+    { jp:'いただきます。',               romaji:'Itadakimasu.',                             meaning:'(Said before eating)',              note:'A social ritual — always say this before your first bite. Locals will appreciate it.', day:20 },
+    { jp:'ごちそうさまでした。',          romaji:'Gochisousama deshita.',                   meaning:'(Said after eating)',               note:'Say to the staff as you leave. Means "it was a feast" — always well received.',       day:20 },
+    { jp:'からくないものはありますか？',  romaji:'Karakunai mono wa arimasu ka?',           meaning:'Is there something not spicy?',     note:'Japanese food is generally mild but some regional dishes can be very hot.',           day:26 },
+    { jp:'アレルギーがあります。',        romaji:'Arerugii ga arimasu.',                    meaning:'I have an allergy.',                note:'Follow with the allergen name. Show a card listing allergens in Japanese for safety.', day:24 },
+    { jp:'えいごのメニューはありますか？',romaji:'Eigo no menyuu wa arimasu ka?',           meaning:'Do you have an English menu?',      note:'Tourist areas often do. Showing the question on your phone also works.',              day:16 },
+    { jp:'おいしかったです！',            romaji:'Oishikatta desu!',                        meaning:'It was delicious!',                 note:'Past tense — say this as you leave or pay. A lovely compliment to any restaurant.',   day:26 },
+    { jp:'メニューをください。',          romaji:'Menyuu wo kudasai.',                      meaning:'The menu please.',                  note:'At sit-down restaurants that don\'t automatically bring one.',                        day:4  },
+    { jp:'すみません！',                  romaji:'Sumimasen!',                              meaning:'Excuse me!',                        note:'To call a waiter — say clearly, a slight raise of hand helps. Not rude at all.',       day:1  },
+  ],
+  hotel: [
+    { jp:'よやくしました。',              romaji:'Yoyaku shimashita.',                      meaning:'I have a reservation.',             note:'Say this at the front desk alongside your booking confirmation.',                     day:10 },
+    { jp:'チェックインおねがいします。',  romaji:'Chekkuin onegaishimasu.',                 meaning:'Check-in please.',                  note:'Hand over your passport — hotels are required by law to record it.',                  day:10 },
+    { jp:'チェックアウトおねがいします。',romaji:'Chekkuauto onegaishimasu.',               meaning:'Check-out please.',                 note:'Many hotels have express checkout — ask at the desk the night before.',               day:10 },
+    { jp:'あさごはんはなんじですか？',    romaji:'Asagohan wa nanji desu ka?',              meaning:'What time is breakfast?',           note:'Japanese hotel breakfasts (和食 washoku) are exceptional — don\'t miss them.',        day:10 },
+    { jp:'へやのかぎをおねがいします。',  romaji:'Heya no kagi wo onegaishimasu.',          meaning:'Room key please.',                  note:'If you lose your key card, this is what to say at the front desk.',                  day:10 },
+    { jp:'おふろはどこですか？',          romaji:'Ofuro wa doko desu ka?',                  meaning:'Where is the bath/onsen?',          note:'Many hotels have shared communal baths — a wonderful Japanese experience.',           day:10 },
+    { jp:'タオルをください。',            romaji:'Taoru wo kudasai.',                       meaning:'Towels please.',                    note:'Call the front desk or ask at reception.',                                            day:4  },
+  ],
+  shopping: [
+    { jp:'これはいくらですか？',          romaji:'Kore wa ikura desu ka?',                  meaning:'How much is this?',                 note:'Point at the item. Many shops have price tags but this is useful for markets.',        day:5  },
+    { jp:'カードでいいですか？',          romaji:'Kaado de ii desu ka?',                    meaning:'Is card payment okay?',             note:'Japan is still very cash-heavy. Always have yen available as backup.',                day:5  },
+    { jp:'げんきんでおねがいします。',    romaji:'Genkin de onegaishimasu.',                meaning:'Cash payment please.',              note:'Say this to clarify you\'re paying cash, especially at busy checkout desks.',         day:5  },
+    { jp:'おつりをください。',            romaji:'Otsuri wo kudasai.',                      meaning:'Change please.',                    note:'Japanese cashiers are meticulous — change will be correct and given neatly.',         day:19 },
+    { jp:'レシートをください。',          romaji:'Reshiito wo kudasai.',                    meaning:'Receipt please.',                   note:'Receipts are usually offered automatically. Useful for expenses or tax refunds.',     day:19 },
+    { jp:'これをください。',              romaji:'Kore wo kudasai.',                        meaning:'I\'ll take this please.',           note:'The universal shopping phrase. Works in any shop.',                                  day:4  },
+    { jp:'けっこうです。',               romaji:'Kekkou desu.',                             meaning:'No thank you.',                     note:'Use when shop staff offer bags or extra items you don\'t need.',                      day:5  },
+    { jp:'おみやげはどこですか？',        romaji:'Omiyage wa doko desu ka?',                meaning:'Where are the souvenirs?',          note:'Omiyage (gift-giving) is a deep Japanese cultural practice. Souvenir shops are everywhere.', day:29 },
+    { jp:'たかいですね。',               romaji:'Takai desu ne.',                           meaning:'That\'s expensive.',               note:'Said with a slight wince. Sometimes triggers a small discount at markets.',            day:5  },
+  ],
+  greetings: [
+    { jp:'おはようございます。',          romaji:'Ohayou gozaimasu.',                       meaning:'Good morning.',                     note:'Use until around 10am. The longer form is more polite — always use it with strangers.', day:1  },
+    { jp:'こんにちは。',                  romaji:'Konnichiwa.',                             meaning:'Hello / Good afternoon.',           note:'The all-purpose greeting. Works any time of day if unsure.',                         day:1  },
+    { jp:'こんばんは。',                  romaji:'Konbanwa.',                               meaning:'Good evening.',                     note:'From around 6pm onwards.',                                                           day:1  },
+    { jp:'ありがとうございます。',        romaji:'Arigatou gozaimasu.',                     meaning:'Thank you very much.',              note:'The polite form. Use with strangers and service staff at all times.',                 day:1  },
+    { jp:'すみません。',                  romaji:'Sumimasen.',                              meaning:'Excuse me / I\'m sorry.',           note:'Also used to get attention. Much softer than the English "hey".',                     day:1  },
+    { jp:'はじめまして。',               romaji:'Hajimemashite.',                           meaning:'Nice to meet you.',                 note:'Said when meeting someone for the first time. A bow accompanies this.',               day:8  },
+    { jp:'よろしくおねがいします。',      romaji:'Yoroshiku onegaishimasu.',                meaning:'Pleased to meet you.',              note:'The standard reply or addition to はじめまして. Means "I look forward to our relationship".', day:8 },
+    { jp:'わたしはスミスです。',          romaji:'Watashi wa Sumisu desu.',                 meaning:'I am Smith.',                       note:'Replace スミス with your surname in katakana if possible.',                          day:8  },
+    { jp:'イギリスからきました。',        romaji:'Igirisu kara kimashita.',                 meaning:'I came from the UK.',               note:'Replace イギリス with your country in Japanese.',                                    day:8  },
+    { jp:'にほんごがじょうずですね！',    romaji:'Nihongo ga jouzu desu ne!',               meaning:'Your Japanese is great!',           note:'Locals will say this to you — smile and say ありがとうございます.',               day:22 },
+    { jp:'そうですね。',                  romaji:'Sou desu ne.',                            meaning:'I see / That\'s right.',            note:'A filler phrase used constantly in Japanese conversation. Makes you sound natural.',   day:23 },
+    { jp:'なるほど！',                    romaji:'Naruhodo!',                               meaning:'I see / Makes sense!',              note:'Use this when someone explains something. Shows you\'re engaged.',                   day:23 },
+    { jp:'どうぞ。',                      romaji:'Douzo.',                                  meaning:'Please go ahead / Here you are.',   note:'Said when offering something or letting someone through a door.',                     day:20 },
+  ],
+  emergency: [
+    { jp:'たすけてください！',            romaji:'Tasukete kudasai!',                       meaning:'Please help!',                      note:'Shout clearly. Japanese people will respond — they are very helpful in emergencies.',  day:24 },
+    { jp:'おなかがいたいです。',          romaji:'Onaka ga itai desu.',                     meaning:'My stomach hurts.',                 note:'Point to your stomach. Show this on your phone to anyone who might help.',            day:24 },
+    { jp:'あたまがいたいです。',          romaji:'Atama ga itai desu.',                     meaning:'I have a headache.',                note:'Point to your head. Pharmacies (薬局 yakkyoku) are everywhere.',                     day:24 },
+    { jp:'びょういんはどこですか？',      romaji:'Byouin wa doko desu ka?',                 meaning:'Where is the hospital?',            note:'Japan has excellent healthcare. Many hospitals have English-speaking staff.',          day:24 },
+    { jp:'くすりをください。',            romaji:'Kusuri wo kudasai.',                      meaning:'Medicine please.',                  note:'At a pharmacy. Show a photo of the medication or its name if possible.',              day:24 },
+    { jp:'アレルギーがあります。',        romaji:'Arerugii ga arimasu.',                    meaning:'I have an allergy.',                note:'Carry a written card with allergens in Japanese for restaurants and medical situations.', day:24 },
+    { jp:'きゅうきゅうしゃをよんでください。', romaji:'Kyuukyuusha wo yonde kudasai.',     meaning:'Please call an ambulance.',         note:'Emergency number in Japan: 119 (ambulance/fire) or 110 (police).',                  day:24 },
+    { jp:'けいさつをよんでください。',    romaji:'Keisatsu wo yonde kudasai.',              meaning:'Please call the police.',           note:'Police (110) are extremely reliable and responsive in Japan.',                       day:24 },
+    { jp:'パスポートをなくしました。',    romaji:'Pasupooto wo nakushimashita.',            meaning:'I\'ve lost my passport.',           note:'Go to the nearest police box (交番 koban) — small police stations on many street corners.', day:24 },
+  ],
+  sightseeing: [
+    { jp:'しゃしんをとってもいいですか？',romaji:'Shashin wo totte mo ii desu ka?',         meaning:'May I take a photo?',               note:'Always ask inside temples, gardens, and traditional restaurants. Respect a "no".',    day:25 },
+    { jp:'いっしょにしゃしんをとってもいいですか？', romaji:'Issho ni shashin wo totte mo ii desu ka?', meaning:'May I take a photo with you?', note:'Often asked at festivals — many locals enjoy this with tourists.',                day:25 },
+    { jp:'これはなんですか？',            romaji:'Kore wa nan desu ka?',                    meaning:'What is this?',                     note:'Point at something interesting. A great conversation starter.',                       day:25 },
+    { jp:'とてもきれいですね！',          romaji:'Totemo kirei desu ne!',                   meaning:'It\'s really beautiful!',           note:'Say to temple staff, garden keepers, locals. Universally appreciated.',               day:25 },
+    { jp:'にゅうじょうりょうはいくらですか？', romaji:'Nyuujouryou wa ikura desu ka?',     meaning:'How much is the admission?',        note:'Many temples and shrines have a small entry fee (usually ¥500-¥1000).',              day:25 },
+    { jp:'こうようがとてもきれいですね！', romaji:'Kouyou ga totemo kirei desu ne!',        meaning:'The autumn leaves are beautiful!',  note:'In October/November this will earn you enormous goodwill from locals.',              day:29 },
+    { jp:'おまつりはどこですか？',        romaji:'Omatsuri wa doko desu ka?',               meaning:'Where is the festival?',            note:'Ask locals or hotel staff — autumn has many local matsuri (festivals).',             day:29 },
+    { jp:'すごいですね！',               romaji:'Sugoi desu ne!',                           meaning:'That\'s amazing!',                 note:'A great reaction phrase for anything impressive. Japanese love genuine enthusiasm.',   day:17 },
+    { jp:'またきます！',                  romaji:'Mata kimasu!',                             meaning:'I\'ll come again!',                 note:'Say this leaving a restaurant or shop you loved. A wonderful compliment.',            day:30 },
+  ],
+  comms: [
+    { jp:'わかりません。',               romaji:'Wakarimasen.',                             meaning:'I don\'t understand.',             note:'Say calmly with a slight bow. Locals will try another approach — they\'re patient.',  day:13 },
+    { jp:'もういちどゆっくりおねがいします。', romaji:'Mou ichido yukkuri onegaishimasu.',  meaning:'Once more slowly please.',          note:'The most useful phrase when lost in conversation. Locals will oblige.',              day:13 },
+    { jp:'えいごがはなせますか？',        romaji:'Eigo ga hanasemasu ka?',                  meaning:'Can you speak English?',            note:'In major cities many younger people have some English. Worth asking.',                day:13 },
+    { jp:'にほんごがすこしはなせます。',  romaji:'Nihongo ga sukoshi hanasemasu.',           meaning:'I speak a little Japanese.',        note:'Locals love hearing this — it shows effort and always gets a warm response.',         day:13 },
+    { jp:'かいてもらえますか？',          romaji:'Kaite moraemasu ka?',                     meaning:'Could you write it down?',          note:'Useful if you can\'t parse spoken Japanese — seeing it written can help.',            day:13 },
+    { jp:'ちょっとまってください。',      romaji:'Chotto matte kudasai.',                   meaning:'Just a moment please.',             note:'Use while you check your phone for a translation.',                                  day:23 },
+    { jp:'すみません、ちょっと…',         romaji:'Sumimasen, chotto...',                    meaning:'Excuse me, that\'s a bit…',         note:'Polite soft refusal — trail off after ちょっと. Very Japanese way to decline.',      day:23 },
+  ],
+  seasonal: [
+    { jp:'こうよう',                      romaji:'kouyou',                                  meaning:'Autumn leaves',                     note:'October-November is peak kouyou season. A beloved national obsession.',              day:29 },
+    { jp:'おまつり',                      romaji:'omatsuri',                                meaning:'Festival',                          note:'Autumn has hundreds of local festivals. Ask your hotel what\'s on.',                 day:29 },
+    { jp:'やたい',                        romaji:'yatai',                                   meaning:'Food stall',                        note:'Festival food stalls sell takoyaki, yakitori, taiyaki. Always queue — it\'s worth it.', day:29 },
+    { jp:'おんせんにはいりたいです！',    romaji:'Onsen ni hairitai desu!',                 meaning:'I want to try the hot spring!',     note:'Onsen etiquette: wash thoroughly before entering, no swimwear, no tattoos in most.',  day:29 },
+    { jp:'ゆかた',                        romaji:'yukata',                                  meaning:'Casual kimono',                     note:'Many ryokans provide yukatas. It\'s completely fine to wear them around the inn.',   day:29 },
+    { jp:'いただきます。',               romaji:'Itadakimasu.',                             meaning:'(Before eating)',                   note:'At festival food stalls too — the ritual applies everywhere you eat.',               day:20 },
+    { jp:'かんぱい！',                    romaji:'Kanpai!',                                 meaning:'Cheers!',                           note:'Raise your glass, make eye contact, say this before the first sip.',                day:1  },
+    { jp:'たのしいですね！',              romaji:'Tanoshii desu ne!',                       meaning:'This is so fun!',                   note:'Express genuine joy at a festival or event. Locals love enthusiastic tourists.',     day:17 },
+    { jp:'さむいですね。',               romaji:'Samui desu ne.',                           meaning:'It\'s cold, isn\'t it.',            note:'October in Japan can be cool. A great small-talk opener.',                           day:12 },
+  ],
+};
+
+// ── Dictionary state ──────────────────────────────────────────────────────────
+let dictCategory    = 'transport'; // current category key
+let dictSearch      = '';
+let dictExpandedId  = null;        // id of currently expanded card
+let dictPlayingId   = null;        // id of currently playing card
+let dictFavourites  = new Set();   // set of jp strings
+
+function loadDictFavourites() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('jp30_favs') || '[]');
+    dictFavourites = new Set(saved);
+  } catch(e) { dictFavourites = new Set(); }
+}
+
+function saveDictFavourites() {
+  localStorage.setItem('jp30_favs', JSON.stringify([...dictFavourites]));
+}
+
+function toggleDictFav(jp, cardId) {
+  if (dictFavourites.has(jp)) {
+    dictFavourites.delete(jp);
+  } else {
+    dictFavourites.add(jp);
+  }
+  saveDictFavourites();
+  // Update just the heart button without full re-render
+  const btn = document.getElementById(`fav-${cardId}`);
+  if (btn) btn.textContent = dictFavourites.has(jp) ? '♥' : '♡';
+  // If we're in the favs category, re-render to remove/add the card
+  if (dictCategory === 'favs') renderDictView();
+}
+
+function toggleDictCard(cardId) {
+  dictExpandedId = dictExpandedId === cardId ? null : cardId;
+  const detail   = document.getElementById(`detail-${cardId}`);
+  const chevron  = document.getElementById(`chev-${cardId}`);
+  if (detail) detail.classList.toggle('open', dictExpandedId === cardId);
+  if (chevron) chevron.textContent = dictExpandedId === cardId ? '▲' : '▼';
+}
+
+function playDictPhrase(jp, cardId) {
+  if (dictPlayingId && dictPlayingId !== cardId) {
+    const prev = document.getElementById(`hear-${dictPlayingId}`);
+    if (prev) { prev.textContent = '🔊'; prev.classList.remove('playing'); }
+  }
+  dictPlayingId = cardId;
+  const btn = document.getElementById(`hear-${cardId}`);
+  if (btn) { btn.textContent = '▶'; btn.classList.add('playing'); }
+  speakJP(jp, currentSpeed, () => {
+    const b = document.getElementById(`hear-${cardId}`);
+    if (b) { b.textContent = '🔊'; b.classList.remove('playing'); }
+    if (dictPlayingId === cardId) dictPlayingId = null;
+  });
+}
+
+function setDictCategory(cat) {
+  dictCategory   = cat;
+  dictSearch     = '';
+  dictExpandedId = null;
+  renderDictView();
+  // Scroll category pills so active is visible
+  setTimeout(() => {
+    const pill = document.querySelector(`.dict-cat-pill.active`);
+    if (pill) pill.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+  }, 50);
+}
+
+function onDictSearch(val) {
+  dictSearch     = val;
+  dictExpandedId = null;
+  renderDictView();
+  const inp = document.getElementById('dictSearchInput');
+  if (inp) { inp.focus(); inp.setSelectionRange(val.length, val.length); }
+}
+
+function clearDictSearch() {
+  dictSearch = '';
+  renderDictView();
+  document.getElementById('dictSearchInput')?.focus();
+}
+
+// Build a card id safe for use in HTML attribute values
+function dictCardId(jp, cat) {
+  // Use a short hash to avoid special chars in jp
+  let h = 0;
+  for (let i = 0; i < jp.length; i++) h = (Math.imul(31, h) + jp.charCodeAt(i)) | 0;
+  return `dc-${cat}-${Math.abs(h)}`;
+}
+
+function buildDictCard(entry, cat, cov) {
+  const { jp, romaji, meaning, note, day } = entry;
+  const cardId  = dictCardId(jp, cat);
+  const isFav   = dictFavourites.has(jp);
+  const covCls  = coverageClass(jp, cov);
+  const isOpen  = dictExpandedId === cardId;
+  const isPlaying = dictPlayingId === cardId;
+  const dayRef  = day ? `First covered: Day ${day}` : '';
+
+  return `
+    <div class="dict-card${covCls?' '+covCls:''}${isPlaying?' playing':''}" id="card-${cardId}">
+      <div class="dict-card-main" onclick="toggleDictCard('${cardId}')">
+        <div class="dict-card-text">
+          <div class="dict-card-jp">${escHtml(jp)}</div>
+          <div class="dict-card-romaji">${escHtml(romaji)}</div>
+          <div class="dict-card-meaning">${escHtml(meaning)}</div>
+        </div>
+        <div class="dict-card-actions">
+          <button class="dict-hear-btn${isPlaying?' playing':''}" id="hear-${cardId}"
+            onclick="event.stopPropagation();_unlockAudioContext();playDictPhrase('${escHtml(jp)}','${cardId}')">
+            ${isPlaying ? '▶' : '🔊'}
+          </button>
+          <button class="dict-fav-btn" id="fav-${cardId}"
+            title="${isFav ? 'Remove from My Phrases' : 'Save to My Phrases'}"
+            onclick="event.stopPropagation();toggleDictFav('${escHtml(jp)}','${cardId}')">
+            ${isFav ? '♥' : '♡'}
+          </button>
+          <span class="dict-chevron" id="chev-${cardId}">${isOpen ? '▲' : '▼'}</span>
+        </div>
+      </div>
+      <div class="dict-card-detail${isOpen?' open':''}" id="detail-${cardId}">
+        ${note ? `<div class="dict-usage-note">${escHtml(note)}</div>` : ''}
+        <div>
+          <span class="dict-formality">丁寧語 Polite</span>
+          <span class="dict-day-ref">${escHtml(dayRef)}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderDictView() {
+  const el = document.getElementById('dictView');
+  if (!el) return;
+
+  const cov = buildCoverageMap();
+
+  // Category pills
+  const pills = DICT_CATS.map(c => {
+    const isFavCat = c.id === 'favs';
+    const count = isFavCat
+      ? dictFavourites.size
+      : (DICT_DATA[c.id] || []).length;
+    const active = (!dictSearch && dictCategory === c.id);
+    return `
+      <button class="dict-cat-pill${active?' active':''}${isFavCat?' fav-pill':''}"
+        onclick="setDictCategory('${c.id}')">
+        ${c.emoji} ${escHtml(c.label)}${count>0?` <span style="opacity:.7;font-weight:400">(${count})</span>`:''}
+      </button>`;
+  }).join('');
+
+  // Build phrase list
+  let bodyHtml = '';
+  let totalCount = 0;
+
+  if (dictSearch.trim()) {
+    // Search across ALL categories
+    const q = dictSearch.trim().toLowerCase();
+    const matches = [];
+    for (const [cat, entries] of Object.entries(DICT_DATA)) {
+      for (const entry of entries) {
+        if (entry.jp.includes(q) ||
+            entry.romaji.toLowerCase().includes(q) ||
+            entry.meaning.toLowerCase().includes(q) ||
+            (entry.note||'').toLowerCase().includes(q)) {
+          matches.push({ ...entry, cat });
+        }
+      }
+    }
+    totalCount = matches.length;
+    if (matches.length === 0) {
+      bodyHtml = `<div class="dict-no-results">No phrases found for "${escHtml(dictSearch)}"<br><small>Try English, romaji or Japanese</small></div>`;
+    } else {
+      // Group by category in search results
+      const byCat = {};
+      matches.forEach(e => { if (!byCat[e.cat]) byCat[e.cat] = []; byCat[e.cat].push(e); });
+      bodyHtml = Object.entries(byCat).map(([cat, entries]) => {
+        const catInfo = DICT_CATS.find(c => c.id === cat);
+        return `
+          <div class="dict-section-title">${catInfo ? catInfo.emoji+' '+catInfo.label : cat}</div>
+          ${entries.map(e => buildDictCard(e, cat, cov)).join('')}`;
+      }).join('');
+    }
+  } else if (dictCategory === 'favs') {
+    // Favourites view
+    if (dictFavourites.size === 0) {
+      bodyHtml = `<div class="dict-empty-fav">
+        ♡ No saved phrases yet.<br>
+        Tap ♡ on any phrase card to save it here.<br>
+        <small style="opacity:.6">Great for building a shortlist before your trip.</small>
+      </div>`;
+    } else {
+      // Find each favourite across all categories
+      const favCards = [];
+      for (const [cat, entries] of Object.entries(DICT_DATA)) {
+        for (const entry of entries) {
+          if (dictFavourites.has(entry.jp)) favCards.push({ ...entry, cat });
+        }
+      }
+      totalCount = favCards.length;
+      bodyHtml = favCards.map(e => buildDictCard(e, e.cat, cov)).join('');
+    }
+  } else {
+    // Single category
+    const entries = DICT_DATA[dictCategory] || [];
+    totalCount = entries.length;
+    if (entries.length === 0) {
+      bodyHtml = `<div class="dict-no-results">No phrases in this category yet.</div>`;
+    } else {
+      const catInfo = DICT_CATS.find(c => c.id === dictCategory);
+      bodyHtml = `
+        <div class="dict-section-title">${catInfo ? catInfo.emoji+' '+catInfo.label : dictCategory}</div>
+        ${entries.map(e => buildDictCard(e, dictCategory, cov)).join('')}`;
+    }
+  }
+
+  const totalAll = Object.values(DICT_DATA).reduce((a,g) => a+g.length, 0);
+
+  el.innerHTML = `
+    <div class="dict-header">
+      <h2>辞書 · Phrase Dictionary</h2>
+      <p>${totalAll} phrases by situation · tap a card to expand · ♡ to save · 🔊 to hear</p>
+      ${coverageLegendHtml()}
+    </div>
+
+    <div class="dict-search-wrap">
+      <input class="dict-search" id="dictSearchInput" type="search"
+        placeholder="Search any phrase, romaji or meaning…"
+        value="${escHtml(dictSearch)}"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+        oninput="onDictSearch(this.value)" />
+      ${dictSearch ? `<button class="dict-search-clear" onclick="clearDictSearch()">✕</button>` : ''}
+    </div>
+
+    <div class="dict-cats">${pills}</div>
+
+    ${!dictSearch && dictCategory !== 'favs' ? `
+      <div class="dict-count">${totalCount} phrase${totalCount!==1?'s':''} · tap any card to see usage tips</div>` :
+      dictSearch ? `<div class="dict-count">${totalCount} result${totalCount!==1?'s':''} across all categories</div>` : ''}
+
+    ${bodyHtml}`;
+}
+
+function goDictView() {
+  stopAllAudio();
+  playingId    = null;
+  dictPlayingId= null;
+  currentView  = 'dict';
+  renderWeekTabs();
+  ['dayGrid','dayHeader','taskList','progressFooter','dayNav'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
+  ['kanaView','kanjiView','phrasesView'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
+  document.getElementById('dictView').classList.remove('hidden');
+  renderDictView();
   window.scrollTo(0, 0);
 }
 
@@ -2934,7 +3390,14 @@ function renderWeekTabs() {
       一覧<span>Phrases</span>
     </button>`;
 
-  el.innerHTML = lessonTabs + kanaTab + kanjiTab + phrasesTab;
+  const dictTab = `
+    <button class="week-tab ${currentView==='dict' ? 'active' : ''}"
+      style="${currentView==='dict' ? 'background:#1a3a5c;color:#fff;border-bottom-color:#1a3a5c' : ''}"
+      onclick="goDictView()">
+      辞書<span>Dictionary</span>
+    </button>`;
+
+  el.innerHTML = lessonTabs + kanaTab + kanjiTab + phrasesTab + dictTab;
 }
 
 function goWeek(w) {
@@ -3087,7 +3550,8 @@ function renderDayNav() {
 function renderAll() {
   renderWeekTabs();
   const lessonEls = ['dayGrid','dayHeader','taskList','progressFooter','dayNav'];
-  const allViews  = ['kanaView','kanjiView','phrasesView'];
+  const allViews  = ['kanaView','kanjiView','phrasesView','dictView'];
+
   if (currentView === 'kana') {
     lessonEls.forEach(id => document.getElementById(id).classList.add('hidden'));
     allViews.forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -3103,6 +3567,11 @@ function renderAll() {
     allViews.forEach(id => document.getElementById(id).classList.add('hidden'));
     document.getElementById('phrasesView').classList.remove('hidden');
     renderPhrasesView();
+  } else if (currentView === 'dict') {
+    lessonEls.forEach(id => document.getElementById(id).classList.add('hidden'));
+    allViews.forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById('dictView').classList.remove('hidden');
+    renderDictView();
   } else {
     lessonEls.forEach(id => document.getElementById(id).classList.remove('hidden'));
     allViews.forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -3163,6 +3632,7 @@ function importProgress() {
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 loadState();
+loadDictFavourites();
 renderAll();
 renderOverallProgress();
 initSpeedToggle();
@@ -3179,13 +3649,12 @@ if (window.speechSynthesis) {
 // stays open consuming battery, and audio state gets corrupted on return.
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
-    // Stop all audio
     stopAllAudio();
     playingId        = null;
     playingKanaCell  = null;
     playingKanjiCell = null;
     playingPhraseRow = null;
-    // Stop mic if recording
+    dictPlayingId    = null;
     if (recState === 'recording' && recGlobal) {
       recGlobal.stop();
     }
