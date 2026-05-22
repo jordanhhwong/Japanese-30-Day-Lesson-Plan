@@ -101,6 +101,78 @@
     font-family: inherit;
   }
 
+  /* ── Personalisation modal ── */
+  .personal-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: fadeInOverlay .2s ease;
+  }
+  .personal-card {
+    background: #fff; border-radius: 18px;
+    padding: 24px 22px; width: 100%; max-width: 360px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    animation: popIn .25s cubic-bezier(.34,1.56,.64,1);
+    max-height: 90vh; overflow-y: auto;
+  }
+  .personal-title {
+    font-size: 17px; font-weight: 700; color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .personal-sub {
+    font-size: 12px; color: var(--muted); margin-bottom: 18px;
+  }
+  .personal-section {
+    font-size: 10px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .07em;
+    margin: 14px 0 8px;
+  }
+  .personal-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .personal-row label {
+    font-size: 13px; color: var(--ink); flex: 1;
+  }
+  .personal-row input[type="color"] {
+    width: 44px; height: 32px; border: 2px solid var(--border);
+    border-radius: 8px; cursor: pointer; padding: 2px;
+    background: #fff;
+  }
+  .personal-row .hex-input {
+    width: 82px; padding: 5px 8px; border: 2px solid var(--border);
+    border-radius: 7px; font-size: 12px; font-family: monospace;
+    margin-left: 8px; text-transform: uppercase; outline: none;
+    color: var(--ink);
+  }
+  .personal-row .hex-input:focus { border-color: var(--red); }
+  .personal-preset-row {
+    display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .personal-preset {
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 10px; border-radius: 20px; border: 2px solid var(--border);
+    background: #fff; cursor: pointer; font-size: 11px; font-weight: 700;
+    color: var(--ink); transition: all .15s; white-space: nowrap;
+  }
+  .personal-preset:active { opacity: .75; }
+  .personal-preset-swatch {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1px solid rgba(0,0,0,.15); flex-shrink: 0;
+  }
+  .personal-actions {
+    display: flex; gap: 8px; margin-top: 18px;
+  }
+  .personal-btn {
+    flex: 1; padding: 11px; border-radius: 10px; border: none;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: opacity .15s;
+  }
+  .personal-btn:active { opacity: .8; }
+  .personal-btn-primary { background: var(--red); color: #fff; }
+  .personal-btn-secondary { background: #f0f0f0; color: var(--ink); }
+
   /* ── Overall progress bar ── */
   .overall-progress-wrap {
     margin: 10px 16px 0;
@@ -740,8 +812,14 @@
     <button id="speed-toggle" class="header-pill" onclick="cycleSpeed()" title="Audio playback speed">🔊 Speed: Normal</button>
     <button onclick="exportProgress()" class="header-pill">💾 Export</button>
     <button onclick="importProgress()" class="header-pill">📂 Import</button>
+    <button onclick="openPersonalise()" class="header-pill">🎨 Personalise</button>
   </div>
 </header>
+
+<!-- Personalisation modal (hidden by default) -->
+<div class="personal-overlay hidden" id="personalOverlay" onclick="if(event.target===this)closePersonalise()">
+  <div class="personal-card" id="personalCard"></div>
+</div>
 
 <!-- Week tabs -->
 <div class="week-tabs" id="weekTabs"></div>
@@ -5931,6 +6009,222 @@ function goDictView() {
   window.scrollTo(0, 0);
 }
 
+// ── Personalisation ───────────────────────────────────────────────────────────
+// Stores 5 CSS variables that control the entire colour scheme.
+// Applied via document.documentElement.style.setProperty() so they
+// override :root defaults without touching any CSS rules.
+
+const PERSONAL_DEFAULTS = {
+  '--cream':       '#fdf6e3',   // page background (top)
+  '--warm':        '#f9f0d8',   // page background (bottom) + tab bar
+  '--red':         '#c0392b',   // header gradient start + accent
+  '--ink':         '#2c1a0e',   // main body text
+  '--muted':       '#7a6650',   // secondary / label text
+};
+
+// Readable labels for the colour picker UI
+const PERSONAL_LABELS = {
+  '--cream':  'Background (top)',
+  '--warm':   'Background (bottom)',
+  '--red':    'Header colour',
+  '--ink':    'Heading text',
+  '--muted':  'Body text',
+};
+
+// Preset themes
+const PERSONAL_PRESETS = [
+  {
+    name: 'Classic',
+    swatch: '#fdf6e3',
+    vars: { '--cream':'#fdf6e3','--warm':'#f9f0d8','--red':'#c0392b','--ink':'#2c1a0e','--muted':'#7a6650' },
+  },
+  {
+    name: 'Night',
+    swatch: '#1a1a2e',
+    vars: { '--cream':'#1a1a2e','--warm':'#16213e','--red':'#4a90d9','--ink':'#e8e8f0','--muted':'#9090b8' },
+  },
+  {
+    name: 'Forest',
+    swatch: '#e8f5e9',
+    vars: { '--cream':'#e8f5e9','--warm':'#dcedc8','--red':'#2e7d32','--ink':'#1b3a1e','--muted':'#4a7a4e' },
+  },
+  {
+    name: 'Ocean',
+    swatch: '#e3f0fd',
+    vars: { '--cream':'#e3f0fd','--warm':'#d0e8fa','--red':'#1565c0','--ink':'#0d2137','--muted':'#3a6080' },
+  },
+  {
+    name: 'Sakura',
+    swatch: '#fce4ec',
+    vars: { '--cream':'#fce4ec','--warm':'#f8bbd0','--red':'#c2185b','--ink':'#3e0019','--muted':'#8a3a5a' },
+  },
+  {
+    name: 'Slate',
+    swatch: '#eceff1',
+    vars: { '--cream':'#eceff1','--warm':'#cfd8dc','--red':'#37474f','--ink':'#1a2428','--muted':'#546e7a' },
+  },
+];
+
+// Current working values (start from defaults, overridden by saved prefs)
+let personalVars = { ...PERSONAL_DEFAULTS };
+
+function loadPersonalisation() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('jp30_personal') || '{}');
+    Object.keys(PERSONAL_DEFAULTS).forEach(k => {
+      if (saved[k]) personalVars[k] = saved[k];
+    });
+  } catch(e) {}
+  applyPersonalisation(personalVars);
+}
+
+function savePersonalisation(vars) {
+  localStorage.setItem('jp30_personal', JSON.stringify(vars));
+}
+
+function applyPersonalisation(vars) {
+  const root = document.documentElement;
+  Object.entries(vars).forEach(([k, v]) => {
+    root.style.setProperty(k, v);
+  });
+  // Header uses a gradient — rebuild it so it always uses the current --red
+  const red = vars['--red'] || '#c0392b';
+  // Darken red by ~20% for gradient end
+  const darker = darkenHex(red, 0.22);
+  document.querySelectorAll('.app-header').forEach(el => {
+    el.style.background = `linear-gradient(135deg, ${red} 0%, ${darker} 100%)`;
+  });
+  // Week tab background
+  const warm = vars['--warm'] || '#f9f0d8';
+  document.querySelectorAll('.week-tab:not(.active)').forEach(el => {
+    el.style.background = warm;
+  });
+  document.querySelectorAll('.week-tabs').forEach(el => {
+    el.style.background = warm;
+  });
+}
+
+function darkenHex(hex, amount) {
+  // Parse hex, multiply RGB by (1-amount), return hex
+  const h = hex.replace('#','');
+  const num = parseInt(h.length === 3
+    ? h.split('').map(c=>c+c).join('')
+    : h, 16);
+  const r = Math.max(0, Math.round(((num >> 16) & 255) * (1 - amount)));
+  const g = Math.max(0, Math.round(((num >> 8)  & 255) * (1 - amount)));
+  const b = Math.max(0, Math.round(( num        & 255) * (1 - amount)));
+  return '#' + [r,g,b].map(x => x.toString(16).padStart(2,'0')).join('');
+}
+
+function openPersonalise() {
+  const overlay = document.getElementById('personalOverlay');
+  const card    = document.getElementById('personalCard');
+  if (!overlay || !card) return;
+
+  // Build modal content
+  const presetHtml = PERSONAL_PRESETS.map(p => `
+    <button class="personal-preset" onclick="applyPreset('${p.name}')">
+      <span class="personal-preset-swatch" style="background:${p.swatch}"></span>
+      ${escHtml(p.name)}
+    </button>`).join('');
+
+  const colourRows = Object.keys(PERSONAL_DEFAULTS).map(k => {
+    const val  = personalVars[k] || PERSONAL_DEFAULTS[k];
+    const safe = k.replace(/--/g,'');
+    return `
+      <div class="personal-row">
+        <label>${escHtml(PERSONAL_LABELS[k])}</label>
+        <input type="color" id="pc-${safe}" value="${val}"
+          oninput="onPersonalColour('${k}', this.value)"
+          onchange="onPersonalColour('${k}', this.value)" />
+        <input type="text" class="hex-input" id="ph-${safe}"
+          value="${val.toUpperCase()}" maxlength="7"
+          oninput="onPersonalHex('${k}', '${safe}', this.value)"
+          placeholder="#RRGGBB" />
+      </div>`;
+  }).join('');
+
+  card.innerHTML = `
+    <div class="personal-title">🎨 Personalise</div>
+    <div class="personal-sub">Changes apply live — tap Save to keep them.</div>
+
+    <div class="personal-section">Presets</div>
+    <div class="personal-preset-row">${presetHtml}</div>
+
+    <div class="personal-section">Custom colours</div>
+    ${colourRows}
+
+    <div class="personal-actions">
+      <button class="personal-btn personal-btn-secondary" onclick="resetPersonalisation()">Reset</button>
+      <button class="personal-btn personal-btn-primary"   onclick="saveAndClosePersonalise()">Save</button>
+    </div>`;
+
+  overlay.classList.remove('hidden');
+}
+
+function closePersonalise() {
+  document.getElementById('personalOverlay')?.classList.add('hidden');
+  // Revert to last saved values if user didn't save
+  loadPersonalisation();
+}
+
+function saveAndClosePersonalise() {
+  savePersonalisation(personalVars);
+  applyPersonalisation(personalVars);
+  document.getElementById('personalOverlay')?.classList.add('hidden');
+}
+
+function onPersonalColour(cssVar, value) {
+  personalVars[cssVar] = value;
+  applyPersonalisation(personalVars);
+  // Sync hex input
+  const safe   = cssVar.replace(/--/g,'');
+  const hexInp = document.getElementById(`ph-${safe}`);
+  if (hexInp) hexInp.value = value.toUpperCase();
+}
+
+function onPersonalHex(cssVar, safe, value) {
+  // Only apply if it's a valid 6-digit hex
+  const clean = value.startsWith('#') ? value : '#' + value;
+  if (/^#[0-9A-Fa-f]{6}$/.test(clean)) {
+    personalVars[cssVar] = clean;
+    applyPersonalisation(personalVars);
+    const picker = document.getElementById(`pc-${safe}`);
+    if (picker) picker.value = clean;
+  }
+}
+
+function applyPreset(name) {
+  const preset = PERSONAL_PRESETS.find(p => p.name === name);
+  if (!preset) return;
+  personalVars = { ...preset.vars };
+  applyPersonalisation(personalVars);
+  // Update all pickers and hex inputs in the open modal
+  Object.keys(PERSONAL_DEFAULTS).forEach(k => {
+    const safe = k.replace(/--/g,'');
+    const val  = personalVars[k];
+    const picker = document.getElementById(`pc-${safe}`);
+    const hexInp = document.getElementById(`ph-${safe}`);
+    if (picker) picker.value = val;
+    if (hexInp) hexInp.value = val.toUpperCase();
+  });
+}
+
+function resetPersonalisation() {
+  personalVars = { ...PERSONAL_DEFAULTS };
+  applyPersonalisation(personalVars);
+  localStorage.removeItem('jp30_personal');
+  // Update pickers
+  Object.keys(PERSONAL_DEFAULTS).forEach(k => {
+    const safe = k.replace(/--/g,'');
+    const val  = PERSONAL_DEFAULTS[k];
+    const picker = document.getElementById(`pc-${safe}`);
+    const hexInp = document.getElementById(`ph-${safe}`);
+    if (picker) picker.value = val;
+    if (hexInp) hexInp.value = val.toUpperCase();
+  });
+}
+
 // ── Rendering ─────────────────────────────────────────────────────────────────
 function renderWeekTabs() {
   const week = getCurrentWeek();
@@ -6207,6 +6501,7 @@ function importProgress() {
 // ── Boot ──────────────────────────────────────────────────────────────────────
 loadState();
 loadDictFavourites();
+loadPersonalisation();
 renderAll();
 renderOverallProgress();
 initSpeedToggle();
