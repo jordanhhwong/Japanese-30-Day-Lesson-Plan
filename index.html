@@ -4297,6 +4297,94 @@ function _resetRecState() {
   recState = 'idle';
 }
 
+// ── Speech matching helpers ───────────────────────────────────────────────────
+// Five-layer matching handles the main ways Chrome's speech engine varies:
+//   1. Katakana returned instead of hiragana (most common on Android)
+//   2. Kanji returned instead of hiragana (e.g. 一 for いち)
+//   3. Romaji returned (engine fell back to Latin script)
+//   4. Ordered character coverage (partial match in correct order)
+//   5. Unordered coverage fallback with dynamic threshold by word length
+
+// Katakana → hiragana (shift unicode block by 0x60)
+function _toHiragana(str) {
+  return str.replace(/[\u30A1-\u30F6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+}
+
+// Strip punctuation and normalise to hiragana + lowercase
+function _normSpeech(str) {
+  return _toHiragana(str)
+    .replace(/[！？。、・\s]/g, '')
+    .toLowerCase();
+}
+
+// Single-kanji → hiragana reading lookup (covers lesson vocab kanji forms)
+const _KANJI_READ = {
+  '一':'いち','二':'に','三':'さん','四':'し','五':'ご',
+  '六':'ろく','七':'なな','八':'はち','九':'きゅう','十':'じゅう',
+  '百':'ひゃく','千':'せん','万':'まん','円':'えん',
+  '水':'みず','右':'みぎ','左':'ひだり','時':'じ','分':'ふん',
+  '今':'いま','日':'にち','月':'つき','年':'ねん','人':'ひと',
+  '駅':'えき','国':'くに','私':'わたし','好':'すき',
+};
+
+// Romaji → hiragana for common phrases the engine romanises
+const _ROMAJI_READ = {
+  'konnichiwa':'こんにちは','konnichiha':'こんにちは',
+  'ohayou':'おはよう','ohayougozaimasu':'おはようございます',
+  'arigatou':'ありがとう','arigatougozaimasu':'ありがとうございます',
+  'sumimasen':'すみません','konbanwa':'こんばんは',
+  'hajimemashite':'はじめまして','yoroshiku':'よろしく',
+  'wakarimasen':'わかりません','tasukete':'たすけて',
+  'ichi':'いち','ni':'に','san':'さん','shi':'し','go':'ご',
+  'roku':'ろく','nana':'なな','hachi':'はち','kyuu':'きゅう','juu':'じゅう',
+  'hyaku':'ひゃく','sen':'せん','man':'まん',
+  'mizu':'みず','migi':'みぎ','hidari':'ひだり',
+  'onegaishimasu':'おねがいします','kudasai':'ください',
+  'itadakimasu':'いただきます','gochisousamadeshita':'ごちそうさまでした',
+};
+
+function _speechMatch(targetJp, transcript, romajiHint) {
+  const targetNorm = _normSpeech(targetJp);
+  const transNorm  = _normSpeech(transcript);
+  if (!targetNorm || !transNorm) return false;
+
+  // ── 1. Direct substring ───────────────────────────────────────────────────
+  if (transNorm.includes(targetNorm) || targetNorm.includes(transNorm)) return true;
+
+  // ── 2. Single-kanji lookup ────────────────────────────────────────────────
+  const kanjiReading = _KANJI_READ[transcript.trim()];
+  if (kanjiReading && _normSpeech(kanjiReading) === targetNorm) return true;
+
+  // ── 3. Romaji fallback ────────────────────────────────────────────────────
+  const romajiClean = transcript.toLowerCase().replace(/[^a-z]/g, '');
+  const romajiJp    = _ROMAJI_READ[romajiClean];
+  if (romajiJp && _normSpeech(romajiJp).includes(targetNorm)) return true;
+  // Also accept if the romaji hint matches what was spoken
+  if (romajiHint) {
+    const hintClean = romajiHint.toLowerCase().replace(/[^a-z]/g, '');
+    if (hintClean && romajiClean.includes(hintClean)) return true;
+    if (hintClean && hintClean.includes(romajiClean) && romajiClean.length >= 3) return true;
+  }
+
+  // ── 4. Ordered character coverage ────────────────────────────────────────
+  // Characters must appear in the right order (stricter than unordered)
+  let oi = 0;
+  for (const ch of transNorm) {
+    if (oi < targetNorm.length && ch === targetNorm[oi]) oi++;
+  }
+  const orderedScore = oi / targetNorm.length;
+
+  // ── 5. Unordered character coverage ──────────────────────────────────────
+  const unorderedScore = [...targetNorm].filter(ch => transNorm.includes(ch)).length / targetNorm.length;
+
+  // Dynamic threshold: short words need higher confidence
+  const len = targetNorm.length;
+  const ordThresh    = len <= 2 ? 1.0 : len <= 4 ? 0.75 : 0.65;
+  const unordThresh  = len <= 2 ? 1.0 : len <= 4 ? 0.85 : 0.70;
+
+  return orderedScore >= ordThresh || unorderedScore >= unordThresh;
+}
+
 function startMic(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
   const btn      = document.getElementById(`${id}-mic-${phraseIdx}`);
   const statusEl = document.getElementById(`${id}-status-${phraseIdx}`);
@@ -4396,27 +4484,26 @@ function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
   }, 15000);
 
   rec.onresult = e => {
-    // With continuous:true, onresult fires for each utterance segment.
-    // Collect the best final result across all segments.
+    // Collect final and interim transcripts from this event
     let finalTranscript = '';
     let interimTranscript = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const t = e.results[i][0].transcript;
-      if (e.results[i].isFinal) {
-        finalTranscript += t;
-      } else {
-        interimTranscript += t;
-      }
+      if (e.results[i].isFinal) finalTranscript += t;
+      else interimTranscript += t;
     }
 
-    // Show live interim text so user knows they're being heard
+    // Show live interim text while recording
     const liveH = document.getElementById(`${id}-heard-${phraseIdx}`) || liveHeardEl;
     if (liveH && (finalTranscript || interimTranscript)) {
-      liveH.textContent = `Heard: "${finalTranscript || interimTranscript}"`;
+      const display = finalTranscript || interimTranscript;
+      liveH.textContent = `Heard: "${display}"`;
+      liveH.style.fontStyle = finalTranscript ? 'normal' : 'italic';
+      liveH.style.opacity   = finalTranscript ? '1' : '0.7';
       liveH.classList.remove('hidden');
     }
 
-    // Only evaluate on final results (not interim)
+    // Only evaluate once we have a final result
     if (!finalTranscript) return;
 
     clearTimeout(_recWatchdog);
@@ -4425,8 +4512,8 @@ function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
     const liveS = document.getElementById(`${id}-status-${phraseIdx}`) || liveStatusEl;
     if (liveS) liveS.textContent = 'Checking…';
 
-    // Build alternatives list from all final results
-    const alts = [finalTranscript.trim()];
+    // Build full alternatives list from all final results across all segments
+    const alts = [];
     for (let i = 0; i < e.results.length; i++) {
       if (e.results[i].isFinal) {
         for (let j = 0; j < e.results[i].length; j++) {
@@ -4435,14 +4522,9 @@ function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
         }
       }
     }
+    if (!alts.includes(finalTranscript.trim())) alts.unshift(finalTranscript.trim());
 
-    const target = japanese.replace(/[！？。、\s]/g, '');
-    const pass = alts.some(a => {
-      const clean = a.replace(/[！？。、\s]/g, '');
-      let hits = 0;
-      for (const ch of target) if (clean.includes(ch)) hits++;
-      return target.length > 0 && hits / target.length >= 0.5;
-    });
+    const pass = alts.some(a => _speechMatch(japanese, a, romaji));
     setTimeout(() => finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese, romaji), 300);
   };
 
