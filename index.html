@@ -4468,13 +4468,20 @@ function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
 
   recState = 'recording';
   clearTimeout(_recWatchdog);
+
+  // bestInterim: Android often only fires interim results (isFinal:false).
+  // We track the best one throughout and evaluate it in onend if no final arrives.
+  let bestInterim = '';
+  let gotFinal    = false;
+
   setMicBtn(liveBtn, 'recording', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
-  if (liveStatusEl) liveStatusEl.innerHTML = '<span style="color:#e05c5c;font-weight:700">🔴 Recording — press again to stop</span>';
+  if (liveStatusEl) liveStatusEl.innerHTML =
+    '<span style="color:#e05c5c;font-weight:700">🔴 Say the phrase — pause when done, or tap to cancel</span>';
 
   // Recording watchdog: if no result or error within 15s, reset
   _recWatchdog = setTimeout(() => {
     if (recState === 'recording') {
-      try { rec.stop(); } catch(e) {}
+      try { rec.abort(); } catch(e) {}
       _resetRecState();
       const b = document.getElementById(`${id}-mic-${phraseIdx}`);
       const s = document.getElementById(`${id}-status-${phraseIdx}`);
@@ -4484,52 +4491,63 @@ function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
   }, 15000);
 
   rec.onresult = e => {
-    // Collect final and interim transcripts from this event
-    let finalTranscript = '';
+    let finalTranscript   = '';
     let interimTranscript = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const t = e.results[i][0].transcript;
-      if (e.results[i].isFinal) finalTranscript += t;
-      else interimTranscript += t;
+      if (e.results[i].isFinal) finalTranscript   += t;
+      else                       interimTranscript += t;
     }
 
-    // Show live interim text while recording
+    // Track best result — used by onend if no final ever arrives (Android)
+    if (interimTranscript) bestInterim = interimTranscript;
+    if (finalTranscript)   bestInterim = finalTranscript;
+
+    // Show live feedback — italic while interim, normal once final
     const liveH = document.getElementById(`${id}-heard-${phraseIdx}`) || liveHeardEl;
-    if (liveH && (finalTranscript || interimTranscript)) {
-      const display = finalTranscript || interimTranscript;
-      liveH.textContent = `Heard: "${display}"`;
+    const display = finalTranscript || interimTranscript;
+    if (liveH && display) {
+      liveH.textContent     = `Heard: "${display}"`;
       liveH.style.fontStyle = finalTranscript ? 'normal' : 'italic';
-      liveH.style.opacity   = finalTranscript ? '1' : '0.7';
+      liveH.style.opacity   = finalTranscript ? '1' : '0.75';
       liveH.classList.remove('hidden');
     }
 
-    // Only evaluate once we have a final result
-    if (!finalTranscript) return;
-
-    clearTimeout(_recWatchdog);
-    recState = 'processing';
-
-    const liveS = document.getElementById(`${id}-status-${phraseIdx}`) || liveStatusEl;
-    if (liveS) liveS.textContent = 'Checking…';
-
-    // Build full alternatives list from all final results across all segments
-    const alts = [];
-    for (let i = 0; i < e.results.length; i++) {
-      if (e.results[i].isFinal) {
-        for (let j = 0; j < e.results[i].length; j++) {
-          const t = e.results[i][j].transcript.trim();
-          if (t && !alts.includes(t)) alts.push(t);
+    // Evaluate immediately on a final result (desktop + some Android builds)
+    if (finalTranscript) {
+      gotFinal = true;
+      clearTimeout(_recWatchdog);
+      recState = 'processing';
+      const liveS = document.getElementById(`${id}-status-${phraseIdx}`) || liveStatusEl;
+      if (liveS) liveS.textContent = 'Checking…';
+      const alts = [finalTranscript.trim()];
+      for (let i = 0; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          for (let j = 0; j < e.results[i].length; j++) {
+            const t = e.results[i][j].transcript.trim();
+            if (t && !alts.includes(t)) alts.push(t);
+          }
         }
       }
+      const pass = alts.some(a => _speechMatch(japanese, a, romaji));
+      setTimeout(() => finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese, romaji), 300);
     }
-    if (!alts.includes(finalTranscript.trim())) alts.unshift(finalTranscript.trim());
-
-    const pass = alts.some(a => _speechMatch(japanese, a, romaji));
-    setTimeout(() => finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese, romaji), 300);
   };
 
   rec.onerror = e => {
     clearTimeout(_recWatchdog);
+    // 'no-speech' fires when Android's silence timeout hits before any speech.
+    // If we captured interim text, evaluate it instead of showing an error.
+    if (e.error === 'no-speech' && bestInterim) {
+      recState = 'processing';
+      const liveS = document.getElementById(`${id}-status-${phraseIdx}`) || liveStatusEl;
+      const liveH = document.getElementById(`${id}-heard-${phraseIdx}`) || liveHeardEl;
+      if (liveS) liveS.textContent = 'Checking…';
+      if (liveH) { liveH.textContent = `Heard: "${bestInterim}"`; liveH.style.fontStyle = 'normal'; liveH.style.opacity = '1'; liveH.classList.remove('hidden'); }
+      const pass = _speechMatch(japanese, bestInterim, romaji);
+      setTimeout(() => finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese, romaji), 300);
+      return;
+    }
     _resetRecState();
     const b = document.getElementById(`${id}-mic-${phraseIdx}`);
     const s = document.getElementById(`${id}-status-${phraseIdx}`);
@@ -4548,10 +4566,24 @@ function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
 
   rec.onend = () => {
     clearTimeout(_recWatchdog);
-    // With continuous:true, onend fires after rec.stop() is called.
-    // If onresult already fired and set recState='processing', do nothing.
-    if (recState === 'processing') return;
-    // If we get here with no result — user stopped without speaking
+
+    // Already handled by onresult
+    if (recState === 'processing' || gotFinal) return;
+
+    // ANDROID FIX: engine fires onend after auto-stopping with only interim
+    // results (isFinal never set to true). Evaluate bestInterim if we have it.
+    if (bestInterim && recState === 'recording') {
+      recState = 'processing';
+      const liveS = document.getElementById(`${id}-status-${phraseIdx}`) || liveStatusEl;
+      const liveH = document.getElementById(`${id}-heard-${phraseIdx}`) || liveHeardEl;
+      if (liveS) liveS.textContent = 'Checking…';
+      if (liveH) { liveH.textContent = `Heard: "${bestInterim}"`; liveH.style.fontStyle = 'normal'; liveH.style.opacity = '1'; liveH.classList.remove('hidden'); }
+      const pass = _speechMatch(japanese, bestInterim, romaji);
+      setTimeout(() => finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese, romaji), 300);
+      return;
+    }
+
+    // No speech captured at all, or user cancelled
     _resetRecState();
     const b = document.getElementById(`${id}-mic-${phraseIdx}`);
     const s = document.getElementById(`${id}-status-${phraseIdx}`);
@@ -4559,8 +4591,8 @@ function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
       setMicBtn(b, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
     }
     if (s) {
-      const txt = s.textContent || s.innerText || '';
-      if (txt.includes('Recording') || txt.includes('Checking')) {
+      const txt = s.textContent || '';
+      if (txt.includes('Say the phrase') || txt.includes('Checking')) {
         s.textContent = 'No speech heard — press 🎤 and try again';
       }
     }
