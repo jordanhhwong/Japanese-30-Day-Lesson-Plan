@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#c0392b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JP Coach">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
 <title>Japanese Holiday Coach · 30 Days</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -197,6 +204,30 @@
     color: rgba(255,255,255,0.8);
   }
   .flag { font-size: 30px; display: block; margin-bottom: 4px; }
+
+  /* ── PWA offline banner ── */
+  .offline-banner {
+    display: none;
+    background: #e05c5c; color: #fff;
+    text-align: center; font-size: 12px; font-weight: 700;
+    padding: 6px 12px; letter-spacing: .03em;
+  }
+  .offline-banner.visible { display: block; }
+
+  /* ── PWA install / cache buttons ── */
+  .header-pill.install-btn { background: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.6); font-weight: 700; }
+  .pwa-progress-wrap {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #1a3a5c; color: #fff; border-radius: 14px;
+    padding: 14px 20px; min-width: 260px; text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35); z-index: 999;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .pwa-progress-bar-wrap {
+    background: rgba(255,255,255,0.2); border-radius: 6px;
+    height: 6px; margin: 10px 0 6px; overflow: hidden;
+  }
+  .pwa-progress-bar { height: 100%; background: var(--green); border-radius: 6px; transition: width .3s; }
 
   /* ── Week tabs ── */
   .week-tabs {
@@ -791,6 +822,9 @@
 <div id="app">
 
 <!-- Header -->
+<!-- Offline banner — shown when device has no internet -->
+<div class="offline-banner" id="offlineBanner">📵 You are offline — lessons and saved audio still work</div>
+
 <header class="app-header">
   <span class="flag">🇯🇵</span>
   <h1>30-Day Japanese Holiday Coach</h1>
@@ -813,6 +847,8 @@
     <button onclick="exportProgress()" class="header-pill">💾 Export</button>
     <button onclick="importProgress()" class="header-pill">📂 Import</button>
     <button onclick="openPersonalise()" class="header-pill">🎨 Personalise</button>
+    <button id="installBtn"  class="header-pill install-btn hidden" onclick="triggerInstall()">📲 Install App</button>
+    <button id="cacheAudioBtn" class="header-pill hidden" onclick="startAudioCache()">📥 Save audio offline</button>
   </div>
 </header>
 
@@ -4188,16 +4224,27 @@ function buildSpeakingTask(task, dayIdx, taskIdx) {
   const phrases = extractPhrases(task.content);
   if (!phrases.length) return buildPlainTask(task);
 
-  const id = `speak-${dayIdx}-${taskIdx}`;
-  let html = `
-  <div class="speaking-info">
-    💡 <strong>How it works:</strong> Press 🔊 to hear the phrase, practise saying it out loud, then press 🎤 and speak clearly into your microphone. The app will check if your pronunciation is intelligible!
-  </div>`;
+  const id       = `speak-${dayIdx}-${taskIdx}`;
+  const isOffline = !navigator.onLine;
+  const hasSR     = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
-  // Check SR availability
-  const hasSR = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-  if (!hasSR) {
-    html += `<div class="perm-warning">⚠️ Speech recognition not available in this browser. Try Chrome on Android or desktop Chrome. You can still listen and practise by ear.</div>`;
+  let html = '';
+
+  if (isOffline) {
+    html += `
+    <div class="speaking-info" style="background:#f5effe;border-color:#9b6fd444">
+      📵 <strong>Offline mode</strong> — speech recognition needs internet.
+      Say each phrase aloud, then type it to check. Accepts romaji, hiragana, or kanji.
+    </div>`;
+  } else {
+    html += `
+    <div class="speaking-info">
+      💡 <strong>How it works:</strong> Press 🔊 to hear the phrase, practise saying it out loud,
+      then press 🎤 and speak clearly. The app will check if your pronunciation is intelligible!
+    </div>`;
+    if (!hasSR) {
+      html += `<div class="perm-warning">⚠️ Speech recognition not available in this browser. Try Chrome on Android or desktop Chrome. You can still listen and practise by ear.</div>`;
+    }
   }
 
   // Phrase pills
@@ -4209,8 +4256,9 @@ function buildSpeakingTask(task, dayIdx, taskIdx) {
   });
   html += `</div>`;
 
-  // Phrase boxes (one shown at a time)
+  // Phrase boxes
   phrases.forEach((p,i) => {
+    const fallbackId = `${id}-textfallback-${i}`;
     html += `
     <div class="phrase-box ${i>0?'hidden':''}" id="${id}-phrase-${i}">
       <div class="phrase-step">Step 1 — Read this phrase aloud:</div>
@@ -4223,16 +4271,40 @@ function buildSpeakingTask(task, dayIdx, taskIdx) {
       </div>
       <button class="speak-btn" style="color:${WEEK_COLORS[getCurrentWeek()]};border-color:${WEEK_COLORS[getCurrentWeek()]}44;margin-bottom:10px"
         onclick="speakJP('${escHtml(p.japanese)}',currentSpeed)">🔊 Hear it first</button>
-      <div class="mic-section">
+      <div class="mic-section">`;
+
+    if (isOffline) {
+      // ── Offline: show text input directly, no mic button ──────────────────
+      html += `
+        <div class="mic-step">Step 2 — Say it aloud, then type it:</div>
+        <div id="${fallbackId}" style="margin-top:8px;padding:12px 14px;background:#f5effe;border-radius:10px;border:1px solid #9b6fd444">
+          <div style="font-size:10px;color:#9b6fd4;margin-bottom:8px;opacity:.85">Accepts romaji (e.g. <em>${escHtml(p.romaji)}</em>), hiragana, or kanji</div>
+          <input id="${fallbackId}-input" type="text"
+            placeholder='e.g. "${escHtml(p.romaji)}" or "${escHtml(p.japanese)}"'
+            style="width:100%;padding:8px 10px;font-size:15px;border:2px solid #d4b8f0;border-radius:7px;outline:none;box-sizing:border-box;font-family:inherit;background:#fdf6e3"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            onkeydown="if(event.key==='Enter')checkTextFallback('${fallbackId}','${escHtml(p.japanese)}','${escHtml(p.romaji)}',${i},'${id}',${dayIdx},${taskIdx},${phrases.length})" />
+          <button onclick="checkTextFallback('${fallbackId}','${escHtml(p.japanese)}','${escHtml(p.romaji)}',${i},'${id}',${dayIdx},${taskIdx},${phrases.length})"
+            style="width:100%;margin-top:8px;padding:10px;border-radius:8px;border:none;background:#9b6fd4;color:#fff;font-weight:700;font-size:13px;cursor:pointer">✓ Check</button>
+          <div id="${fallbackId}-result" style="margin-top:8px;font-size:12px;display:none"></div>
+        </div>
+        <!-- Hidden mic elements so finishMic can still find them -->
+        <div class="mic-status hidden" id="${id}-status-${i}"></div>
+        <div class="mic-transcript hidden" id="${id}-heard-${i}"></div>
+        <div class="mic-feedback hidden" id="${id}-fb-${i}"></div>`;
+    } else {
+      // ── Online: normal mic button ──────────────────────────────────────────
+      html += `
         <div class="mic-step">Step 2 — Press 🎤 and speak:</div>
         <button class="mic-btn" id="${id}-mic-${i}"
           style="background:${WEEK_COLORS[getCurrentWeek()]}"
           onclick="startMic('${id}',${i},'${escHtml(p.japanese)}','${escHtml(p.romaji)}',${dayIdx},${taskIdx},${phrases.length})">🎤</button>
         <div class="mic-status" id="${id}-status-${i}">Tap mic to speak</div>
         <div class="mic-transcript hidden" id="${id}-heard-${i}"></div>
-        <div class="mic-feedback hidden" id="${id}-fb-${i}"></div>
-      </div>
-    </div>`;
+        <div class="mic-feedback hidden" id="${id}-fb-${i}"></div>`;
+    }
+
+    html += `</div></div>`;
   });
 
   html += `<div class="complete-banner hidden" id="${id}-banner" style="background:linear-gradient(135deg,${WEEK_COLORS[getCurrentWeek()]},${WEEK_COLORS[getCurrentWeek()]}99)">🎤 All phrases passed — speaking complete!</div>`;
@@ -4701,6 +4773,85 @@ function finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese,
     if (fbEl) { fbEl.textContent = `Tip: speak clearly — ${romaji}`; fbEl.className = 'mic-feedback fail'; }
   }
 }
+// ── Romaji → Hiragana conversion ──────────────────────────────────────────────
+// Used by the text fallback so typing "konnichiwa" is treated the same as
+// typing "こんにちは". Covers standard Hepburn romanisation.
+const _ROMAJI_TO_KANA = {
+  // Long vowels / special
+  'ー':   'ー', 'n':   'ん',
+  // Vowels
+  'a':'あ','i':'い','u':'う','e':'え','o':'お',
+  // K
+  'ka':'か','ki':'き','ku':'く','ke':'け','ko':'こ',
+  'kya':'きゃ','kyu':'きゅ','kyo':'きょ',
+  // S
+  'sa':'さ','si':'し','su':'す','se':'せ','so':'そ',
+  'shi':'し','sha':'しゃ','shu':'しゅ','sho':'しょ',
+  // T
+  'ta':'た','ti':'ち','tu':'つ','te':'て','to':'と',
+  'chi':'ち','tsu':'つ','cha':'ちゃ','chu':'ちゅ','cho':'ちょ',
+  // N
+  'na':'な','ni':'に','nu':'ぬ','ne':'ね','no':'の',
+  'nya':'にゃ','nyu':'にゅ','nyo':'にょ',
+  // H
+  'ha':'は','hi':'ひ','hu':'ふ','he':'へ','ho':'ほ',
+  'fu':'ふ','fa':'ふぁ','fi':'ふぃ','fe':'ふぇ','fo':'ふぉ',
+  'hya':'ひゃ','hyu':'ひゅ','hyo':'ひょ',
+  // M
+  'ma':'ま','mi':'み','mu':'む','me':'め','mo':'も',
+  'mya':'みゃ','myu':'みゅ','myo':'みょ',
+  // Y
+  'ya':'や','yu':'ゆ','yo':'よ',
+  // R
+  'ra':'ら','ri':'り','ru':'る','re':'れ','ro':'ろ',
+  'rya':'りゃ','ryu':'りゅ','ryo':'りょ',
+  // W
+  'wa':'わ','wi':'ゐ','we':'ゑ','wo':'を',
+  // G
+  'ga':'が','gi':'ぎ','gu':'ぐ','ge':'げ','go':'ご',
+  'gya':'ぎゃ','gyu':'ぎゅ','gyo':'ぎょ',
+  // Z
+  'za':'ざ','zi':'じ','zu':'ず','ze':'ぜ','zo':'ぞ',
+  'ji':'じ','ja':'じゃ','ju':'じゅ','jo':'じょ',
+  // D
+  'da':'だ','di':'ぢ','du':'づ','de':'で','do':'ど',
+  // B
+  'ba':'ば','bi':'び','bu':'ぶ','be':'べ','bo':'ぼ',
+  'bya':'びゃ','byu':'びゅ','byo':'びょ',
+  // P
+  'pa':'ぱ','pi':'ぴ','pu':'ぷ','pe':'ぺ','po':'ぽ',
+  'pya':'ぴゃ','pyu':'ぴゅ','pyo':'ぴょ',
+  // Double consonant (っ)
+  'tte':'って','kka':'っか','ssa':'っさ','ppa':'っぱ',
+  // Common whole-word overrides
+  'ha':'は','wa':'わ','wo':'を','he':'へ',
+};
+
+// Convert a romaji string to hiragana using longest-match greedy approach
+function _romajiToHiragana(str) {
+  str = str.toLowerCase().replace(/[^a-zん\u3040-\u9faf]/g, '');
+  // If already contains Japanese chars, return as-is
+  if (/[\u3040-\u9faf]/.test(str)) return str;
+
+  let result = '';
+  let i = 0;
+  while (i < str.length) {
+    // Try longest match first (4 chars down to 1)
+    let matched = false;
+    for (let len = 4; len >= 1; len--) {
+      const chunk = str.slice(i, i + len);
+      if (_ROMAJI_TO_KANA[chunk]) {
+        result += _ROMAJI_TO_KANA[chunk];
+        i += len;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) { result += str[i]; i++; }
+  }
+  return result;
+}
+
 function _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
   const fallbackId = `${id}-textfallback-${phraseIdx}`;
   if (document.getElementById(fallbackId)) return; // already shown
@@ -4709,35 +4860,52 @@ function _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, tota
 
   const wrap = document.createElement('div');
   wrap.id = fallbackId;
-  wrap.style.cssText = 'margin-top:12px;padding:10px 12px;background:#f5effe;border-radius:8px;border:1px solid #9b6fd444';
+  wrap.style.cssText = 'margin-top:12px;padding:12px 14px;background:#f5effe;border-radius:10px;border:1px solid #9b6fd444';
   wrap.innerHTML =
-    '<div style="font-size:11px;color:#9b6fd4;font-weight:700;margin-bottom:6px">✏️ Text fallback — say it aloud, then type what you said:</div>' +
-    `<input id="${fallbackId}-input" type="text" placeholder='Type what you said (e.g. "${romaji}")…'` +
-    ' style="width:100%;padding:8px 10px;font-size:14px;border:2px solid #d4b8f0;border-radius:7px;outline:none;box-sizing:border-box;font-family:inherit;background:#fdf6e3">' +
+    '<div style="font-size:11px;color:#9b6fd4;font-weight:700;margin-bottom:4px">✏️ Type check — say it aloud, then type it:</div>' +
+    '<div style="font-size:10px;color:#9b6fd4;margin-bottom:8px;opacity:.85">Accepts romaji (e.g. <em>konnichiwa</em>), hiragana (e.g. <em>こんにちは</em>), or kanji</div>' +
+    `<input id="${fallbackId}-input" type="text" placeholder='e.g. "${escHtml(romaji)}" or "${escHtml(japanese)}"'` +
+    ' style="width:100%;padding:8px 10px;font-size:15px;border:2px solid #d4b8f0;border-radius:7px;outline:none;box-sizing:border-box;font-family:inherit;background:#fdf6e3"' +
+    ' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"' +
+    `  onkeydown="if(event.key==='Enter')checkTextFallback('${fallbackId}','${escHtml(japanese)}','${escHtml(romaji)}',${phraseIdx},'${id}',${dayIdx},${taskIdx},${totalPhrases})">` +
     `<button onclick="checkTextFallback('${fallbackId}','${escHtml(japanese)}','${escHtml(romaji)}',${phraseIdx},'${id}',${dayIdx},${taskIdx},${totalPhrases})"` +
-    ' style="width:100%;margin-top:7px;padding:9px;border-radius:7px;border:none;background:#9b6fd4;color:#fff;font-weight:700;font-size:13px;cursor:pointer">✓ Check pronunciation</button>' +
-    `<div id="${fallbackId}-result" style="margin-top:7px;font-size:12px;display:none"></div>`;
+    ' style="width:100%;margin-top:8px;padding:10px;border-radius:8px;border:none;background:#9b6fd4;color:#fff;font-weight:700;font-size:13px;cursor:pointer">✓ Check</button>' +
+    `<div id="${fallbackId}-result" style="margin-top:8px;font-size:12px;display:none"></div>`;
   container.appendChild(wrap);
+  // Auto-focus the input
+  setTimeout(() => document.getElementById(`${fallbackId}-input`)?.focus(), 100);
 }
 
 function checkTextFallback(fallbackId, japanese, romaji, phraseIdx, id, dayIdx, taskIdx, totalPhrases) {
   const input  = document.getElementById(`${fallbackId}-input`);
   const result = document.getElementById(`${fallbackId}-result`);
   if (!input || !result) return;
-  const typed = input.value.trim().toLowerCase().replace(/[^\w\u3040-\u9faf]/g, '');
-  const target = romaji.toLowerCase().replace(/[^\w]/g, '');
-  let hits = 0;
-  for (const ch of target) if (typed.includes(ch)) hits++;
-  const pass = target.length > 0 && hits / target.length >= 0.5;
+
+  const raw   = input.value.trim();
+  if (!raw) { input.focus(); return; }
+
+  // Accept three input styles:
+  //   1. Romaji (e.g. "konnichiwa") — convert to hiragana then match
+  //   2. Hiragana / katakana directly
+  //   3. Kanji directly
+  // All are passed through _speechMatch which handles normalisation.
+  const asKana  = _romajiToHiragana(raw);
+  // Try both the raw input AND the converted kana form
+  const pass = _speechMatch(japanese, raw, romaji) || _speechMatch(japanese, asKana, romaji);
 
   result.style.display = 'block';
   if (pass) {
+    result.innerHTML = `✅ <strong>Correct!</strong> Marked as passed.`;
     result.style.color = 'var(--green)';
-    result.textContent = '✅ Good effort! Marked as passed.';
-    finishMic(id, phraseIdx, true, dayIdx, taskIdx, totalPhrases, japanese, romaji);
+    // Disable input so it can't be resubmitted
+    input.disabled = true;
+    input.style.opacity = '0.6';
+    setTimeout(() => finishMic(id, phraseIdx, true, dayIdx, taskIdx, totalPhrases, japanese, romaji), 600);
   } else {
+    result.innerHTML = `❌ Doesn't match. Try romaji: <strong>${escHtml(romaji)}</strong> or Japanese: <strong>${escHtml(japanese)}</strong>`;
     result.style.color = '#e05c5c';
-    result.textContent = `❌ Doesn't quite match "${romaji}" — say it aloud and try again.`;
+    input.select();
+    input.focus();
   }
 }
 
@@ -6654,6 +6822,143 @@ function importProgress() {
   document.body.appendChild(input); input.click(); document.body.removeChild(input);
 }
 
+// ── PWA — Service Worker, Install Prompt, Offline Detection ──────────────────
+
+let _installPromptEvent = null;   // saved beforeinstallprompt event
+let _swRegistration     = null;   // active service worker registration
+
+function initPWA() {
+  // ── Register service worker ─────────────────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .then(reg => {
+        _swRegistration = reg;
+        // Show the "Save audio offline" button once SW is controlling the page
+        document.getElementById('cacheAudioBtn')?.classList.remove('hidden');
+        console.log('Service worker registered:', reg.scope);
+      })
+      .catch(err => console.warn('SW registration failed:', err));
+  }
+
+  // ── Capture the install prompt (Android Chrome shows this automatically) ─
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();          // stop the automatic mini-bar
+    _installPromptEvent = e;     // save for our own button
+    document.getElementById('installBtn')?.classList.remove('hidden');
+  });
+
+  // ── Hide install button after successful install ─────────────────────────
+  window.addEventListener('appinstalled', () => {
+    document.getElementById('installBtn')?.classList.add('hidden');
+    _installPromptEvent = null;
+  });
+
+  // ── Offline / online detection ───────────────────────────────────────────
+  function updateOnlineStatus() {
+    const offline = !navigator.onLine;
+    const banner  = document.getElementById('offlineBanner');
+    if (banner) banner.classList.toggle('visible', offline);
+    // When offline, auto-show text fallback on mic buttons
+    if (offline && currentView === 'lessons') {
+      document.querySelectorAll('.mic-btn').forEach(btn => {
+        const wrap = btn.closest('.speaking-task');
+        // _showMicFallback for each phrase if not already shown
+      });
+    }
+  }
+  window.addEventListener('online',  updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();   // check immediately on load
+}
+
+function triggerInstall() {
+  if (_installPromptEvent) {
+    _installPromptEvent.prompt();
+    _installPromptEvent.userChoice.then(choice => {
+      if (choice.outcome === 'accepted') {
+        document.getElementById('installBtn')?.classList.add('hidden');
+      }
+    });
+  } else {
+    // iOS Safari — show manual instructions
+    alert(
+      'To install on iPhone / iPad:\n\n' +
+      '1. Tap the Share button (□↑) in Safari\n' +
+      '2. Scroll down and tap "Add to Home Screen"\n' +
+      '3. Tap "Add"\n\n' +
+      'The app will then work like a native app, including offline.'
+    );
+  }
+}
+
+// ── Audio pre-cache ────────────────────────────────────────────────────────
+// Fetches all 2,469 audio files so they're available offline.
+// The service worker intercepts each fetch and caches the response.
+// Batched at 8 concurrent requests to stay within mobile radio limits.
+
+function startAudioCache() {
+  if (!_swRegistration) {
+    alert('Install the app first, then use this button to save audio offline.');
+    return;
+  }
+
+  const urls   = Object.values(AUDIO_MANIFEST);
+  const total  = urls.length;
+  let done     = 0;
+  let cancelled= false;
+
+  // Show progress UI
+  const wrap = document.createElement('div');
+  wrap.className = 'pwa-progress-wrap';
+  wrap.id = 'pwaProgressWrap';
+  wrap.innerHTML = `
+    <div style="font-size:13px;font-weight:700;margin-bottom:2px">📥 Saving audio for offline use</div>
+    <div style="font-size:11px;opacity:.75">This downloads ~10 MB — keep the screen on</div>
+    <div class="pwa-progress-bar-wrap">
+      <div class="pwa-progress-bar" id="pwaBar" style="width:0%"></div>
+    </div>
+    <div id="pwaProgressText" style="font-size:11px">0 / ${total} files</div>
+    <button onclick="cancelAudioCache()" style="margin-top:10px;background:none;border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 16px;border-radius:8px;cursor:pointer;font-size:12px">Cancel</button>`;
+  document.body.appendChild(wrap);
+
+  function updateProgress() {
+    const pct = Math.round((done / total) * 100);
+    const bar = document.getElementById('pwaBar');
+    const txt = document.getElementById('pwaProgressText');
+    if (bar) bar.style.width = pct + '%';
+    if (txt) txt.textContent = `${done} / ${total} files (${pct}%)`;
+  }
+
+  async function run() {
+    const BATCH = 8;
+    for (let i = 0; i < urls.length && !cancelled; i += BATCH) {
+      const batch = urls.slice(i, i + BATCH);
+      await Promise.all(batch.map(async path => {
+        try { await fetch(path); } catch(e) { /* skip — offline or 404 */ }
+        done++;
+        updateProgress();
+      }));
+    }
+    const wrap = document.getElementById('pwaProgressWrap');
+    if (wrap) {
+      if (cancelled) {
+        wrap.remove();
+      } else {
+        wrap.innerHTML = `
+          <div style="font-size:14px;font-weight:700">✅ Audio saved for offline use!</div>
+          <div style="font-size:11px;opacity:.75;margin-top:4px">${done} files cached — lessons now work without internet</div>
+          <button onclick="document.getElementById('pwaProgressWrap').remove()"
+            style="margin-top:10px;background:var(--green);border:none;color:#fff;padding:6px 18px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Done</button>`;
+      }
+    }
+  }
+
+  // Expose cancel so the button works
+  window.cancelAudioCache = () => { cancelled = true; };
+
+  run();
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 loadState();
 loadDictFavourites();
@@ -6663,6 +6968,7 @@ renderOverallProgress();
 initSpeedToggle();
 initRomajiToggle();
 renderStreak();
+initPWA();
 
 if (window.speechSynthesis) {
   speechSynthesis.getVoices();
