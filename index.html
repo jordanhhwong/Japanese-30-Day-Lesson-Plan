@@ -6858,12 +6858,10 @@ function initPWA() {
     const offline = !navigator.onLine;
     const banner  = document.getElementById('offlineBanner');
     if (banner) banner.classList.toggle('visible', offline);
-    // When offline, auto-show text fallback on mic buttons
-    if (offline && currentView === 'lessons') {
-      document.querySelectorAll('.mic-btn').forEach(btn => {
-        const wrap = btn.closest('.speaking-task');
-        // _showMicFallback for each phrase if not already shown
-      });
+    // Re-render the lesson view so speaking tasks switch between
+    // mic-button (online) and text-input (offline) layouts
+    if (currentView === 'lessons') {
+      renderTaskList();
     }
   }
   window.addEventListener('online',  updateOnlineStatus);
