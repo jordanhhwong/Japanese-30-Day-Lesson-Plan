@@ -1,0 +1,19 @@
+{
+  "name": "Japanese Holiday Coach",
+  "short_name": "JP Coach",
+  "description": "30-day Japanese learning plan — works offline",
+  "start_url": "./japanese_coach.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf6e3",
+  "theme_color": "#c0392b",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
