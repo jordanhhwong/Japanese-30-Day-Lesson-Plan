@@ -3908,9 +3908,13 @@ let _audioCtx    = null;
 let _ttsWatchdog = null;
 
 function _unlockAudioContext() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  // If context was closed (e.g. by OS on app backgrounding), recreate it
+  if (_audioCtx && _audioCtx.state === 'closed') {
+    _audioCtx = null;
+  }
   if (!_audioCtx) {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
     try { _audioCtx = new AC(); } catch(e) { return; }
   }
   if (_audioCtx.state === 'suspended') {
@@ -6781,9 +6785,18 @@ function exportProgress() {
     completed,
     currentDay,
     exportedAt: new Date().toISOString(),
-    version: 1
+    version: 1,
+    // Persist all user preferences so they transfer between devices
+    prefs: {
+      speed:      localStorage.getItem('jp30_speed')    || '0.75',
+      romaji:     localStorage.getItem('jp30_romaji')   || 'visible',
+      personal:   localStorage.getItem('jp30_personal') || '{}',
+      favs:       localStorage.getItem('jp30_favs')     || '[]',
+      streak:     localStorage.getItem('jp30_streak')   || '0',
+      lastStudied:localStorage.getItem('jp30_lastStudied') || '',
+    }
   };
-  const json = JSON.stringify(data);
+  const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], {type:'application/json'});
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -6805,21 +6818,41 @@ function importProgress() {
         if (data.version === 1 && data.completed) {
           completed = data.completed;
           if (data.currentDay) currentDay = data.currentDay;
+
+          // Restore all preferences if present
+          if (data.prefs) {
+            const p = data.prefs;
+            if (p.speed)       localStorage.setItem('jp30_speed',       p.speed);
+            if (p.romaji)      localStorage.setItem('jp30_romaji',      p.romaji);
+            if (p.personal)    localStorage.setItem('jp30_personal',    p.personal);
+            if (p.favs)        localStorage.setItem('jp30_favs',        p.favs);
+            if (p.streak)      localStorage.setItem('jp30_streak',      p.streak);
+            if (p.lastStudied) localStorage.setItem('jp30_lastStudied', p.lastStudied);
+          }
+
           saveState();
           openTaskIdx = null;
+
+          // Re-initialise everything that reads from localStorage
+          loadPersonalisation();
+          loadDictFavourites();
+          initSpeedToggle();
+          initRomajiToggle();
+          renderStreak();
           renderAll();
           renderOverallProgress();
+
           alert('✓ Progress imported successfully!');
         } else {
           alert('⚠️ Unrecognised file format.');
         }
       } catch(err) {
-        alert('⚠️ Could not read file: ' + err.message);
+        alert('⚠️ Could not read the file — make sure it is a valid progress export.');
       }
     };
     reader.readAsText(file);
   };
-  document.body.appendChild(input); input.click(); document.body.removeChild(input);
+  input.click();
 }
 
 // ── PWA — Service Worker, Install Prompt, Offline Detection ──────────────────
