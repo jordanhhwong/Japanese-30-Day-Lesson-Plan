@@ -572,6 +572,89 @@
   .dict-no-results { text-align: center; padding: 30px 20px; color: var(--muted); font-size: 14px; }
   .dict-empty-fav  { text-align: center; padding: 30px 20px; color: var(--muted); font-size: 13px; line-height: 1.7; }
 
+  /* ── Add custom phrase ── */
+  .dict-add-btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; padding: 11px; margin-bottom: 10px;
+    border: 2px dashed #1a3a5c55; border-radius: 12px;
+    background: #f5f8fc; color: #1a3a5c; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all .15s; font-family: 'Noto Sans JP', sans-serif;
+  }
+  .dict-add-btn:active { background: #e8f0f8; }
+
+  .custom-phrase-badge {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    padding: 2px 6px; border-radius: 6px;
+    background: #1a3a5c22; color: #1a3a5c; margin-left: 6px; vertical-align: middle;
+  }
+  .custom-card-actions {
+    display: flex; gap: 6px; margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid #eef0f4;
+  }
+  .custom-action-btn {
+    flex: 1; padding: 6px; border-radius: 7px; border: 1px solid var(--border);
+    background: #f8f8f8; color: var(--muted); font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: all .15s;
+  }
+  .custom-action-btn:hover { background: #eee; }
+  .custom-action-btn.delete { border-color: #e05c5c44; color: #e05c5c; }
+  .custom-action-btn.delete:hover { background: #fff0f0; }
+
+  /* Add / Edit phrase modal */
+  .add-phrase-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: flex-end; justify-content: center;
+    animation: fadeInOverlay .2s ease;
+  }
+  .add-phrase-card {
+    background: #fff; border-radius: 20px 20px 0 0;
+    padding: 24px 20px 32px; width: 100%; max-width: 480px;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.25);
+    animation: slideUp .25s cubic-bezier(.34,1.56,.64,1);
+    max-height: 92vh; overflow-y: auto;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .add-phrase-title {
+    font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 4px;
+  }
+  .add-phrase-sub { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+  .add-phrase-label {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .07em; margin-bottom: 5px; display: block;
+  }
+  .add-phrase-input {
+    width: 100%; padding: 10px 12px; font-size: 18px;
+    font-family: 'Noto Serif JP', serif; border: 2px solid var(--border);
+    border-radius: 9px; outline: none; color: var(--ink);
+    background: #fff; box-sizing: border-box; transition: border-color .15s;
+    margin-bottom: 14px;
+  }
+  .add-phrase-input.small { font-size: 14px; font-family: 'Noto Sans JP', sans-serif; }
+  .add-phrase-input:focus { border-color: #1a3a5c; }
+  .add-phrase-romaji-wrap { position: relative; }
+  .add-phrase-auto-badge {
+    position: absolute; right: 10px; top: 12px;
+    font-size: 9px; background: var(--green); color: #fff;
+    padding: 2px 6px; border-radius: 6px; font-weight: 700; pointer-events: none;
+  }
+  .add-phrase-preview {
+    background: #f5f8fc; border: 1.5px solid #1a3a5c22;
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .add-phrase-preview-text { flex: 1; }
+  .add-phrase-preview-jp { font-family: 'Noto Serif JP', serif; font-size: 18px; color: var(--ink); line-height: 2.4; }
+  .add-phrase-preview-ro { font-size: 11px; color: var(--red); font-weight: 700; }
+  .add-phrase-preview-en { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .add-phrase-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .add-phrase-btn {
+    flex: 1; padding: 12px; border-radius: 10px; border: none;
+    font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .add-phrase-btn-primary { background: #1a3a5c; color: #fff; }
+  .add-phrase-btn-secondary { background: #f0f0f0; color: var(--ink); }
+
   /* Day grid ── */
   .day-grid {
     display: grid; grid-template-columns: repeat(7, 1fr);
@@ -6220,7 +6303,7 @@ function renderDictView() {
   const pills = DICT_CATS.map(c => {
     const isFavCat = c.id === 'favs';
     const count = isFavCat
-      ? dictFavourites.size
+      ? customPhrases.length + dictFavourites.size
       : (DICT_DATA[c.id] || []).length;
     const active = (!dictSearch && dictCategory === c.id);
     return `
@@ -6263,24 +6346,42 @@ function renderDictView() {
       }).join('');
     }
   } else if (dictCategory === 'favs') {
-    // Favourites view
-    if (dictFavourites.size === 0) {
-      bodyHtml = `<div class="dict-empty-fav">
-        ♡ No saved phrases yet.<br>
-        Tap ♡ on any phrase card to save it here.<br>
-        <small style="opacity:.6">Great for building a shortlist before your trip.</small>
-      </div>`;
-    } else {
-      // Find each favourite across all categories
+    // Custom phrases always shown first
+    const customHtml = customPhrases.map(p => buildCustomCard(p)).join('');
+
+    // Then favourited built-in phrases
+    let builtInHtml = '';
+    if (dictFavourites.size > 0) {
       const favCards = [];
       for (const [cat, entries] of Object.entries(DICT_DATA)) {
         for (const entry of entries) {
           if (dictFavourites.has(entry.jp)) favCards.push({ ...entry, cat });
         }
       }
-      totalCount = favCards.length;
-      bodyHtml = favCards.map(e => buildDictCard(e, e.cat, cov)).join('');
+      builtInHtml = favCards.map(e => buildDictCard(e, e.cat, cov)).join('');
     }
+
+    const isEmpty = customPhrases.length === 0 && dictFavourites.size === 0;
+
+    bodyHtml = `
+      <button class="dict-add-btn" onclick="openAddPhrase()">
+        <span style="font-size:20px;line-height:1">＋</span>
+        Add your own phrase
+      </button>
+      ${isEmpty ? `
+        <div class="dict-empty-fav">
+          ♡ No saved phrases yet.<br>
+          Tap ♡ on any dictionary card to save it here.<br>
+          Or tap <strong>＋ Add your own phrase</strong> above to create one.<br>
+          <small style="opacity:.6">Great for building a shortlist before your trip.</small>
+        </div>` : ''}
+      ${customPhrases.length > 0 ? `
+        <div class="dict-section-title">✏️ My own phrases (${customPhrases.length})</div>
+        ${customHtml}` : ''}
+      ${dictFavourites.size > 0 ? `
+        <div class="dict-section-title" style="margin-top:${customPhrases.length>0?12:0}px">♥ Saved from dictionary (${dictFavourites.size})</div>
+        ${builtInHtml}` : ''}`;
+    totalCount = customPhrases.length + dictFavourites.size;
   } else {
     // Single category
     const entries = DICT_DATA[dictCategory] || [];
@@ -6553,6 +6654,289 @@ function resetPersonalisation() {
   });
 }
 
+// ── Custom phrases ────────────────────────────────────────────────────────────
+// Stored in localStorage as jp30_custom — an array of objects:
+// { id, jp, romaji, meaning, addedAt }
+// Included in export/import so they survive device transfers.
+// Audio uses speakJP() — tries local MP3 first, then Google TTS, then device TTS.
+
+let customPhrases = [];   // loaded on boot
+let _editingCustomId = null;  // null = adding new, string = editing existing
+
+function loadCustomPhrases() {
+  try {
+    customPhrases = JSON.parse(localStorage.getItem('jp30_custom') || '[]');
+  } catch(e) { customPhrases = []; }
+}
+
+function saveCustomPhrases() {
+  localStorage.setItem('jp30_custom', JSON.stringify(customPhrases));
+}
+
+// ── Kana → Romaji conversion ──────────────────────────────────────────────────
+// Used to auto-fill the pronunciation field when the user types Japanese.
+// Handles hiragana, katakana, and っ (double consonant).
+// Kanji are looked up in _KANJI_READ; anything else is kept as-is.
+
+const _KANA_TO_ROMAJI = {
+  // Hiragana — vowels
+  'あ':'a','い':'i','う':'u','え':'e','お':'o',
+  // K
+  'か':'ka','き':'ki','く':'ku','け':'ke','こ':'ko',
+  'きゃ':'kya','きゅ':'kyu','きょ':'kyo',
+  // S
+  'さ':'sa','し':'shi','す':'su','せ':'se','そ':'so',
+  'しゃ':'sha','しゅ':'shu','しょ':'sho',
+  // T
+  'た':'ta','ち':'chi','つ':'tsu','て':'te','と':'to',
+  'ちゃ':'cha','ちゅ':'chu','ちょ':'cho',
+  // N
+  'な':'na','に':'ni','ぬ':'nu','ね':'ne','の':'no',
+  'にゃ':'nya','にゅ':'nyu','にょ':'nyo',
+  // H
+  'は':'ha','ひ':'hi','ふ':'fu','へ':'he','ほ':'ho',
+  'ひゃ':'hya','ひゅ':'hyu','ひょ':'hyo',
+  // M
+  'ま':'ma','み':'mi','む':'mu','め':'me','も':'mo',
+  'みゃ':'mya','みゅ':'myu','みょ':'myo',
+  // Y
+  'や':'ya','ゆ':'yu','よ':'yo',
+  // R
+  'ら':'ra','り':'ri','る':'ru','れ':'re','ろ':'ro',
+  'りゃ':'rya','りゅ':'ryu','りょ':'ryo',
+  // W / N
+  'わ':'wa','を':'wo','ん':'n',
+  // Voiced
+  'が':'ga','ぎ':'gi','ぐ':'gu','げ':'ge','ご':'go',
+  'ぎゃ':'gya','ぎゅ':'gyu','ぎょ':'gyo',
+  'ざ':'za','じ':'ji','ず':'zu','ぜ':'ze','ぞ':'zo',
+  'じゃ':'ja','じゅ':'ju','じょ':'jo',
+  'だ':'da','ぢ':'di','づ':'du','で':'de','ど':'do',
+  'ば':'ba','び':'bi','ぶ':'bu','べ':'be','ぼ':'bo',
+  'びゃ':'bya','びゅ':'byu','びょ':'byo',
+  // Semi-voiced
+  'ぱ':'pa','ぴ':'pi','ぷ':'pu','ぺ':'pe','ぽ':'po',
+  'ぴゃ':'pya','ぴゅ':'pyu','ぴょ':'pyo',
+  // Long vowel marker
+  'ー':'ー',
+};
+
+// Build a katakana version of the table automatically
+const _KATA_TO_ROMAJI = {};
+Object.entries(_KANA_TO_ROMAJI).forEach(([hira, ro]) => {
+  const kata = hira.replace(/[\u3041-\u3096]/g, ch =>
+    String.fromCharCode(ch.charCodeAt(0) + 0x60));
+  _KATA_TO_ROMAJI[kata] = ro;
+});
+
+function _kanaToRomaji(str) {
+  let result = '';
+  let i = 0;
+  while (i < str.length) {
+    const ch  = str[i];
+    const ch2 = str.slice(i, i + 2);
+
+    // Small tsu / double consonant (っ or ッ)
+    if (ch === 'っ' || ch === 'ッ') {
+      const next2 = _KANA_TO_ROMAJI[str.slice(i+1, i+3)] || _KATA_TO_ROMAJI[str.slice(i+1, i+3)];
+      const next1 = _KANA_TO_ROMAJI[str[i+1]] || _KATA_TO_ROMAJI[str[i+1]];
+      const nextRo = next2 || next1 || '';
+      if (nextRo) result += nextRo[0];  // double first consonant
+      i++;
+      continue;
+    }
+
+    // 2-char compound (check hiragana then katakana)
+    if (_KANA_TO_ROMAJI[ch2]) { result += _KANA_TO_ROMAJI[ch2]; i += 2; continue; }
+    if (_KATA_TO_ROMAJI[ch2]) { result += _KATA_TO_ROMAJI[ch2]; i += 2; continue; }
+
+    // 1-char kana
+    if (_KANA_TO_ROMAJI[ch]) { result += _KANA_TO_ROMAJI[ch]; i++; continue; }
+    if (_KATA_TO_ROMAJI[ch]) { result += _KATA_TO_ROMAJI[ch]; i++; continue; }
+
+    // Single kanji — look up in existing reading table
+    if (_KANJI_READ[ch]) { result += _KANJI_READ[ch]; i++; continue; }
+
+    // Anything else (spaces, punctuation, unknown kanji) — keep as-is
+    result += ch; i++;
+  }
+  return result;
+}
+
+// Auto-generate romaji from Japanese input, return it and a flag
+// indicating how complete the conversion was
+function _autoRomaji(jp) {
+  if (!jp) return { romaji: '', complete: false };
+  const converted = _kanaToRomaji(jp.replace(/[！？。、\s]/g, ' ').trim());
+  // "complete" if no kanji remain in the result (all converted)
+  const hasUnconverted = /[\u4E00-\u9FAF]/.test(converted);
+  return { romaji: converted, complete: !hasUnconverted };
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openAddPhrase(editId) {
+  _editingCustomId = editId || null;
+  const existing = editId ? customPhrases.find(p => p.id === editId) : null;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'add-phrase-overlay';
+  overlay.id = 'addPhraseOverlay';
+  overlay.innerHTML = `
+    <div class="add-phrase-card">
+      <div class="add-phrase-title">${existing ? '✏️ Edit phrase' : '＋ Add your own phrase'}</div>
+      <div class="add-phrase-sub">Audio is generated automatically via Google TTS when online.</div>
+
+      <label class="add-phrase-label">Japanese (hiragana, katakana, or kanji)</label>
+      <input class="add-phrase-input" id="apJP" type="text"
+        placeholder="e.g. 東京は大きいです"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+        value="${existing ? escHtml(existing.jp) : ''}"
+        oninput="onAddPhraseJPInput(this.value)" />
+
+      <label class="add-phrase-label">Pronunciation (romaji)</label>
+      <div class="add-phrase-romaji-wrap">
+        <input class="add-phrase-input small" id="apRomaji" type="text"
+          placeholder="e.g. Toukyou wa ookii desu"
+          autocomplete="off" autocorrect="off" spellcheck="false"
+          value="${existing ? escHtml(existing.romaji) : ''}" />
+        <span class="add-phrase-auto-badge hidden" id="apAutoBadge">Auto ✓</span>
+      </div>
+
+      <label class="add-phrase-label">English meaning</label>
+      <input class="add-phrase-input small" id="apMeaning" type="text"
+        placeholder="e.g. Tokyo is big"
+        value="${existing ? escHtml(existing.meaning) : ''}" />
+
+      <div id="apPreviewWrap" class="add-phrase-preview" style="display:none">
+        <div class="add-phrase-preview-text">
+          <div class="add-phrase-preview-jp" id="apPreviewJP"></div>
+          <div class="add-phrase-preview-ro" id="apPreviewRo"></div>
+          <div class="add-phrase-preview-en" id="apPreviewEn"></div>
+        </div>
+        <button class="dict-hear-btn" id="apHearBtn"
+          onclick="_unlockAudioContext();speakJP(document.getElementById('apJP').value, currentSpeed)"
+          title="Hear pronunciation">🔊</button>
+      </div>
+
+      <div class="add-phrase-actions">
+        <button class="add-phrase-btn add-phrase-btn-secondary" onclick="closeAddPhrase()">Cancel</button>
+        <button class="add-phrase-btn add-phrase-btn-primary" onclick="saveCustomPhrase()">
+          ${existing ? 'Save changes' : 'Add phrase'}
+        </button>
+      </div>
+    </div>`;
+
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeAddPhrase(); });
+  document.body.appendChild(overlay);
+
+  // If editing, trigger preview immediately
+  if (existing) {
+    updateAddPhrasePreview(existing.jp, existing.romaji, existing.meaning);
+  }
+
+  setTimeout(() => document.getElementById('apJP')?.focus(), 100);
+}
+
+function onAddPhraseJPInput(val) {
+  const { romaji, complete } = _autoRomaji(val);
+  const romajiEl = document.getElementById('apRomaji');
+  const badge    = document.getElementById('apAutoBadge');
+
+  if (romajiEl && romaji) {
+    romajiEl.value = romaji;
+  }
+  if (badge) {
+    badge.classList.toggle('hidden', !complete);
+  }
+
+  const meaning = document.getElementById('apMeaning')?.value || '';
+  updateAddPhrasePreview(val, romaji, meaning);
+}
+
+function updateAddPhrasePreview(jp, romaji, meaning) {
+  const wrap = document.getElementById('apPreviewWrap');
+  if (!wrap) return;
+  const hasContent = jp || romaji || meaning;
+  wrap.style.display = hasContent ? 'flex' : 'none';
+  if (document.getElementById('apPreviewJP'))  document.getElementById('apPreviewJP').textContent = jp || '';
+  if (document.getElementById('apPreviewRo'))  document.getElementById('apPreviewRo').textContent = romaji || '';
+  if (document.getElementById('apPreviewEn'))  document.getElementById('apPreviewEn').textContent = meaning || '';
+}
+
+function saveCustomPhrase() {
+  const jp      = (document.getElementById('apJP')?.value || '').trim();
+  const romaji  = (document.getElementById('apRomaji')?.value || '').trim();
+  const meaning = (document.getElementById('apMeaning')?.value || '').trim();
+
+  if (!jp) {
+    document.getElementById('apJP')?.focus();
+    document.getElementById('apJP')?.style.setProperty('border-color', '#e05c5c');
+    return;
+  }
+
+  if (_editingCustomId) {
+    // Update existing
+    const idx = customPhrases.findIndex(p => p.id === _editingCustomId);
+    if (idx >= 0) {
+      customPhrases[idx] = { ...customPhrases[idx], jp, romaji, meaning };
+    }
+  } else {
+    // Add new
+    customPhrases.push({
+      id:       'custom_' + Date.now(),
+      jp, romaji, meaning,
+      addedAt:  new Date().toISOString()
+    });
+  }
+
+  saveCustomPhrases();
+  closeAddPhrase();
+  // Re-render if we're in the favs tab
+  if (dictCategory === 'favs') renderDictView();
+}
+
+function closeAddPhrase() {
+  document.getElementById('addPhraseOverlay')?.remove();
+  _editingCustomId = null;
+}
+
+function deleteCustomPhrase(id) {
+  if (!confirm('Remove this phrase from My Phrases?')) return;
+  customPhrases = customPhrases.filter(p => p.id !== id);
+  saveCustomPhrases();
+  renderDictView();
+}
+
+function buildCustomCard(phrase) {
+  const { id, jp, romaji, meaning } = phrase;
+  const cardId = `custom-${id}`;
+  const isOpen = dictExpandedId === cardId;
+
+  return `
+    <div class="dict-card" id="card-${cardId}">
+      <div class="dict-card-main" onclick="toggleDictCard('${cardId}')">
+        <div class="dict-card-text">
+          <div class="dict-card-jp">${escHtml(jp)}<span class="custom-phrase-badge">My phrase</span></div>
+          <div class="dict-card-romaji">${escHtml(romaji || '—')}</div>
+          <div class="dict-card-meaning">${escHtml(meaning || '—')}</div>
+        </div>
+        <div class="dict-card-actions">
+          <button class="dict-hear-btn${dictPlayingId===cardId?' playing':''}" id="hear-${cardId}"
+            onclick="event.stopPropagation();_unlockAudioContext();playDictPhrase('${escHtml(jp)}','${cardId}')">
+            ${dictPlayingId === cardId ? '▶' : '🔊'}
+          </button>
+          <span class="dict-chevron" id="chev-${cardId}">${isOpen ? '▲' : '▼'}</span>
+        </div>
+      </div>
+      <div class="dict-card-detail${isOpen?' open':''}" id="detail-${cardId}">
+        <div class="custom-card-actions">
+          <button class="custom-action-btn" onclick="openAddPhrase('${id}')">✏️ Edit</button>
+          <button class="custom-action-btn delete" onclick="deleteCustomPhrase('${id}')">🗑 Delete</button>
+        </div>
+      </div>
+    </div>`;
+}
+
 // ── Rendering ─────────────────────────────────────────────────────────────────
 function renderWeekTabs() {
   const week = getCurrentWeek();
@@ -6794,6 +7178,7 @@ function exportProgress() {
       favs:       localStorage.getItem('jp30_favs')     || '[]',
       streak:     localStorage.getItem('jp30_streak')   || '0',
       lastStudied:localStorage.getItem('jp30_lastStudied') || '',
+      custom:     localStorage.getItem('jp30_custom')   || '[]',
     }
   };
   const json = JSON.stringify(data, null, 2);
@@ -6828,6 +7213,7 @@ function importProgress() {
             if (p.favs)        localStorage.setItem('jp30_favs',        p.favs);
             if (p.streak)      localStorage.setItem('jp30_streak',      p.streak);
             if (p.lastStudied) localStorage.setItem('jp30_lastStudied', p.lastStudied);
+            if (p.custom)      localStorage.setItem('jp30_custom',      p.custom);
           }
 
           saveState();
@@ -6836,6 +7222,7 @@ function importProgress() {
           // Re-initialise everything that reads from localStorage
           loadPersonalisation();
           loadDictFavourites();
+          loadCustomPhrases();
           initSpeedToggle();
           initRomajiToggle();
           renderStreak();
@@ -6993,6 +7380,7 @@ function startAudioCache() {
 // ── Boot ──────────────────────────────────────────────────────────────────────
 loadState();
 loadDictFavourites();
+loadCustomPhrases();
 loadPersonalisation();
 renderAll();
 renderOverallProgress();
