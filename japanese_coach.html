@@ -4325,12 +4325,11 @@ function buildSpeakingTask(task, dayIdx, taskIdx) {
     </div>`;
   } else {
     html += `
-    <div class="speaking-info">
-      💡 <strong>How it works:</strong> Press 🔊 to hear the phrase, practise saying it out loud,
-      then press 🎤 and speak clearly. The app will check if your pronunciation is intelligible!
-    </div>`;
+      <div class="speaking-info">
+        💡 Say the phrase aloud, then type it to check — or use 🎤 if your mic works on this device.
+      </div>`;
     if (!hasSR) {
-      html += `<div class="perm-warning">⚠️ Speech recognition not available in this browser. Try Chrome on Android or desktop Chrome. You can still listen and practise by ear.</div>`;
+      html += `<div class="perm-warning">⚠️ Mic not available in this browser — use the text box below.</div>`;
     }
   }
 
@@ -4346,9 +4345,11 @@ function buildSpeakingTask(task, dayIdx, taskIdx) {
   // Phrase boxes
   phrases.forEach((p,i) => {
     const fallbackId = `${id}-textfallback-${i}`;
+    const wc = WEEK_COLORS[getCurrentWeek()];
+
     html += `
     <div class="phrase-box ${i>0?'hidden':''}" id="${id}-phrase-${i}">
-      <div class="phrase-step">Step 1 — Read this phrase aloud:</div>
+      <div class="phrase-step">Step 1 — Read &amp; hear the phrase:</div>
       <div class="phrase-jp"><ruby>${escHtml(p.japanese)}<rt>${escHtml(p.romaji)}</rt></ruby></div>
       <button class="phrase-guide-btn" onclick="toggleGuide('${id}-guide-${i}')">👁 Syllable guide</button>
       <div class="syll-guide hidden" id="${id}-guide-${i}">
@@ -4356,42 +4357,57 @@ function buildSpeakingTask(task, dayIdx, taskIdx) {
         <div class="syll-wrap" id="${id}-syls-${i}">${buildSylls(p.romaji)}</div>
         <div class="syll-full">Full: <strong>${escHtml(p.romaji)}</strong></div>
       </div>
-      <button class="speak-btn" style="color:${WEEK_COLORS[getCurrentWeek()]};border-color:${WEEK_COLORS[getCurrentWeek()]}44;margin-bottom:10px"
+      <button class="speak-btn" style="color:${wc};border-color:${wc}44;margin-bottom:12px"
         onclick="speakJP('${escHtml(p.japanese)}',currentSpeed)">🔊 Hear it first</button>
-      <div class="mic-section">`;
 
-    if (isOffline) {
-      // ── Offline: show text input directly, no mic button ──────────────────
-      html += `
-        <div class="mic-step">Step 2 — Say it aloud, then type it:</div>
-        <div id="${fallbackId}" style="margin-top:8px;padding:12px 14px;background:#f5effe;border-radius:10px;border:1px solid #9b6fd444">
-          <div style="font-size:10px;color:#9b6fd4;margin-bottom:8px;opacity:.85">Accepts romaji (e.g. <em>${escHtml(p.romaji)}</em>), hiragana, or kanji</div>
-          <input id="${fallbackId}-input" type="text"
-            placeholder='e.g. "${escHtml(p.romaji)}" or "${escHtml(p.japanese)}"'
-            style="width:100%;padding:8px 10px;font-size:15px;border:2px solid #d4b8f0;border-radius:7px;outline:none;box-sizing:border-box;font-family:inherit;background:#fdf6e3"
-            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-            onkeydown="if(event.key==='Enter')checkTextFallback('${fallbackId}','${escHtml(p.japanese)}','${escHtml(p.romaji)}',${i},'${id}',${dayIdx},${taskIdx},${phrases.length})" />
-          <button onclick="checkTextFallback('${fallbackId}','${escHtml(p.japanese)}','${escHtml(p.romaji)}',${i},'${id}',${dayIdx},${taskIdx},${phrases.length})"
-            style="width:100%;margin-top:8px;padding:10px;border-radius:8px;border:none;background:#9b6fd4;color:#fff;font-weight:700;font-size:13px;cursor:pointer">✓ Check</button>
+      <div class="mic-section">
+        <div class="mic-step">Step 2 — Say it aloud, then type to check:</div>
+
+        <!-- TEXT INPUT — always visible, primary method -->
+        <div id="${fallbackId}"
+          style="margin-bottom:10px;padding:12px 14px;background:#f5f8fc;border-radius:10px;border:1.5px solid ${wc}44">
+          <div style="font-size:10px;color:${wc};font-weight:700;margin-bottom:6px">
+            Accepts romaji · hiragana · kanji
+          </div>
+          <div style="display:flex;gap:7px">
+            <input id="${fallbackId}-input" type="text"
+              placeholder='e.g. "${escHtml(p.romaji)}"'
+              style="flex:1;padding:9px 11px;font-size:15px;border:2px solid ${wc}55;border-radius:8px;outline:none;font-family:inherit;background:#fff;color:var(--ink)"
+              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+              onkeydown="if(event.key==='Enter'&&!event.isComposing)checkTextFallback('${fallbackId}','${escHtml(p.japanese)}','${escHtml(p.romaji)}',${i},'${id}',${dayIdx},${taskIdx},${phrases.length})" />
+            <button onclick="checkTextFallback('${fallbackId}','${escHtml(p.japanese)}','${escHtml(p.romaji)}',${i},'${id}',${dayIdx},${taskIdx},${phrases.length})"
+              style="padding:0 14px;border-radius:8px;border:2px solid ${wc};background:${wc};color:#fff;font-weight:700;font-size:13px;cursor:pointer;flex-shrink:0">
+              ✓
+            </button>
+          </div>
           <div id="${fallbackId}-result" style="margin-top:8px;font-size:12px;display:none"></div>
-        </div>
-        <!-- Hidden mic elements so finishMic can still find them -->
-        <div class="mic-status hidden" id="${id}-status-${i}"></div>
-        <div class="mic-transcript hidden" id="${id}-heard-${i}"></div>
-        <div class="mic-feedback hidden" id="${id}-fb-${i}"></div>`;
-    } else {
-      // ── Online: normal mic button ──────────────────────────────────────────
+        </div>`;
+
+    if (!isOffline && hasSR) {
+      // MIC — secondary option shown below text input
       html += `
-        <div class="mic-step">Step 2 — Press 🎤 and speak:</div>
-        <button class="mic-btn" id="${id}-mic-${i}"
-          style="background:${WEEK_COLORS[getCurrentWeek()]}"
-          onclick="startMic('${id}',${i},'${escHtml(p.japanese)}','${escHtml(p.romaji)}',${dayIdx},${taskIdx},${phrases.length})">🎤</button>
-        <div class="mic-status" id="${id}-status-${i}">Tap mic to speak</div>
-        <div class="mic-transcript hidden" id="${id}-heard-${i}"></div>
-        <div class="mic-feedback hidden" id="${id}-fb-${i}"></div>`;
+        <div style="display:flex;align-items:center;gap:10px;margin-top:2px">
+          <button class="mic-btn" id="${id}-mic-${i}"
+            style="background:${wc};width:44px;height:44px;font-size:18px;flex-shrink:0"
+            onclick="startMic('${id}',${i},'${escHtml(p.japanese)}','${escHtml(p.romaji)}',${dayIdx},${taskIdx},${phrases.length})">🎤</button>
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:2px">OR USE MIC</div>
+            <div class="mic-status" id="${id}-status-${i}" style="font-size:12px;color:var(--muted)">Tap 🎤 to speak — mic result auto-checks</div>
+            <div class="mic-transcript hidden" id="${id}-heard-${i}" style="font-size:12px;color:var(--ink);margin-top:2px"></div>
+          </div>
+        </div>`;
+    } else {
+      // Hidden stubs so finishMic can still find them
+      html += `
+        <div class="hidden" id="${id}-mic-${i}"></div>
+        <div class="hidden" id="${id}-status-${i}"></div>
+        <div class="hidden" id="${id}-heard-${i}"></div>`;
     }
 
-    html += `</div></div>`;
+    html += `
+        <div class="mic-feedback hidden" id="${id}-fb-${i}"></div>
+      </div>
+    </div>`;
   });
 
   html += `<div class="complete-banner hidden" id="${id}-banner" style="background:linear-gradient(135deg,${WEEK_COLORS[getCurrentWeek()]},${WEEK_COLORS[getCurrentWeek()]}99)">🎤 All phrases passed — speaking complete!</div>`;
@@ -4729,8 +4745,7 @@ function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
     // Already handled by onresult
     if (recState === 'processing' || gotFinal) return;
 
-    // ANDROID FIX: engine fires onend after auto-stopping with only interim
-    // results (isFinal never set to true). Evaluate bestInterim if we have it.
+    // ANDROID FIX: engine fires onend after auto-stopping with only interim results
     if (bestInterim && recState === 'recording') {
       recState = 'processing';
       const liveS = document.getElementById(`${id}-status-${phraseIdx}`) || liveStatusEl;
@@ -4742,18 +4757,23 @@ function _beginRecognition(SR, id, phraseIdx, japanese, romaji,
       return;
     }
 
-    // No speech captured at all, or user cancelled
+    // No speech captured — reset button and gently focus text input
     _resetRecState();
     const b = document.getElementById(`${id}-mic-${phraseIdx}`);
     const s = document.getElementById(`${id}-status-${phraseIdx}`);
     if (b && b.classList.contains('listening')) {
       setMicBtn(b, 'idle', id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases);
     }
-    if (s) {
-      const txt = s.textContent || '';
-      if (txt.includes('Say the phrase') || txt.includes('Checking')) {
-        s.textContent = 'No speech heard — press 🎤 and try again';
-      }
+    if (s) s.textContent = 'No speech detected — try typing below';
+
+    // Auto-focus the text input so user can proceed without extra taps
+    const textInput = document.getElementById(`${id}-textfallback-${phraseIdx}-input`);
+    if (textInput) {
+      setTimeout(() => {
+        textInput.focus();
+        textInput.style.borderColor = 'var(--gold)';
+        setTimeout(() => { textInput.style.borderColor = ''; }, 1500);
+      }, 200);
     }
   };
 
@@ -4941,7 +4961,20 @@ function _romajiToHiragana(str) {
 
 function _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
   const fallbackId = `${id}-textfallback-${phraseIdx}`;
-  if (document.getElementById(fallbackId)) return; // already shown
+  const existingInput = document.getElementById(`${fallbackId}-input`);
+
+  // Text input is now always pre-rendered in the speaking task layout.
+  // If it already exists (online mode), just focus it with a brief highlight.
+  if (existingInput) {
+    setTimeout(() => {
+      existingInput.focus();
+      existingInput.style.borderColor = 'var(--gold)';
+      setTimeout(() => { existingInput.style.borderColor = ''; }, 1500);
+    }, 150);
+    return;
+  }
+
+  // Fallback: dynamically insert if not pre-rendered (shouldn't normally happen)
   const container = document.getElementById(`${id}-mic-${phraseIdx}`)?.parentElement;
   if (!container) return;
 
@@ -4950,7 +4983,7 @@ function _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, tota
   wrap.style.cssText = 'margin-top:12px;padding:12px 14px;background:#f5effe;border-radius:10px;border:1px solid #9b6fd444';
   wrap.innerHTML =
     '<div style="font-size:11px;color:#9b6fd4;font-weight:700;margin-bottom:4px">✏️ Type check — say it aloud, then type it:</div>' +
-    '<div style="font-size:10px;color:#9b6fd4;margin-bottom:8px;opacity:.85">Accepts romaji (e.g. <em>konnichiwa</em>), hiragana (e.g. <em>こんにちは</em>), or kanji</div>' +
+    '<div style="font-size:10px;color:#9b6fd4;margin-bottom:8px;opacity:.85">Accepts romaji (e.g. <em>' + escHtml(romaji) + '</em>), hiragana, or kanji</div>' +
     `<input id="${fallbackId}-input" type="text" placeholder='e.g. "${escHtml(romaji)}" or "${escHtml(japanese)}"'` +
     ' style="width:100%;padding:8px 10px;font-size:15px;border:2px solid #d4b8f0;border-radius:7px;outline:none;box-sizing:border-box;font-family:inherit;background:#fdf6e3"' +
     ' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"' +
@@ -4959,7 +4992,6 @@ function _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, tota
     ' style="width:100%;margin-top:8px;padding:10px;border-radius:8px;border:none;background:#9b6fd4;color:#fff;font-weight:700;font-size:13px;cursor:pointer">✓ Check</button>' +
     `<div id="${fallbackId}-result" style="margin-top:8px;font-size:12px;display:none"></div>`;
   container.appendChild(wrap);
-  // Auto-focus the input
   setTimeout(() => document.getElementById(`${fallbackId}-input`)?.focus(), 100);
 }
 
