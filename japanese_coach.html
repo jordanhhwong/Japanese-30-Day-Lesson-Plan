@@ -718,6 +718,63 @@
     color: #1a3a5c; cursor: pointer;
   }
 
+  /* Tourist Essentials + Sentence Builder */
+  .dict-subtitle {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    margin: 16px 0 7px; padding-left: 2px; letter-spacing: .03em;
+  }
+  .dict-hear-tag {
+    display: inline-block; font-size: 10px; font-weight: 700; margin-top: 3px;
+    padding: 1px 7px; border-radius: 8px; background: #fff4e0; color: #a06010;
+  }
+  .dict-formality.hear { background: #fff4e0; color: #a06010; }
+
+  .tpl-card, .tip-card {
+    background: #fff; border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 13px 14px; margin-bottom: 10px;
+  }
+  .tpl-title, .tip-title { font-size: 13.5px; font-weight: 700; color: #1a3a5c; margin-bottom: 6px; }
+  .tpl-pattern { font-family: 'Noto Serif JP', serif; font-size: 19px; line-height: 1.9; color: var(--ink); }
+  .tpl-ro { font-size: 11.5px; color: var(--red); font-weight: 700; }
+  .tpl-en { font-size: 12.5px; color: var(--muted); margin: 2px 0 8px; }
+  .tpl-slot {
+    display: inline-block; min-width: 2.2em; text-align: center; margin: 0 2px;
+    color: #1a3a5c; background: #e8f0f8; border-bottom: 2px solid #1a3a5c;
+    border-radius: 4px; font-weight: 700;
+  }
+  .tpl-try {
+    font-size: 10px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .06em; margin: 8px 0 6px;
+  }
+  .tpl-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tpl-chip {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 6px 11px; border-radius: 10px; border: 1.5px solid #1a3a5c33;
+    background: #f5f8fc; color: var(--ink); cursor: pointer; transition: all .15s;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 14px;
+  }
+  .tpl-chip small { font-size: 9.5px; color: var(--muted); font-weight: 400; margin-top: 1px; }
+  .tpl-chip:active { background: #e8f0f8; }
+  .tpl-chip.active { background: #1a3a5c; border-color: #1a3a5c; color: #fff; }
+  .tpl-chip.active small { color: rgba(255,255,255,.8); }
+  .tpl-result {
+    align-items: center; gap: 10px; margin-top: 10px; padding: 10px 12px;
+    background: #edfaf3; border: 1.5px solid #2a7a4a55; border-radius: 10px;
+  }
+  .tpl-res-text { flex: 1; min-width: 0; }
+  .tpl-res-jp { font-family: 'Noto Serif JP', serif; font-size: 19px; line-height: 1.9; color: var(--ink); }
+  .tpl-res-ro { font-size: 11.5px; color: var(--red); font-weight: 700; }
+  .tpl-res-en { font-size: 12.5px; color: var(--muted); }
+  .tip-body { font-size: 12.5px; color: #3a4a5a; line-height: 1.65; margin-bottom: 4px; }
+  .tip-ex {
+    display: flex; align-items: center; gap: 10px; margin-top: 6px;
+    padding: 8px 10px; background: #f5f8fc; border-radius: 9px;
+  }
+  .tip-ex-text { flex: 1; min-width: 0; }
+  .tip-ex-jp { font-family: 'Noto Serif JP', serif; font-size: 17px; line-height: 1.9; color: var(--ink); }
+  .tip-ex-ro { font-size: 11px; color: var(--red); font-weight: 700; }
+  .tip-ex-en { font-size: 12px; color: var(--muted); }
+
   /* Day grid ── */
   .day-grid {
     display: grid; grid-template-columns: repeat(7, 1fr);
@@ -6323,7 +6380,7 @@ const DICT_DATA = {
       ['しちゃくしてもいいですか？', 'Shichaku shite mo ii desu ka?', 'May I try this on?', 'Staff will guide you to the fitting room (しちゃくしつ).'],
       ['ほかのいろはありますか？', 'Hoka no iro wa arimasu ka?', 'Do you have other colours?', 'For other sizes, ask ちがうサイズはありますか？ (Do you have a different size?).'],
       ['めんぜいでおねがいします。', 'Menzei de onegaishimasu.', 'Tax-free, please.',
-        'Show your passport at the till (usually ¥5,000+ at one shop per day). Rules change on 1 Nov 2026 — you’ll pay full price and claim at the airport — but purchases up to 31 Oct are still tax-free at the till.'],
+        'Show your passport at the till (usually ¥5,000+ at one shop per day). Rules change on 1 Nov 2026 — you’ll pay full price and claim at the airport — but purchases up to 31 Oct follow the current rules (tax taken off at the till or a tax-free counter, depending on the shop).'],
       ['プレゼントようにほうそうしてください。', 'Purezento you ni housou shite kudasai.', 'Please gift-wrap it.', 'Ask before you pay — many shops will wrap gifts neatly.'],
     ]),
     ..._ess('Hotel', [
@@ -6356,6 +6413,206 @@ const DICT_DATA = {
     ], 'hear'),
   ],
 };
+
+// ── Sentence Builder: templates + structure tips ─────────────────────────────
+// Templates: a reusable pattern with one slot {X}. Tapping a word fills the slot, shows the
+// finished sentence (Japanese, romaji, English) and plays it.  fills: [jp, romaji, english]
+const DICT_TEMPLATES = [
+  { id:'doko', title:'Where is …?', jp:'{X}はどこですか？', ro:'{X} wa doko desu ka?', en:'Where is {X}?',
+    note:'The most useful pattern of all: say the place, add はどこですか. Even just the place + どこですか is understood.',
+    fills:[['トイレ','toire','the toilet'],['えき','eki','the station'],['ホテル','hoteru','the hotel'],['コンビニ','konbini','the convenience store'],['でぐち','deguchi','the exit'],['こうばん','kouban','the police box']] },
+  { id:'kudasai', title:'Please give me …', jp:'{X}をください。', ro:'{X} wo kudasai.', en:'Please give me {X}.',
+    note:'Point at what you want and say ください — it works at picture menus, shops and ticket counters.',
+    fills:[['これ','kore','this'],['みず','mizu','water'],['ビール','biiru','a beer'],['メニュー','menyuu','a menu'],['ふくろ','fukuro','a bag'],['レシート','reshiito','a receipt']] },
+  { id:'kazu', title:'I’ll take … of these', jp:'これを{X}ください。', ro:'Kore wo {X} kudasai.', en:'I’ll take {X} of these.',
+    note:'The amount goes right before ください. ひとつ, ふたつ… count most things.',
+    fills:[['ひとつ','hitotsu','one'],['ふたつ','futatsu','two'],['みっつ','mittsu','three'],['よっつ','yottsu','four']] },
+  { id:'arimasu', title:'Do you have …?', jp:'{X}はありますか？', ro:'{X} wa arimasu ka?', en:'Do you have {X}?',
+    note:'Item + ありますか. If you don’t know the word, show a photo on your phone.',
+    fills:[['えいごのメニュー','eigo no menyuu','an English menu'],['ワイファイ','waifai','Wi-Fi'],['おおきいサイズ','ookii saizu','a bigger size'],['ちいさいサイズ','chiisai saizu','a smaller size'],['コインロッカー','koin rokkaa','a coin locker'],['ベジタリアンのりょうり','bejitarian no ryouri','a vegetarian dish']] },
+  { id:'ikura', title:'How much is …?', jp:'{X}はいくらですか？', ro:'{X} wa ikura desu ka?', en:'How much is {X}?',
+    note:'いくら means “how much”. Prices are in yen (えん) — the number comes before えん.',
+    fills:[['これ','kore','this'],['それ','sore','that'],['あれ','are','that one over there'],['きっぷ','kippu','the ticket'],['にゅうじょうりょう','nyuujouryou','the admission fee']] },
+  { id:'nan', title:'What is …?', jp:'{X}はなんですか？', ro:'{X} wa nan desu ka?', en:'What is {X}?',
+    note:'Great for menus and shop shelves — point and ask.',
+    fills:[['これ','kore','this'],['それ','sore','that'],['おすすめ','osusume','the recommendation'],['めいぶつ','meibutsu','the local speciality'],['このりょうり','kono ryouri','this dish']] },
+  { id:'ikitai', title:'I’d like to go to …', jp:'{X}にいきたいです。', ro:'{X} ni ikitai desu.', en:'I’d like to go to {X}.',
+    note:'Verb stem + たい means “want to”. いきたい (ikitai) is “want to go”.',
+    fills:[['とうきょう','toukyou','Tokyo'],['きょうと','kyouto','Kyoto'],['おおさか','oosaka','Osaka'],['くうこう','kuukou','the airport'],['おんせん','onsen','a hot spring'],['とうきょうえき','toukyou eki','Tokyo Station']] },
+  { id:'made', title:'To … please (taxi)', jp:'{X}までおねがいします。', ro:'{X} made onegaishimasu.', en:'To {X}, please.',
+    note:'Destination + まで (“to / as far as”). Show the address on your phone if you can.',
+    fills:[['とうきょうえき','toukyou eki','Tokyo Station'],['くうこう','kuukou','the airport'],['このホテル','kono hoteru','this hotel'],['このじゅうしょ','kono juusho','this address'],['ここ','koko','here']] },
+  { id:'tabetai', title:'I want to eat …', jp:'{X}をたべたいです。', ro:'{X} wo tabetai desu.', en:'I want to eat {X}.',
+    note:'Food + を + たべたいです. Not sure of the name? Point and say これをたべたいです.',
+    fills:[['ラーメン','raamen','ramen'],['すし','sushi','sushi'],['てんぷら','tenpura','tempura'],['うどん','udon','udon'],['やきとり','yakitori','yakitori'],['おこのみやき','okonomiyaki','okonomiyaki']] },
+  { id:'mitai', title:'I want to see …', jp:'{X}をみたいです。', ro:'{X} wo mitai desu.', en:'I want to see {X}.',
+    note:'Same shape: みる (see) becomes みたい. Handy at tourist information desks.',
+    fills:[['ふじさん','fujisan','Mt Fuji'],['こうよう','kouyou','the autumn leaves'],['おしろ','oshiro','a castle'],['おてら','otera','a temple'],['おまつり','omatsuri','a festival']] },
+  { id:'kaitai', title:'I want to buy …', jp:'{X}をかいたいです。', ro:'{X} wo kaitai desu.', en:'I want to buy {X}.',
+    note:'かう (buy) becomes かいたい. Pair it with a pointing finger in shops.',
+    fills:[['おみやげ','omiyage','souvenirs'],['おかし','okashi','sweets'],['かさ','kasa','an umbrella'],['ちず','chizu','a map'],['スイカ','suika','a Suica card']] },
+  { id:'temo', title:'May I …?', jp:'{X}もいいですか？', ro:'{X} mo ii desu ka?', en:'May I {X}?',
+    note:'Verb て-form + もいいですか asks permission. Learn a handful of て-forms and you can ask about almost anything.',
+    fills:[['しゃしんをとって','shashin wo totte','take a photo'],['ここにすわって','koko ni suwatte','sit here'],['はいって','haitte','go in'],['これをみて','kore wo mite','look at this'],['トイレをかりて','toire wo karite','use your toilet']] },
+  { id:'tekudasai', title:'Please … (ask someone to do something)', jp:'{X}ください。', ro:'{X} kudasai.', en:'Please {X}.',
+    note:'て-form + ください is the polite way to ask someone to do something.',
+    fills:[['おしえて','oshiete','tell me'],['みせて','misete','show me'],['まって','matte','wait'],['かいて','kaite','write it down'],['ゆっくりはなして','yukkuri hanashite','speak slowly'],['たすけて','tasukete','help me']] },
+  { id:'nanji', title:'What time does it …?', jp:'なんじに{X}ますか？', ro:'nanji ni {X}masu ka?', en:'What time does it {X}?',
+    note:'Use the verb stem before ます: あき (opens), しまり (closes), はじまり (starts), おわり (ends).',
+    fills:[['あき','aki','open'],['しまり','shimari','close'],['はじまり','hajimari','start'],['おわり','owari','end']] },
+  { id:'taberarenai', title:'I can’t eat …', jp:'{X}がたべられません。', ro:'{X} ga taberaremasen.', en:'I can’t eat {X}.',
+    note:'For a serious allergy, also say アレルギーがあります and show a written allergy card in Japanese.',
+    fills:[['ぎゅうにく','gyuuniku','beef'],['ぶたにく','butaniku','pork'],['えび','ebi','shrimp'],['たまご','tamago','eggs'],['ナッツ','nattsu','nuts'],['からいもの','karai mono','spicy food']] },
+];
+
+// Structure tips: short rules of thumb with playable examples  [jp, romaji, english]
+const DICT_TIPS = [
+  { title:'The verb comes last',
+    body:'Japanese puts the verb at the end of the sentence: “water + drink”, not “drink water”. Everything else slots in before it.',
+    examples:[['みずをのみます。','Mizu wo nomimasu.','I drink water.'],['えきにいきます。','Eki ni ikimasu.','I’m going to the station.']] },
+  { title:'Make a question with か',
+    body:'Add か to the end and a statement becomes a question — no change in word order. Your voice can stay flat or rise a little.',
+    examples:[['ここです。','Koko desu.','It’s here.'],['ここですか？','Koko desu ka?','Is it here?'],['あれはえきですか？','Are wa eki desu ka?','Is that a station?']] },
+  { title:'Particles are the glue',
+    body:'Small words mark each part’s job: は (the topic, said “wa”), を (what you act on, written wo, said “o”), に (to / at), で (where something happens), も (also), の (of / ’s).',
+    examples:[['ホテルにいきます。','Hoteru ni ikimasu.','I’m going to the hotel.'],['レストランでたべます。','Resutoran de tabemasu.','I eat at a restaurant.'],['わたしもです。','Watashi mo desu.','Me too.']] },
+  { title:'Drop “I” and “you”',
+    body:'When it’s obvious who you mean, Japanese leaves the subject out. Avoid あなた (“you”) — use the person’s name, or just leave it out.',
+    examples:[['たべたいです。','Tabetai desu.','(I) want to eat.'],['いきますか？','Ikimasu ka?','Are (you) going?']] },
+  { title:'Short beats perfect',
+    body:'A noun plus one reliable ending carries most travel conversations: ＿＿をください (give me), ＿＿はどこですか (where is), ＿＿はありますか (do you have). Point, show your phone, and keep it simple.',
+    examples:[['トイレ、どこですか？','Toire, doko desu ka?','Toilet — where is it?'],['これ、ください。','Kore, kudasai.','This one, please.']] },
+  { title:'Finish with です or ます',
+    body:'です and ます keep you polite with strangers and staff. For verbs: ～ます (do), ～ません (don’t), ～ました (did).',
+    examples:[['たべます。','Tabemasu.','I eat / I’ll eat.'],['たべません。','Tabemasen.','I don’t eat.'],['たべました。','Tabemashita.','I ate.']] },
+  { title:'ください or おねがいします?',
+    body:'Both make polite requests. ください means “please give me” and follows what you want. おねがいします (“I ask this of you”) is softer and suits services — taxis, checking in, paying.',
+    examples:[['これをください。','Kore wo kudasai.','Please give me this.'],['チェックインをおねがいします。','Chekkuin wo onegaishimasu.','Check-in, please.']] },
+  { title:'あります or います?',
+    body:'Things use あります; people and animals use います. You’ll hear both in “Is there…?” questions.',
+    examples:[['トイレはありますか？','Toire wa arimasu ka?','Is there a toilet?'],['ガイドさんはいますか？','Gaido-san wa imasu ka?','Is there a guide?']] },
+  { title:'Three endings do the heavy lifting',
+    body:'Verb + たい = “want to”. Verb (て-form) + ください = “please do…”. Verb (て-form) + もいいですか = “may I…?”. Learn a few verbs in these shapes: いきたい, みせて, はいって.',
+    examples:[['いきたいです。','Ikitai desu.','I want to go.'],['みせてください。','Misete kudasai.','Please show me.'],['はいってもいいですか？','Haitte mo ii desu ka?','May I go in?']] },
+  { title:'Counting things and people',
+    body:'Things: ひとつ, ふたつ, みっつ, よっつ… (up to とお = 10). People: ひとり, ふたり, さんにん, よにん… Say the number right before ください or です.',
+    examples:[['ビールをふたつください。','Biiru wo futatsu kudasai.','Two beers, please.'],['さんにんです。','Sannin desu.','Three people.']] },
+  { title:'Katakana is English in disguise',
+    body:'Many everyday words are borrowed English written in katakana — ホテル, タクシー, コーヒー, メニュー. Say the English word with Japanese rhythm and extra vowels (“hoteru”, “takushii”) and you’ll often be understood.',
+    examples:[['コーヒーをください。','Koohii wo kudasai.','Coffee, please.'],['タクシーはどこですか？','Takushii wa doko desu ka?','Where are the taxis?']] },
+  { title:'Soften with すみません and ちょっと…',
+    body:'Start requests with すみません (“excuse me”). To decline, trail off with ちょっと… rather than saying a flat “no”.',
+    examples:[['すみません、ちょっといいですか？','Sumimasen, chotto ii desu ka?','Excuse me, do you have a moment?'],['すみません、ちょっと…','Sumimasen, chotto...','Sorry, that’s a bit difficult… (a polite no)']] },
+  { title:'これ・それ・あれ',
+    body:'これ = this (near me), それ = that (near you), あれ = that over there. For places: ここ (here), そこ, あそこ (over there). Pointing plus these words covers a lot.',
+    examples:[['あれはなんですか？','Are wa nan desu ka?','What is that over there?'],['あそこです。','Asoko desu.','It’s over there.']] },
+];
+
+// ── Builder rendering ────────────────────────────────────────────────────────
+function _tplSlotHtml(pattern) {
+  const [a, b] = pattern.split('{X}');
+  return escHtml(a) + '<span class="tpl-slot">＿＿</span>' + escHtml(b || '');
+}
+
+function _tplCompose(t, i) {
+  const [fj, fr, fe] = t.fills[i];
+  const ro = t.ro.replace('{X}', () => fr);
+  return {
+    jp: t.jp.replace('{X}', () => fj),
+    ro: ro.charAt(0).toUpperCase() + ro.slice(1),
+    en: t.en.replace('{X}', () => fe),
+  };
+}
+
+function buildTemplateCard(t) {
+  const chips = t.fills.map((f, i) => `
+    <button type="button" class="tpl-chip" id="tplchip-${t.id}-${i}" onclick="pickTemplateFill('${t.id}',${i})">
+      ${escHtml(f[0])}<small>${escHtml(f[2])}</small>
+    </button>`).join('');
+  return `
+    <div class="tpl-card" id="tpl-${t.id}">
+      <div class="tpl-title">${escHtml(t.title)}</div>
+      <div class="tpl-pattern">${_tplSlotHtml(t.jp)}</div>
+      <div class="tpl-ro">${_tplSlotHtml(t.ro)}</div>
+      <div class="tpl-en">${_tplSlotHtml(t.en)}</div>
+      ${t.note ? `<div class="dict-usage-note">${escHtml(t.note)}</div>` : ''}
+      <div class="tpl-try">Tap a word to build the sentence</div>
+      <div class="tpl-chips">${chips}</div>
+      <div class="tpl-result" id="tplres-${t.id}" style="display:none"></div>
+    </div>`;
+}
+
+function pickTemplateFill(id, i) {
+  const t = DICT_TEMPLATES.find(x => x.id === id);
+  if (!t || !t.fills[i]) return;
+  const s = _tplCompose(t, i);
+  t.fills.forEach((_, k) =>
+    document.getElementById(`tplchip-${id}-${k}`)?.classList.toggle('active', k === i));
+  const box = document.getElementById(`tplres-${id}`);
+  if (box) {
+    box.style.display = 'flex';
+    box.innerHTML = `
+      <div class="tpl-res-text">
+        <div class="tpl-res-jp">${escHtml(s.jp)}</div>
+        <div class="tpl-res-ro">${escHtml(s.ro)}</div>
+        <div class="tpl-res-en">${escHtml(s.en)}</div>
+      </div>
+      <button class="dict-hear-btn" onclick="_unlockAudioContext();playTemplateFill('${id}',${i})" title="Hear it">🔊</button>`;
+  }
+  _unlockAudioContext();
+  playTemplateFill(id, i);
+}
+
+function playTemplateFill(id, i) {
+  const t = DICT_TEMPLATES.find(x => x.id === id);
+  if (!t || !t.fills[i]) return;
+  speakJP(_tplCompose(t, i).jp, currentSpeed);
+}
+
+function buildTipCard(tip) {
+  const ti = DICT_TIPS.indexOf(tip);
+  const ex = tip.examples.map((e, j) => `
+    <div class="tip-ex">
+      <div class="tip-ex-text">
+        <div class="tip-ex-jp">${escHtml(e[0])}</div>
+        <div class="tip-ex-ro">${escHtml(e[1])}</div>
+        <div class="tip-ex-en">${escHtml(e[2])}</div>
+      </div>
+      <button class="dict-hear-btn" onclick="_unlockAudioContext();playTipExample(${ti},${j})" title="Hear it">🔊</button>
+    </div>`).join('');
+  return `
+    <div class="tip-card">
+      <div class="tip-title">${ti + 1} · ${escHtml(tip.title)}</div>
+      <div class="tip-body">${escHtml(tip.body)}</div>
+      ${ex}
+    </div>`;
+}
+
+function playTipExample(ti, j) {
+  const e = DICT_TIPS[ti] && DICT_TIPS[ti].examples[j];
+  if (e) speakJP(e[0], currentSpeed);
+}
+
+function buildSentenceBuilderHtml() {
+  return `
+    <div class="dict-usage-note" style="margin-bottom:12px">
+      A handful of patterns covers most travel situations. Tap a word under any template to build a
+      full sentence and hear it, then read the tips below to see why it works.
+    </div>
+    <div class="dict-section-title">🧩 Sentence templates (${DICT_TEMPLATES.length})</div>
+    ${DICT_TEMPLATES.map(buildTemplateCard).join('')}
+    <div class="dict-section-title" style="margin-top:18px">💡 Structure tips (${DICT_TIPS.length})</div>
+    ${DICT_TIPS.map(buildTipCard).join('')}`;
+}
+
+function _tplMatches(t, q) {
+  return [t.title, t.jp, t.ro, t.en, t.note || '', ...t.fills.map(f => f.join(' '))]
+    .join(' ').toLowerCase().includes(q);
+}
+function _tipMatches(tip, q) {
+  return [tip.title, tip.body, ...tip.examples.map(e => e.join(' '))]
+    .join(' ').toLowerCase().includes(q);
+}
 
 // ── Dictionary state ──────────────────────────────────────────────────────────
 let dictCategory    = 'transport'; // current category key
@@ -6447,7 +6704,7 @@ function dictCardId(jp, cat) {
 }
 
 function buildDictCard(entry, cat, cov) {
-  const { jp, romaji, meaning, note, day } = entry;
+  const { jp, romaji, meaning, note, day, tag } = entry;
   const cardId  = dictCardId(jp, cat);
   const isFav   = dictFavourites.has(jp);
   const covCls  = coverageClass(jp, cov);
@@ -6462,6 +6719,7 @@ function buildDictCard(entry, cat, cov) {
           <div class="dict-card-jp">${escHtml(jp)}</div>
           <div class="dict-card-romaji">${escHtml(romaji)}</div>
           <div class="dict-card-meaning">${escHtml(meaning)}</div>
+          ${tag === 'hear' ? '<div class="dict-hear-tag">👂 You’ll hear this</div>' : ''}
         </div>
         <div class="dict-card-actions">
           <button class="dict-hear-btn${isPlaying?' playing':''}" id="hear-${cardId}"
@@ -6479,7 +6737,9 @@ function buildDictCard(entry, cat, cov) {
       <div class="dict-card-detail${isOpen?' open':''}" id="detail-${cardId}">
         ${note ? `<div class="dict-usage-note">${escHtml(note)}</div>` : ''}
         <div>
-          <span class="dict-formality">丁寧語 Polite</span>
+          ${tag === 'hear'
+            ? '<span class="dict-formality hear">👂 Staff phrase — just recognise it</span>'
+            : '<span class="dict-formality">丁寧語 Polite</span>'}
           <span class="dict-day-ref">${escHtml(dayRef)}</span>
         </div>
       </div>
@@ -6497,7 +6757,9 @@ function renderDictView() {
     const isFavCat = c.id === 'favs';
     const count = isFavCat
       ? customPhrases.length + dictFavourites.size
-      : (DICT_DATA[c.id] || []).length;
+      : c.id === 'builder'
+        ? DICT_TEMPLATES.length + DICT_TIPS.length
+        : (DICT_DATA[c.id] || []).length;
     const active = (!dictSearch && dictCategory === c.id);
     return `
       <button class="dict-cat-pill${active?' active':''}${isFavCat?' fav-pill':''}"
@@ -6524,19 +6786,26 @@ function renderDictView() {
         }
       }
     }
-    totalCount = matches.length;
-    if (matches.length === 0) {
+    // The same Japanese can live in two categories — show it once (first category wins)
+    const seenJp = new Set();
+    const uniq = matches.filter(m => !seenJp.has(m.jp) && seenJp.add(m.jp));
+    const tplHits = q.length >= 2 ? DICT_TEMPLATES.filter(t => _tplMatches(t, q)) : [];
+    const tipHits = q.length >= 2 ? DICT_TIPS.filter(t => _tipMatches(t, q)) : [];
+    totalCount = uniq.length + tplHits.length + tipHits.length;
+    if (totalCount === 0) {
       bodyHtml = `<div class="dict-no-results">No phrases found for "${escHtml(dictSearch)}"<br><small>Try English, romaji or Japanese</small></div>`;
     } else {
       // Group by category in search results
       const byCat = {};
-      matches.forEach(e => { if (!byCat[e.cat]) byCat[e.cat] = []; byCat[e.cat].push(e); });
+      uniq.forEach(e => { if (!byCat[e.cat]) byCat[e.cat] = []; byCat[e.cat].push(e); });
       bodyHtml = Object.entries(byCat).map(([cat, entries]) => {
         const catInfo = DICT_CATS.find(c => c.id === cat);
         return `
           <div class="dict-section-title">${catInfo ? catInfo.emoji+' '+catInfo.label : cat}</div>
           ${entries.map(e => buildDictCard(e, cat, cov)).join('')}`;
-      }).join('');
+      }).join('') +
+      (tplHits.length ? `<div class="dict-section-title">🧩 Sentence templates</div>${tplHits.map(buildTemplateCard).join('')}` : '') +
+      (tipHits.length ? `<div class="dict-section-title">💡 Structure tips</div>${tipHits.map(buildTipCard).join('')}` : '');
     }
   } else if (dictCategory === 'favs') {
     // Custom phrases always shown first
@@ -6546,9 +6815,13 @@ function renderDictView() {
     let builtInHtml = '';
     if (dictFavourites.size > 0) {
       const favCards = [];
+      const seenFav = new Set();
       for (const [cat, entries] of Object.entries(DICT_DATA)) {
         for (const entry of entries) {
-          if (dictFavourites.has(entry.jp)) favCards.push({ ...entry, cat });
+          if (dictFavourites.has(entry.jp) && !seenFav.has(entry.jp)) {
+            seenFav.add(entry.jp);
+            favCards.push({ ...entry, cat });
+          }
         }
       }
       builtInHtml = favCards.map(e => buildDictCard(e, e.cat, cov)).join('');
@@ -6575,6 +6848,9 @@ function renderDictView() {
         <div class="dict-section-title" style="margin-top:${customPhrases.length>0?12:0}px">♥ Saved from dictionary (${dictFavourites.size})</div>
         ${builtInHtml}` : ''}`;
     totalCount = customPhrases.length + dictFavourites.size;
+  } else if (dictCategory === 'builder') {
+    totalCount = DICT_TEMPLATES.length + DICT_TIPS.length;
+    bodyHtml = buildSentenceBuilderHtml();
   } else {
     // Single category
     const entries = DICT_DATA[dictCategory] || [];
@@ -6585,7 +6861,10 @@ function renderDictView() {
       const catInfo = DICT_CATS.find(c => c.id === dictCategory);
       bodyHtml = `
         <div class="dict-section-title">${catInfo ? catInfo.emoji+' '+catInfo.label : dictCategory}</div>
-        ${entries.map(e => buildDictCard(e, dictCategory, cov)).join('')}`;
+        ${entries.map((e, i) =>
+          (e.group && e.group !== (entries[i - 1] || {}).group
+            ? `<div class="dict-subtitle">${escHtml(e.group)}</div>` : '') +
+          buildDictCard(e, dictCategory, cov)).join('')}`;
     }
   }
 
@@ -6609,7 +6888,7 @@ function renderDictView() {
 
     <div class="dict-cats">${pills}</div>
 
-    ${!dictSearch && dictCategory !== 'favs' ? `
+    ${!dictSearch && dictCategory !== 'favs' && dictCategory !== 'builder' ? `
       <div class="dict-count">${totalCount} phrase${totalCount!==1?'s':''} · tap any card to see usage tips</div>` :
       dictSearch ? `<div class="dict-count">${totalCount} result${totalCount!==1?'s':''} across all categories</div>` : ''}
 
