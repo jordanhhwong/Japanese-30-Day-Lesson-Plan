@@ -5,7 +5,7 @@ Downloads all Japanese TTS audio files for japanese_coach.html.
 
 Covers:
   - Every kana syllable (hiragana, voiced, semi-voiced, compounds) — 129 sounds
-  - All 1,299 Joyo kanji (characters + readings)                  — ~2,100 files
+  - The 917 school kanji (Grades 1–6) and their readings           — ~2,100 files
   - All lesson phrases from the 30-day plan                        —   235 phrases
   Total: ~2,469 unique audio files, ~10 MB
 
