@@ -69,7 +69,7 @@ The app plays audio from three sources in priority order:
 2. Click **Run workflow → Run workflow**
 3. Wait ~15 minutes — the workflow downloads all 2,469 MP3 files and commits them
 
-The audio covers every lesson phrase, all kana syllables, and all 2,136 Joyo kanji.
+The audio covers every lesson phrase, all kana syllables, and the 917 school kanji (Grades 1–6) in the Kanji tab.
 
 ### Saving audio for offline use
 
@@ -100,9 +100,9 @@ The export includes **all settings** — completed tasks, current day, colour th
 |-----|-------------|
 | Week 1–4 | Daily lessons — vocab, speaking, listening, grammar, review |
 | かな Kana | Full hiragana and katakana chart with audio and progress tracking |
-| 漢字 Kanji | All 2,136 Joyo kanji by grade with readings and audio |
+| 漢字 Kanji | 917 school kanji (Grades 1–6) with readings and audio, plus **✏️ Mine** — add your own kanji outside that list with a pronunciation you supply; the app then reads it aloud correctly everywhere |
 | 一覧 Phrases | All lesson phrases grouped by day, searchable |
-| 辞書 Dictionary | Situation-based phrase dictionary with usage notes and favourites |
+| 辞書 Dictionary | Situation-based phrase dictionary with usage notes and favourites. Includes **⭐ Tourist Essentials** (68 phrases in groups, including the set phrases staff say to you), **🧩 Sentence Builder** (15 tap-to-build templates and 13 structure tips), and **♡ My Phrases** where you can add your own phrases — type Japanese and the romaji fills in, or type English and matching Japanese is suggested from the app's own data |
 
 ### Lesson task types
 - **Vocabulary** — type each word 3× to master it; accepts hiragana or kanji forms
