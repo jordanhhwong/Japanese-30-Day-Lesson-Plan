@@ -678,6 +678,46 @@
   .ap-chip-ro { font-size: 11px; color: var(--red); font-weight: 700; }
   .ap-chip-en { font-size: 11px; color: var(--muted); }
 
+  /* My kanji list */
+  .ck-row {
+    display: flex; align-items: center; gap: 12px;
+    background: #fff; border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 10px 12px; margin-bottom: 8px; transition: all .15s;
+  }
+  .ck-row.playing { border-color: #2c3e7a; box-shadow: 0 0 0 3px #2c3e7a22; }
+  .ck-kanji {
+    font-family: 'Noto Serif JP', serif; font-size: 30px; line-height: 1.2;
+    color: var(--ink); min-width: 44px; max-width: 35%; text-align: center;
+    flex-shrink: 0; overflow-wrap: anywhere;
+  }
+  .ck-body { flex: 1; min-width: 0; }
+  .ck-reading { font-family: 'Noto Sans JP', sans-serif; font-size: 14px; font-weight: 700; color: var(--ink); }
+  .ck-romaji  { font-size: 11px; color: var(--red); font-weight: 700; }
+  .ck-meaning { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .ck-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .ck-icon-btn {
+    width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
+    background: #f8f8f8; font-size: 14px; cursor: pointer;
+  }
+  .ck-icon-btn.delete { border-color: #e05c5c44; }
+  .ck-icon-btn:active { opacity: .7; }
+
+  /* Add-kanji dialog helpers */
+  #akReadingLine { display: flex; align-items: center; gap: 8px; margin: -6px 0 12px; }
+  #akReadingLine:empty, #akNote:empty { display: none; }
+  #akNote { font-size: 11px; color: var(--muted); margin: -6px 0 12px; }
+  .ak-good { font-size: 12px; color: #2a7a4a; font-weight: 700; }
+  .ak-bad  { font-size: 12px; color: #e05c5c; font-weight: 700; }
+
+  /* Unknown-kanji hint in the Add-phrase dialog */
+  #apKanjiHint { margin: -6px 0 14px; font-size: 11px; color: var(--muted); line-height: 1.6; }
+  #apKanjiHint:empty { display: none; }
+  .ap-kanji-chip {
+    font-family: 'Noto Serif JP', serif; font-size: 14px; padding: 3px 10px; margin: 0 2px;
+    border-radius: 14px; border: 1.5px solid #1a3a5c55; background: #f5f8fc;
+    color: #1a3a5c; cursor: pointer;
+  }
+
   /* Day grid ── */
   .day-grid {
     display: grid; grid-template-columns: repeat(7, 1fr);
@@ -4045,6 +4085,10 @@ function speakJP(text, rate, onEnd) {
   rate = (typeof rate === 'number') ? rate : 0.75;
   _unlockAudioContext();
 
+  // Swap any "My kanji" for the reading the user gave, so TTS pronounces it
+  // correctly (online via Google TTS or offline via device voice).
+  text = _applyCustomReadings(text);
+
   clearTimeout(_ttsWatchdog);
   ttsAudio.pause();
   ttsAudio.onended = null;
@@ -4904,82 +4948,66 @@ function finishMic(id, phraseIdx, pass, dayIdx, taskIdx, totalPhrases, japanese,
   }
 }
 // ── Romaji → Hiragana conversion ──────────────────────────────────────────────
-// Used by the text fallback so typing "konnichiwa" is treated the same as
-// typing "こんにちは". Covers standard Hepburn romanisation.
-const _ROMAJI_TO_KANA = {
-  // Long vowels / special
-  'ー':   'ー', 'n':   'ん',
-  // Vowels
-  'a':'あ','i':'い','u':'う','e':'え','o':'お',
-  // K
-  'ka':'か','ki':'き','ku':'く','ke':'け','ko':'こ',
-  'kya':'きゃ','kyu':'きゅ','kyo':'きょ',
-  // S
-  'sa':'さ','si':'し','su':'す','se':'せ','so':'そ',
-  'shi':'し','sha':'しゃ','shu':'しゅ','sho':'しょ',
-  // T
-  'ta':'た','ti':'ち','tu':'つ','te':'て','to':'と',
-  'chi':'ち','tsu':'つ','cha':'ちゃ','chu':'ちゅ','cho':'ちょ',
-  // N
-  'na':'な','ni':'に','nu':'ぬ','ne':'ね','no':'の',
-  'nya':'にゃ','nyu':'にゅ','nyo':'にょ',
-  // H
-  'ha':'は','hi':'ひ','hu':'ふ','he':'へ','ho':'ほ',
-  'fu':'ふ','fa':'ふぁ','fi':'ふぃ','fe':'ふぇ','fo':'ふぉ',
-  'hya':'ひゃ','hyu':'ひゅ','hyo':'ひょ',
-  // M
-  'ma':'ま','mi':'み','mu':'む','me':'め','mo':'も',
-  'mya':'みゃ','myu':'みゅ','myo':'みょ',
-  // Y
-  'ya':'や','yu':'ゆ','yo':'よ',
-  // R
-  'ra':'ら','ri':'り','ru':'る','re':'れ','ro':'ろ',
-  'rya':'りゃ','ryu':'りゅ','ryo':'りょ',
-  // W
-  'wa':'わ','wi':'ゐ','we':'ゑ','wo':'を',
-  // G
-  'ga':'が','gi':'ぎ','gu':'ぐ','ge':'げ','go':'ご',
-  'gya':'ぎゃ','gyu':'ぎゅ','gyo':'ぎょ',
-  // Z
-  'za':'ざ','zi':'じ','zu':'ず','ze':'ぜ','zo':'ぞ',
-  'ji':'じ','ja':'じゃ','ju':'じゅ','jo':'じょ',
-  // D
-  'da':'だ','di':'ぢ','du':'づ','de':'で','do':'ど',
-  // B
-  'ba':'ば','bi':'び','bu':'ぶ','be':'べ','bo':'ぼ',
-  'bya':'びゃ','byu':'びゅ','byo':'びょ',
-  // P
-  'pa':'ぱ','pi':'ぴ','pu':'ぷ','pe':'ぺ','po':'ぽ',
-  'pya':'ぴゃ','pyu':'ぴゅ','pyo':'ぴょ',
-  // Double consonant (っ)
-  'tte':'って','kka':'っか','ssa':'っさ','ppa':'っぱ',
-  // Common whole-word overrides
-  'ha':'は','wa':'わ','wo':'を','he':'へ',
-};
+// Used by the typed-answer check ("konnichiwa" ≈ こんにちは) and by My kanji, where the
+// result is what gets SPOKEN — so it handles the awkward cases properly:
+//   doubled consonants   kitte → きって, zasshi → ざっし, matcha → まっちゃ
+//   n before a consonant / at the end   kanpai → かんぱい, onsen → おんせん
+//   m before b/p/m       tempura → てんぷら
+//   n' or n- as ん       kon'ya → こんや
+//   macron vowels        ō → ou, ū → uu
+// Input that already contains Japanese characters is returned untouched.
+const _ROMAJI_SYL = {};
+[
+  'a:あ i:い u:う e:え o:お',
+  'ka:か ki:き ku:く ke:け ko:こ kya:きゃ kyu:きゅ kyo:きょ',
+  'ga:が gi:ぎ gu:ぐ ge:げ go:ご gya:ぎゃ gyu:ぎゅ gyo:ぎょ',
+  'sa:さ si:し shi:し su:す se:せ so:そ sha:しゃ shu:しゅ sho:しょ she:しぇ sya:しゃ syu:しゅ syo:しょ',
+  'za:ざ zi:じ ji:じ zu:ず ze:ぜ zo:ぞ ja:じゃ ju:じゅ jo:じょ je:じぇ jya:じゃ jyu:じゅ jyo:じょ zya:じゃ zyu:じゅ zyo:じょ',
+  'ta:た ti:ち chi:ち tu:つ tsu:つ te:て to:と cha:ちゃ chu:ちゅ cho:ちょ che:ちぇ tya:ちゃ tyu:ちゅ tyo:ちょ tsa:つぁ tsi:つぃ tse:つぇ tso:つぉ',
+  'da:だ di:ぢ du:づ de:で do:ど dya:ぢゃ dyu:ぢゅ dyo:ぢょ',
+  'na:な ni:に nu:ぬ ne:ね no:の nya:にゃ nyu:にゅ nyo:にょ',
+  'ha:は hi:ひ hu:ふ fu:ふ he:へ ho:ほ hya:ひゃ hyu:ひゅ hyo:ひょ fa:ふぁ fi:ふぃ fe:ふぇ fo:ふぉ',
+  'ba:ば bi:び bu:ぶ be:べ bo:ぼ bya:びゃ byu:びゅ byo:びょ',
+  'pa:ぱ pi:ぴ pu:ぷ pe:ぺ po:ぽ pya:ぴゃ pyu:ぴゅ pyo:ぴょ',
+  'ma:ま mi:み mu:む me:め mo:も mya:みゃ myu:みゅ myo:みょ',
+  'ya:や yu:ゆ yo:よ ye:いぇ',
+  'ra:ら ri:り ru:る re:れ ro:ろ rya:りゃ ryu:りゅ ryo:りょ',
+  'wa:わ wi:うぃ we:うぇ wo:を',
+  'va:ゔぁ vi:ゔぃ vu:ゔ ve:ゔぇ vo:ゔぉ'
+].join(' ').split(' ').forEach(p => { const [k, v] = p.split(':'); _ROMAJI_SYL[k] = v; });
 
-// Convert a romaji string to hiragana using longest-match greedy approach
-function _romajiToHiragana(str) {
-  str = str.toLowerCase().replace(/[^a-zん\u3040-\u9faf]/g, '');
-  // If already contains Japanese chars, return as-is
-  if (/[\u3040-\u9faf]/.test(str)) return str;
+function _romajiToHiragana(input) {
+  let s = String(input || '').toLowerCase()
+    .replace(/[āâ]/g, 'aa').replace(/[īî]/g, 'ii').replace(/[ūû]/g, 'uu')
+    .replace(/[ēê]/g, 'ee').replace(/[ōô]/g, 'ou');
 
-  let result = '';
+  // Already (partly) Japanese — leave as typed, just drop stray symbols
+  if (/[\u3040-\u9faf]/.test(s)) return s.replace(/[^a-z\u3040-\u9faf]/g, '');
+
+  s = s.replace(/n['\u2019\-]/g, 'N').replace(/[^a-zN]/g, '');   // N = forced ん
+  let out = '';
   let i = 0;
-  while (i < str.length) {
-    // Try longest match first (4 chars down to 1)
-    let matched = false;
-    for (let len = 4; len >= 1; len--) {
-      const chunk = str.slice(i, i + len);
-      if (_ROMAJI_TO_KANA[chunk]) {
-        result += _ROMAJI_TO_KANA[chunk];
-        i += len;
-        matched = true;
-        break;
+  while (i < s.length) {
+    const c = s[i], next = s[i + 1];
+    if (c === 'N') { out += 'ん'; i++; continue; }
+    // m before b/p/m is ん (shimbun, tempura, anmari)
+    if (c === 'm' && next && 'bpm'.includes(next)) { out += 'ん'; i++; continue; }
+    // doubled consonant, or "tch", is a small っ
+    if ((next === c && !'aiueonN'.includes(c)) || (c === 't' && s.startsWith('tch', i))) {
+      out += 'っ'; i++; continue;
+    }
+    let hit = false;
+    for (let len = 3; len >= 1 && !hit; len--) {
+      const chunk = s.slice(i, i + len);
+      if (chunk.length === len && _ROMAJI_SYL[chunk]) {
+        out += _ROMAJI_SYL[chunk]; i += len; hit = true;
       }
     }
-    if (!matched) { result += str[i]; i++; }
+    if (hit) continue;
+    out += (c === 'n') ? 'ん' : c;   // bare n → ん; anything unknown is kept as typed
+    i++;
   }
-  return result;
+  return out;
 }
 
 function _showMicFallback(id, phraseIdx, japanese, romaji, dayIdx, taskIdx, totalPhrases) {
@@ -5766,7 +5794,14 @@ function renderKanjiChart() {
       <span style="font-size:9px;font-weight:400;opacity:.75;display:block">
         ${JOYO_DATA[g].length} kanji
       </span>
-    </button>`).join('');
+    </button>`).join('') + `
+    <button class="kanji-grade-tab ${currentKanjiGrade==='mine'?'active':''}"
+      onclick="setKanjiGrade('mine')">
+      ✏️ Mine
+      <span style="font-size:9px;font-weight:400;opacity:.75;display:block">
+        ${customKanji.length} kanji
+      </span>
+    </button>`;
 
   // Filter by search query or show current grade
   let data;
@@ -5780,9 +5815,15 @@ function renderKanjiChart() {
         }
       }
     }
+    const mine = customKanji
+      .filter(k => k.kanji.includes(q) || k.reading.includes(q) ||
+                   (k.romaji || '').toLowerCase().includes(q) || (k.meaning || '').toLowerCase().includes(q))
+      .map(k => [k.kanji, k.reading, k.meaning || '']);
+    data = mine.concat(data);
   } else {
-    data = JOYO_DATA[currentKanjiGrade] || [];
+    data = currentKanjiGrade === 'mine' ? [] : (JOYO_DATA[currentKanjiGrade] || []);
   }
+  const showMine = currentKanjiGrade === 'mine' && !kanjiSearchQuery.trim();
 
   // Build grid cells
   const cov = buildCoverageMap();
@@ -5801,7 +5842,7 @@ function renderKanjiChart() {
       </div>`;
   }).join('');
 
-  const noResults = data.length === 0
+  const noResults = (data.length === 0 && !showMine)
     ? `<div class="kanji-no-results">No kanji found for "${escHtml(kanjiSearchQuery)}"</div>`
     : '';
 
@@ -5826,11 +5867,13 @@ function renderKanjiChart() {
     <div class="kanji-count">
       ${kanjiSearchQuery
         ? `${data.length} result${data.length!==1?'s':''} across all grades`
-        : `${data.length} kanji — ${JOYO_GRADE_LABELS[currentKanjiGrade]}`}
+        : showMine
+          ? `${customKanji.length} of your own kanji — outside the Joyo list`
+          : `${data.length} kanji — ${JOYO_GRADE_LABELS[currentKanjiGrade]}`}
     </div>
 
     ${noResults}
-    <div class="kanji-grid">${cells}</div>`;
+    ${showMine ? buildCustomKanjiPanel() : `<div class="kanji-grid">${cells}</div>`}`;
 }
 
 function playKanji(kanji, reading, cellId) {
@@ -6097,6 +6140,8 @@ function goPhrasesView() {
 
 const DICT_CATS = [
   { id:'favs',      emoji:'♡',  label:'My Phrases' },
+  { id:'essentials',emoji:'⭐', label:'Tourist Essentials' },
+  { id:'builder',   emoji:'🧩', label:'Sentence Builder' },
   { id:'transport', emoji:'🚉', label:'Getting Around' },
   { id:'food',      emoji:'🍜', label:'Food & Drink' },
   { id:'hotel',     emoji:'🏨', label:'Accommodation' },
@@ -6107,6 +6152,10 @@ const DICT_CATS = [
   { id:'comms',     emoji:'🗣️', label:'Communication' },
   { id:'seasonal',  emoji:'🍂', label:'Seasonal / Holidays' },
 ];
+
+// Compact row helper for the Tourist Essentials list: [jp, romaji, meaning, note]
+const _ess = (group, rows, tag) => rows.map(([jp, romaji, meaning, note]) =>
+  ({ group, jp, romaji, meaning, note, ...(tag ? { tag } : {}) }));
 
 const DICT_DATA = {
   transport: [
@@ -6216,6 +6265,95 @@ const DICT_DATA = {
     { jp:'かんぱい！',                    romaji:'Kanpai!',                                 meaning:'Cheers!',                           note:'Raise your glass, make eye contact, say this before the first sip.',                day:1  },
     { jp:'たのしいですね！',              romaji:'Tanoshii desu ne!',                       meaning:'This is so fun!',                   note:'Express genuine joy at a festival or event. Locals love enthusiastic tourists.',     day:17 },
     { jp:'さむいですね。',               romaji:'Samui desu ne.',                           meaning:'It\'s cold, isn\'t it.',            note:'October in Japan can be cool. A great small-talk opener.',                           day:12 },
+  ],
+  // Compiled from travel guides, language blogs and traveller write-ups: the phrases that come up
+  // again and again for a first-time visitor, grouped by situation.
+  essentials: [
+    ..._ess('Everyday basics', [
+      ['はい。', 'Hai.', 'Yes / I’m listening.', 'Often just means “I hear you”, not “I agree” — staff say it constantly to show they’re following you.'],
+      ['いいえ。', 'Iie.', 'No.', 'Sounds blunt on its own. For a softer refusal use だいじょうぶです or すみません、ちょっと… (see Communication).'],
+      ['だいじょうぶです。', 'Daijoubu desu.', 'I’m fine / No thanks.', 'Handy for politely turning down a bag, a receipt or extra help. It can also mean “I’m OK” — tone and context tell them which.'],
+      ['ごめんなさい。', 'Gomennasai.', 'I’m sorry.', 'For apologising when you’ve caused a problem, like bumping into someone. すみません is the safer all-rounder.'],
+      ['ありがとうございました。', 'Arigatou gozaimashita.', 'Thank you (for what just happened).', 'The past form — say it as you leave a shop or after being helped. Staff will say it to you too.'],
+      ['どういたしまして。', 'Dou itashimashite.', 'You’re welcome.', 'Rarely needed with service staff — a smile and a small nod is normal — but handy when you’ve helped someone.'],
+      ['しゃしんをとってもらえますか？', 'Shashin wo totte moraemasu ka?', 'Could you take a photo of us?', 'Hold out your phone, point at the shutter button and bow. Most people are happy to help.'],
+    ]),
+    ..._ess('When you don’t understand', [
+      ['わかりました。', 'Wakarimashita.', 'I understand / Got it.', 'Say it after directions or instructions. It means “understood” (and often “I’ll do that”).'],
+      ['にほんごがあまりはなせません。', 'Nihongo ga amari hanasemasen.', 'I don’t speak much Japanese.', 'Honest and polite. People usually slow down, simplify, or switch to gestures and a translation app.'],
+      ['えいごをはなせるひとはいますか？', 'Eigo wo hanaseru hito wa imasu ka?', 'Is there anyone who speaks English?', 'Good at hotels, stations and information desks — even a “no” often leads to a colleague or a translation app.'],
+      ['ゆっくりはなしてください。', 'Yukkuri hanashite kudasai.', 'Please speak slowly.', 'Smile as you say it — most people slow down and choose simpler words.'],
+      ['もういちどいってください。', 'Mou ichido itte kudasai.', 'Please say that again.', 'Add ゆっくり if they were too fast. Asking for a repeat is normal and nobody minds.'],
+      ['にほんごでなんといいますか？', 'Nihongo de nan to iimasu ka?', 'How do you say this in Japanese?', 'Point at an object and ask — a quick way to pick up words as you travel.'],
+    ]),
+    ..._ess('Getting around', [
+      ['ここはどこですか？', 'Koko wa doko desu ka?', 'Where am I? / Where is this?', 'Point at your map app. People will often show you, or even walk you there.'],
+      ['みちにまよいました。', 'Michi ni mayoimashita.', 'I’m lost.', 'People are generally keen to help lost travellers — follow it with a place name and どこですか？'],
+      ['いちばんちかいえきはどこですか？', 'Ichiban chikai eki wa doko desu ka?', 'Where is the nearest station?', 'いちばん means “number one / most”. Listen for みぎ, ひだり and まっすぐ in the answer.'],
+      ['このでんしゃはしぶやにいきますか？', 'Kono densha wa Shibuya ni ikimasu ka?', 'Does this train go to Shibuya?', 'Swap in your own destination. Station and platform staff will answer はい or いいえ.'],
+      ['なんばんせんですか？', 'Nanbansen desu ka?', 'Which platform is it?', 'Use it when a ticket or sign doesn’t show the platform. The answer will be a number plus ばんせん.'],
+      ['のりかえはどこですか？', 'Norikae wa doko desu ka?', 'Where do I change trains?', 'Essential at big interchange stations. Show the line or station you need to reach.'],
+      ['きっぷうりばはどこですか？', 'Kippu uriba wa doko desu ka?', 'Where is the ticket office?', 'You’ll see 切符売り場 on signs. Most stations also have ticket machines with an English option.'],
+      ['でぐちはどこですか？', 'Deguchi wa doko desu ka?', 'Where is the exit?', 'Big stations have many exits — showing your destination on your phone helps a lot.'],
+      ['スイカにチャージしたいです。', 'Suika ni chaaji shitai desu.', 'I’d like to top up my Suica.', 'For when you need staff help at a machine. IC cards like Suica and PASMO work across most of Japan.'],
+      ['このじゅうしょまでおねがいします。', 'Kono juusho made onegaishimasu.', 'To this address, please.', 'Show the address on your phone or hotel card — much easier than pronouncing it.'],
+      ['ここでおろしてください。', 'Koko de oroshite kudasai.', 'Please let me out here.', 'Tell a taxi driver where to stop. The rear door opens automatically — wait for it.'],
+    ]),
+    ..._ess('Eating out', [
+      ['ひとりです。', 'Hitori desu.', 'Just one (person).', 'The answer to なんめいさまですか？ Hold up a finger too. Counter seats are common for solo diners.'],
+      ['ふたりです。', 'Futari desu.', 'Two people.', 'Use さんにん (3), よにん (4)… for bigger groups. Staff will lead you to a table.'],
+      ['よやくはしていません。', 'Yoyaku wa shite imasen.', 'I don’t have a reservation.', 'Useful at popular places — staff will check for a free table or tell you politely if they’re full.'],
+      ['きんえんせきをおねがいします。', 'Kin’en seki wo onegaishimasu.', 'Non-smoking seat, please.', 'Some restaurants still have smoking sections. Smoking seats are きつえんせき.'],
+      ['これとこれをください。', 'Kore to kore wo kudasai.', 'This one and this one, please.', 'Point at each item — works with picture menus and the plastic food displays outside many restaurants.'],
+      ['おなじものをください。', 'Onaji mono wo kudasai.', 'I’ll have the same, please.', 'Point at someone else’s dish or a picture and say this.'],
+      ['ここでたべます。', 'Koko de tabemasu.', 'I’ll eat here.', 'The answer to “eat in or take away?” at counters and konbini.'],
+      ['もちかえりでおねがいします。', 'Mochikaeri de onegaishimasu.', 'Takeaway, please.', 'Prices can differ slightly from eating in, because takeaway food is taxed at a lower rate.'],
+      ['フォークをください。', 'Fooku wo kudasai.', 'A fork, please.', 'Chopsticks come as standard, but forks and spoons are usually available if you ask.'],
+      ['にくとさかなはたべません。', 'Niku to sakana wa tabemasen.', 'I don’t eat meat or fish.', 'Many soups and sauces use fish stock (dashi), so vegetarian-looking dishes may not be. Add アレルギーがあります for allergies.'],
+      ['べつべつでおねがいします。', 'Betsubetsu de onegaishimasu.', 'Separate bills, please.', 'Not every restaurant can split bills — ask politely, or pay for the group and settle up later.'],
+      ['レジはどこですか？', 'Reji wa doko desu ka?', 'Where is the register?', 'In many restaurants you take the bill to the register on your way out and pay there, not at the table.'],
+    ]),
+    ..._ess('Paying & shopping', [
+      ['カードはつかえますか？', 'Kaado wa tsukaemasu ka?', 'Can I use a card?', 'Ask before you order or shop — cards are widely accepted now, but small places can still be cash-only.'],
+      ['げんきんだけですか？', 'Genkin dake desu ka?', 'Is it cash only?', 'Handy at small restaurants, stalls and temples. Keep some yen on you.'],
+      ['ふくろをください。', 'Fukuro wo kudasai.', 'A bag, please.', 'Shops usually charge a few yen for a plastic bag.'],
+      ['ふくろはいりません。', 'Fukuro wa irimasen.', 'I don’t need a bag.', 'Staff often ask once at the till — this (or just a shake of the head) is all you need.'],
+      ['あたためてください。', 'Atatamete kudasai.', 'Please heat it up.', 'Konbini will warm bento and ready meals; staff normally ask first — answer はい、おねがいします or だいじょうぶです.'],
+      ['これをみせてください。', 'Kore wo misete kudasai.', 'Please show me this.', 'Point at something in a display case or behind the counter.'],
+      ['しちゃくしてもいいですか？', 'Shichaku shite mo ii desu ka?', 'May I try this on?', 'Staff will guide you to the fitting room (しちゃくしつ).'],
+      ['ほかのいろはありますか？', 'Hoka no iro wa arimasu ka?', 'Do you have other colours?', 'For other sizes, ask ちがうサイズはありますか？ (Do you have a different size?).'],
+      ['めんぜいでおねがいします。', 'Menzei de onegaishimasu.', 'Tax-free, please.',
+        'Show your passport at the till (usually ¥5,000+ at one shop per day). Rules change on 1 Nov 2026 — you’ll pay full price and claim at the airport — but purchases up to 31 Oct are still tax-free at the till.'],
+      ['プレゼントようにほうそうしてください。', 'Purezento you ni housou shite kudasai.', 'Please gift-wrap it.', 'Ask before you pay — many shops will wrap gifts neatly.'],
+    ]),
+    ..._ess('Hotel', [
+      ['にもつをあずかってもらえますか？', 'Nimotsu wo azukatte moraemasu ka?', 'Could you hold my luggage?', 'Most hotels will store bags before check-in or after check-out.'],
+      ['ワイファイのパスワードをおしえてください。', 'Waifai no pasuwaado wo oshiete kudasai.', 'Please tell me the Wi-Fi password.', 'Hotels and many cafés have free Wi-Fi — ask staff for the password.'],
+      ['タクシーをよんでください。', 'Takushii wo yonde kudasai.', 'Please call a taxi.', 'Reception can book one and write your destination in Japanese for the driver.'],
+    ]),
+    ..._ess('Feeling unwell, lost or in trouble', [
+      ['きぶんがわるいです。', 'Kibun ga warui desu.', 'I feel unwell.', 'Say it to staff or anyone nearby — add びょういんにいきたいです if you need a doctor.'],
+      ['びょういんにいきたいです。', 'Byouin ni ikitai desu.', 'I need to go to a hospital.', 'Hotel reception can help you find a nearby clinic or hospital.'],
+      ['やっきょくはどこですか？', 'Yakkyoku wa doko desu ka?', 'Where is a pharmacy?', 'Look for ドラッグストア signs too — they sell everyday medicines.'],
+      ['こうばんはどこですか？', 'Kouban wa doko desu ka?', 'Where is the police box?', 'Small neighbourhood police boxes (交番) are where you report lost or stolen items, or ask for directions.'],
+      ['さいふをなくしました。', 'Saifu wo nakushimashita.', 'I lost my wallet.', 'Head to the nearest 交番 — lost items are often handed in there.'],
+      ['ぬすまれました。', 'Nusumaremashita.', 'It was stolen.', 'Say what was taken first: さいふ (wallet), スマホ (phone), パスポート (passport).'],
+      ['わすれものをしました。', 'Wasuremono wo shimashita.', 'I left something behind.', 'Tell station staff or the shop you left it in — they’ll usually help you check lost property.'],
+    ]),
+    ..._ess('Phrases you’ll hear', [
+      ['いらっしゃいませ。', 'Irasshaimase.', 'Welcome!', 'Staff say this as you enter. No reply needed — a nod and a smile is perfect.'],
+      ['なんめいさまですか？', 'Nanmei-sama desu ka?', 'How many people?', 'Answer with ひとりです or ふたりです.'],
+      ['しょうしょうおまちください。', 'Shoushou omachi kudasai.', 'Please wait a moment.', 'Common when staff go to check something — a nod is enough.'],
+      ['ごちゅうもんはおきまりですか？', 'Gochuumon wa okimari desu ka?', 'Are you ready to order?', 'Reply with これとこれをください, or ちょっとまってください (just a moment) if you need longer.'],
+      ['こちらでおめしあがりですか？', 'Kochira de omeshiagari desu ka?', 'Eating here?', 'Counter staff ask this (or おもちかえりですか？ — “takeaway?”). Answer ここでたべます or もちかえりで.'],
+      ['おまたせしました。', 'Omatase shimashita.', 'Sorry to keep you waiting / Here you are.', 'Said when your food arrives or staff return to you. A nod and ありがとうございます is the reply.'],
+      ['ごゆっくりどうぞ。', 'Goyukkuri douzo.', 'Please take your time / Enjoy.', 'Said as food is served or you’re shown to a room. No reply needed.'],
+      ['おあたためしますか？', 'Oatatame shimasu ka?', 'Shall I heat that up?', 'Konbini staff ask this for bento and ready meals. Say はい、おねがいします or だいじょうぶです.'],
+      ['ふくろはごりようですか？', 'Fukuro wa goriyou desu ka?', 'Will you need a bag?', 'Wording varies — ふくろはおつけしますか？ is also common. Answer ふくろをください or ふくろはいりません.'],
+      ['ポイントカードはおもちですか？', 'Pointo kaado wa omochi desu ka?', 'Do you have a points card?', 'Konbini and shops ask this at the till. Just say いいえ or もっていません.'],
+      ['おしはらいはどうなさいますか？', 'Oshiharai wa dou nasaimasu ka?', 'How would you like to pay?', 'Answer カードで, げんきんで or スイカで (with an IC card). At self-service tills it appears on the screen.'],
+      ['きつえんですか、きんえんですか？', 'Kitsuen desu ka, kin’en desu ka?', 'Smoking or non-smoking?', 'Asked when seating you. Answer きんえん (non-smoking) — or point to the sign.'],
+    ], 'hear'),
   ],
 };
 
@@ -6872,6 +7010,10 @@ function _kanjiToHira(str) {
   let result = '';
   let i = 0;
   while (i < str.length) {
+    // 0. The user's own "My kanji" readings always win (longest entry first)
+    const ck = _customKanjiKeys.find(k => str.startsWith(k, i));
+    if (ck) { result += _customKanjiMap[ck]; i += ck.length; continue; }
+
     // Try compound matches longest-first (5 chars down to 2)
     let matched = false;
     for (let len = 5; len >= 2; len--) {
@@ -6959,6 +7101,232 @@ function _autoRomaji(jp) {
   const asRomaji = _kanaToRomaji(asHira);      // hiragana → romaji
   const hasUnresolved = /[\u4E00-\u9FAF]/.test(asHira); // any kanji still there?
   return { romaji: asRomaji, complete: !hasUnresolved };
+}
+
+// ── My kanji: kanji outside the Joyo list, with a pronunciation you supply ─────
+// Each entry: { id, kanji, romaji, reading (hiragana), meaning, addedAt }
+// Stored in localStorage (jp30_customkanji) and included in Export / Import.
+// The reading is used in two places:
+//   1. speakJP()      — your kanji is swapped for its reading before TTS, so it is
+//                       pronounced correctly everywhere a 🔊 button appears
+//   2. _kanjiToHira() — the Add-phrase box can now auto-fill romaji for phrases using it
+let customKanji        = [];
+let _customKanjiMap    = {};   // kanji → hiragana reading
+let _customKanjiKeys   = [];   // keys, longest first (so 鰻丼 beats 鰻)
+let _editingKanjiId    = null;
+let _joyoKanjiSet      = null;
+
+const _HAS_KANJI_RE = /[\u3005\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]|[\uD840-\uD87F][\uDC00-\uDFFF]/;
+const _KANJI_RUN_RE = /(?:[\u3005\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]|[\uD840-\uD87F][\uDC00-\uDFFF])+/g;
+
+function _rebuildCustomKanjiIndex() {
+  _customKanjiMap = {};
+  customKanji.forEach(k => { if (k && k.kanji && k.reading) _customKanjiMap[k.kanji] = k.reading; });
+  _customKanjiKeys = Object.keys(_customKanjiMap).sort((a, b) => b.length - a.length);
+}
+
+function loadCustomKanji() {
+  try { customKanji = JSON.parse(localStorage.getItem('jp30_customkanji') || '[]'); }
+  catch (e) { customKanji = []; }
+  if (!Array.isArray(customKanji)) customKanji = [];
+  _rebuildCustomKanjiIndex();
+}
+
+function saveCustomKanji() {
+  localStorage.setItem('jp30_customkanji', JSON.stringify(customKanji));
+  _rebuildCustomKanjiIndex();
+}
+
+// Replace any saved kanji in `text` with its reading (used just before TTS)
+function _applyCustomReadings(text) {
+  if (typeof text !== 'string' || !_customKanjiKeys.length) return text;
+  let out = '';
+  let i = 0;
+  while (i < text.length) {
+    const hit = _customKanjiKeys.find(k => text.startsWith(k, i));
+    if (hit) { out += _customKanjiMap[hit]; i += hit.length; }
+    else     { out += text[i]; i++; }
+  }
+  return out;
+}
+
+// What the user typed (romaji, or hiragana/katakana) → { reading, romaji }, or null if unreadable
+function _parsePronunciation(input) {
+  const raw = (input || '').trim();
+  if (!raw) return null;
+  const reading = _toHiragana(_romajiToHiragana(raw)).replace(/\s+/g, '');
+  if (!/^[\u3041-\u3096\u30FC]+$/.test(reading)) return null;
+  const typedKana = /[\u3040-\u30FF]/.test(raw);
+  return { reading, romaji: typedKana ? _kanaToRomaji(reading) : raw.replace(/\s+/g, ' ') };
+}
+
+function _joyoGradeOf(ch) {
+  if (!_joyoKanjiSet) {
+    _joyoKanjiSet = new Map();
+    Object.entries(JOYO_DATA).forEach(([g, list]) => list.forEach(e => _joyoKanjiSet.set(e[0], g)));
+  }
+  return _joyoKanjiSet.get(ch) || null;
+}
+
+// ── List panel (shown on the ✏️ Mine tab of 漢字) ─────────────────────────────
+function buildCustomKanjiPanel() {
+  const addBtn = `
+    <button class="dict-add-btn" onclick="openAddKanji()">
+      <span style="font-size:20px;line-height:1">＋</span> Add a kanji that isn’t in the Joyo list
+    </button>`;
+  if (!customKanji.length) {
+    return addBtn + `
+      <div class="kanji-no-results">No kanji of your own yet.<br>
+        <small>Add one with its pronunciation and the app will read it aloud correctly — in lessons, the dictionary and your own phrases.</small>
+      </div>`;
+  }
+  const rows = [...customKanji].reverse().map(k => `
+    <div class="ck-row" id="ck-${k.id}">
+      <div class="ck-kanji">${escHtml(k.kanji)}</div>
+      <div class="ck-body">
+        <div class="ck-reading">${escHtml(k.reading)}</div>
+        <div class="ck-romaji">${escHtml(k.romaji)}</div>
+        <div class="ck-meaning">${escHtml(k.meaning || '—')}</div>
+      </div>
+      <div class="ck-actions">
+        <button class="dict-hear-btn" onclick="_unlockAudioContext();playCustomKanji('${k.id}')" title="Hear it">🔊</button>
+        <button class="ck-icon-btn" onclick="openAddKanji('${k.id}')" title="Edit">✏️</button>
+        <button class="ck-icon-btn delete" onclick="deleteCustomKanji('${k.id}')" title="Delete">🗑</button>
+      </div>
+    </div>`).join('');
+  return addBtn + rows;
+}
+
+function playCustomKanji(id) {
+  const k = customKanji.find(x => x.id === id);
+  if (!k) return;
+  const row = document.getElementById('ck-' + id);
+  row?.classList.add('playing');
+  speakJP(k.kanji, currentSpeed, () => row?.classList.remove('playing'));
+}
+
+function deleteCustomKanji(id) {
+  const k = customKanji.find(x => x.id === id);
+  if (!k || !confirm(`Remove ${k.kanji} from My kanji?`)) return;
+  customKanji = customKanji.filter(x => x.id !== id);
+  saveCustomKanji();
+  renderKanjiChart();
+}
+
+// ── Add / edit dialog ─────────────────────────────────────────────────────────
+// editId: id of an entry to edit.  prefill: kanji text to start with (from the Add-phrase hint).
+function openAddKanji(editId, prefill) {
+  _editingKanjiId = editId || null;
+  const ex = editId ? customKanji.find(k => k.id === editId) : null;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'add-phrase-overlay';
+  overlay.id = 'addKanjiOverlay';
+  overlay.innerHTML = `
+    <div class="add-phrase-card">
+      <div class="add-phrase-title">${ex ? '✏️ Edit kanji' : '＋ Add a kanji'}</div>
+      <div class="add-phrase-sub">For kanji outside the Joyo list. The app speaks the reading you give, so it’s pronounced correctly wherever it appears.</div>
+
+      <label class="add-phrase-label">Kanji or word</label>
+      <input class="add-phrase-input" id="akKanji" type="text" placeholder="e.g. 鰻 or 蕎麦"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+        value="${escHtml(ex ? ex.kanji : (prefill || ''))}" oninput="onAddKanjiInput()" />
+      <div id="akNote"></div>
+
+      <label class="add-phrase-label">Pronunciation (romaji — or kana)</label>
+      <input class="add-phrase-input small" id="akRomaji" type="text" placeholder="e.g. unagi"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+        value="${escHtml(ex ? ex.romaji : '')}" oninput="onAddKanjiInput()" />
+      <div id="akReadingLine"></div>
+
+      <label class="add-phrase-label">English meaning (optional)</label>
+      <input class="add-phrase-input small" id="akMeaning" type="text" placeholder="e.g. eel"
+        value="${escHtml(ex ? (ex.meaning || '') : '')}" />
+
+      <div class="add-phrase-actions">
+        <button class="add-phrase-btn add-phrase-btn-secondary" onclick="closeAddKanji()">Cancel</button>
+        <button class="add-phrase-btn add-phrase-btn-primary" onclick="saveCustomKanjiEntry()">${ex ? 'Save changes' : 'Add kanji'}</button>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeAddKanji(); });
+  document.body.appendChild(overlay);
+
+  onAddKanjiInput();
+  setTimeout(() => document.getElementById(ex || prefill ? 'akRomaji' : 'akKanji')?.focus(), 100);
+}
+
+function onAddKanjiInput() {
+  const kanji = (document.getElementById('akKanji')?.value || '').trim();
+  const pron  = document.getElementById('akRomaji')?.value || '';
+  const line  = document.getElementById('akReadingLine');
+  const note  = document.getElementById('akNote');
+
+  if (note) {
+    const g = [...kanji].length === 1 ? _joyoGradeOf(kanji) : null;
+    note.textContent = g
+      ? `ℹ️ ${kanji} is already in the Joyo list (Grade ${g}) — saving here changes how the app speaks it.`
+      : '';
+  }
+  if (!line) return;
+  if (!pron.trim()) { line.innerHTML = ''; return; }
+  const p = _parsePronunciation(pron);
+  if (!p) {
+    line.innerHTML = '<span class="ak-bad">Couldn’t read that — use letters a–z (e.g. unagi) or kana.</span>';
+    return;
+  }
+  line.innerHTML =
+    `<span class="ak-good">Will be spoken as <strong>${escHtml(p.reading)}</strong></span>` +
+    `<button type="button" class="dict-hear-btn" style="width:34px;height:34px;font-size:14px"
+       onclick="_unlockAudioContext();speakJP('${escHtml(p.reading)}', currentSpeed)" title="Hear it">🔊</button>`;
+}
+
+function saveCustomKanjiEntry() {
+  const kEl = document.getElementById('akKanji');
+  const pEl = document.getElementById('akRomaji');
+  const mEl = document.getElementById('akMeaning');
+  const kanji   = (kEl?.value || '').replace(/\s+/g, '');
+  const meaning = (mEl?.value || '').trim();
+  const pron    = _parsePronunciation(pEl?.value || '');
+
+  const flag = el => { el?.style.setProperty('border-color', '#e05c5c'); el?.focus(); };
+  if (!kanji || !_HAS_KANJI_RE.test(kanji)) { flag(kEl); return; }
+  if (!pron)                                { flag(pEl); return; }
+
+  // One entry per kanji string: re-adding (or editing to) the same kanji replaces the old one
+  const id = _editingKanjiId ||
+    ('ck_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
+  customKanji = customKanji.filter(k => k.id !== id && k.kanji !== kanji);
+  customKanji.push({ id, kanji, romaji: pron.romaji, reading: pron.reading, meaning,
+                     addedAt: new Date().toISOString() });
+  saveCustomKanji();
+  closeAddKanji();
+
+  if (currentView === 'kanji') renderKanjiChart();
+  // If the Add-phrase box is open underneath, re-read its Japanese so the new reading is used
+  const jpEl = document.getElementById('apJP');
+  if (jpEl && jpEl.value) onAddPhraseJPInput(jpEl.value);
+}
+
+function closeAddKanji() {
+  document.getElementById('addKanjiOverlay')?.remove();
+  _editingKanjiId = null;
+}
+
+// ── Hint inside the Add-phrase box: kanji the app can't read yet ──────────────
+function _unresolvedKanjiRuns(jp) {
+  const hira = _kanjiToHira(String(jp || '').replace(/[！？。、・\n]/g, ' '));
+  return [...new Set(hira.match(_KANJI_RUN_RE) || [])];
+}
+
+function updateAddPhraseKanjiHint(jp) {
+  const box = document.getElementById('apKanjiHint');
+  if (!box) return;
+  const runs = _unresolvedKanjiRuns(jp);
+  if (!runs.length) { box.innerHTML = ''; return; }
+  box.innerHTML =
+    'No reading known for: ' +
+    runs.map(r => `<button type="button" class="ap-kanji-chip" onclick="openAddKanji(null,'${escHtml(r)}')">${escHtml(r)} ＋</button>`).join(' ') +
+    '<div style="margin-top:3px">Tap to teach the app its pronunciation — it will fill the romaji and read it aloud correctly.</div>';
 }
 
 // ── English → Japanese lookup (autofill for the Add-phrase modal) ─────────────
@@ -7183,6 +7551,7 @@ function openAddPhrase(editId) {
           value="${existing ? escHtml(existing.romaji) : ''}" />
         <span class="add-phrase-auto-badge hidden" id="apAutoBadge">Auto ✓</span>
       </div>
+      <div id="apKanjiHint"></div>
 
       <label class="add-phrase-label">English meaning</label>
       <input class="add-phrase-input small" id="apMeaning" type="text"
@@ -7217,6 +7586,7 @@ function openAddPhrase(editId) {
   // If editing, trigger preview immediately
   if (existing) {
     updateAddPhrasePreview(existing.jp, existing.romaji, existing.meaning);
+    updateAddPhraseKanjiHint(existing.jp);
   }
 
   setTimeout(() => document.getElementById('apJP')?.focus(), 100);
@@ -7237,6 +7607,7 @@ function onAddPhraseJPInput(val) {
 
   const meaning = document.getElementById('apMeaning')?.value || '';
   updateAddPhrasePreview(val, romaji, meaning);
+  updateAddPhraseKanjiHint(val);
 }
 
 function updateAddPhrasePreview(jp, romaji, meaning) {
@@ -7565,6 +7936,7 @@ function exportProgress() {
       streak:     localStorage.getItem('jp30_streak')   || '0',
       lastStudied:localStorage.getItem('jp30_lastStudied') || '',
       custom:     localStorage.getItem('jp30_custom')   || '[]',
+      customKanji:localStorage.getItem('jp30_customkanji') || '[]',
     }
   };
   const json = JSON.stringify(data, null, 2);
@@ -7600,6 +7972,7 @@ function importProgress() {
             if (p.streak)      localStorage.setItem('jp30_streak',      p.streak);
             if (p.lastStudied) localStorage.setItem('jp30_lastStudied', p.lastStudied);
             if (p.custom)      localStorage.setItem('jp30_custom',      p.custom);
+            if (p.customKanji) localStorage.setItem('jp30_customkanji', p.customKanji);
           }
 
           saveState();
@@ -7609,6 +7982,7 @@ function importProgress() {
           loadPersonalisation();
           loadDictFavourites();
           loadCustomPhrases();
+          loadCustomKanji();
           initSpeedToggle();
           initRomajiToggle();
           renderStreak();
@@ -7766,6 +8140,7 @@ function startAudioCache() {
 // ── Boot ──────────────────────────────────────────────────────────────────────
 loadState();
 loadDictFavourites();
+loadCustomKanji();
 loadCustomPhrases();
 loadPersonalisation();
 renderAll();
